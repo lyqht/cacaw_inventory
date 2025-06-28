@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Save, X, Plus, GripVertical, Crop, RotateCcw, Check, Edit2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, X, Plus, GripVertical, Crop, RotateCcw, Check, Edit2, Trash2, Move } from 'lucide-react';
 import { DetectionResult, CollectibleData, ItemCondition, Folder } from '../types';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -50,6 +50,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cropCanvasRef = useRef<HTMLCanvasElement>(null);
+  const cropContainerRef = useRef<HTMLDivElement>(null);
 
   const conditions: { value: ItemCondition; label: string; color: string }[] = [
     { value: 'mint', label: 'Mint', color: 'text-retro-success' },
@@ -80,41 +81,83 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
   const startCrop = (itemId: string) => {
     setCropMode(itemId);
     setCropArea(null);
+    setIsDragging(false);
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const cancelCrop = () => {
+    setCropMode(null);
+    setCropArea(null);
+    setIsDragging(false);
+  };
+
+  const getRelativeCoordinates = (e: React.MouseEvent, element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  };
+
+  const handleCropMouseDown = (e: React.MouseEvent) => {
+    // Only handle crop events when in crop mode
     if (!cropMode || !imageRef.current) return;
     
-    const rect = imageRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Prevent default to avoid image dragging
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const coords = getRelativeCoordinates(e, imageRef.current);
     
     setIsDragging(true);
-    setDragStart({ x, y });
-    setCropArea({ x, y, width: 0, height: 0 });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !cropMode || !imageRef.current) return;
-    
-    const rect = imageRef.current.getBoundingClientRect();
-    const currentX = e.clientX - rect.left;
-    const currentY = e.clientY - rect.top;
-    
-    setCropArea({
-      x: Math.min(dragStart.x, currentX),
-      y: Math.min(dragStart.y, currentY),
-      width: Math.abs(currentX - dragStart.x),
-      height: Math.abs(currentY - dragStart.y)
+    setDragStart(coords);
+    setCropArea({ 
+      x: coords.x, 
+      y: coords.y, 
+      width: 0, 
+      height: 0 
     });
   };
 
-  const handleMouseUp = () => {
+  const handleCropMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !cropMode || !imageRef.current) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const coords = getRelativeCoordinates(e, imageRef.current);
+    
+    setCropArea({
+      x: Math.min(dragStart.x, coords.x),
+      y: Math.min(dragStart.y, coords.y),
+      width: Math.abs(coords.x - dragStart.x),
+      height: Math.abs(coords.y - dragStart.y)
+    });
+  };
+
+  const handleCropMouseUp = (e: React.MouseEvent) => {
+    if (!cropMode) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
     setIsDragging(false);
+  };
+
+  // Prevent context menu on crop area
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (cropMode) {
+      e.preventDefault();
+    }
   };
 
   const applyCrop = async () => {
     if (!cropArea || !cropMode || !imageRef.current || !canvasRef.current) return;
+    
+    // Validate crop area
+    if (cropArea.width < 10 || cropArea.height < 10) {
+      alert('Crop area is too small. Please select a larger area.');
+      return;
+    }
     
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -124,28 +167,37 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     const scaleX = img.naturalWidth / img.width;
     const scaleY = img.naturalHeight / img.height;
 
+    // Calculate actual crop dimensions
+    const actualCrop = {
+      x: cropArea.x * scaleX,
+      y: cropArea.y * scaleY,
+      width: cropArea.width * scaleX,
+      height: cropArea.height * scaleY
+    };
+
     // Set canvas size to crop area
-    canvas.width = cropArea.width * scaleX;
-    canvas.height = cropArea.height * scaleY;
+    canvas.width = actualCrop.width;
+    canvas.height = actualCrop.height;
 
     // Draw cropped portion
     ctx.drawImage(
       img,
-      cropArea.x * scaleX,
-      cropArea.y * scaleY,
-      cropArea.width * scaleX,
-      cropArea.height * scaleY,
+      actualCrop.x,
+      actualCrop.y,
+      actualCrop.width,
+      actualCrop.height,
       0,
       0,
       canvas.width,
       canvas.height
     );
 
-    // Convert to data URL
+    // Convert to data URL with high quality
     const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
     setCroppedImages(prev => ({ ...prev, [cropMode]: croppedDataUrl }));
-    setCropMode(null);
-    setCropArea(null);
+    
+    // Exit crop mode
+    cancelCrop();
   };
 
   const resetCrop = (itemId: string) => {
@@ -326,31 +378,73 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
           {/* Original Image */}
           <div className="lg:col-span-1">
             <Card variant="outlined" padding="md">
-              <h3 className="font-pixel text-retro-accent mb-pixel-2">Original Image</h3>
-              <div className="relative">
+              <div className="flex items-center justify-between mb-pixel-2">
+                <h3 className="font-pixel text-retro-accent">Original Image</h3>
+                {cropMode && (
+                  <Badge variant="warning" glow>
+                    <Move className="w-3 h-3 mr-1" />
+                    Crop Mode Active
+                  </Badge>
+                )}
+              </div>
+              
+              <div 
+                ref={cropContainerRef}
+                className="relative select-none"
+              >
                 <img
                   ref={imageRef}
                   src={originalImage}
                   alt="Original capture"
-                  className="w-full h-auto border-2 border-retro-accent rounded-pixel"
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  style={{ cursor: cropMode ? 'crosshair' : 'default' }}
+                  className={`w-full h-auto border-2 border-retro-accent rounded-pixel transition-all duration-200 ${
+                    cropMode 
+                      ? 'cursor-crosshair border-retro-warning shadow-pixel-glow' 
+                      : 'cursor-default'
+                  }`}
+                  onMouseDown={handleCropMouseDown}
+                  onMouseMove={handleCropMouseMove}
+                  onMouseUp={handleCropMouseUp}
+                  onContextMenu={handleContextMenu}
+                  draggable={false}
+                  style={{ 
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    MozUserSelect: 'none',
+                    msUserSelect: 'none'
+                  }}
                 />
                 
                 {/* Crop overlay */}
-                {cropMode && cropArea && (
+                {cropMode && cropArea && cropArea.width > 0 && cropArea.height > 0 && (
                   <div
-                    className="absolute border-2 border-retro-accent bg-retro-accent bg-opacity-20"
+                    className="absolute border-2 border-retro-warning bg-retro-warning bg-opacity-20 pointer-events-none"
                     style={{
                       left: cropArea.x,
                       top: cropArea.y,
                       width: cropArea.width,
                       height: cropArea.height,
-                      pointerEvents: 'none'
                     }}
-                  />
+                  >
+                    {/* Corner indicators */}
+                    <div className="absolute -top-1 -left-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                    <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                  </div>
+                )}
+                
+                {/* Crop instructions */}
+                {cropMode && !cropArea && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                    <div className="text-center text-white p-4 bg-retro-bg-primary border-2 border-retro-warning rounded-pixel">
+                      <p className="font-pixel-sans text-sm mb-2">
+                        Click and drag to select crop area
+                      </p>
+                      <p className="font-pixel-sans text-xs text-retro-accent-light">
+                        Drag from top-left to bottom-right
+                      </p>
+                    </div>
+                  </div>
                 )}
                 
                 {/* Crop controls */}
@@ -361,7 +455,8 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                       size="sm"
                       icon={Check}
                       onClick={applyCrop}
-                      disabled={!cropArea}
+                      disabled={!cropArea || cropArea.width < 10 || cropArea.height < 10}
+                      glow
                     >
                       Apply Crop
                     </Button>
@@ -369,16 +464,23 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                       variant="ghost"
                       size="sm"
                       icon={X}
-                      onClick={() => {
-                        setCropMode(null);
-                        setCropArea(null);
-                      }}
+                      onClick={cancelCrop}
                     >
                       Cancel
                     </Button>
                   </div>
                 )}
               </div>
+              
+              {/* Crop Instructions */}
+              {cropMode && (
+                <div className="mt-2 p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
+                  <p className="text-retro-warning font-pixel-sans text-xs">
+                    💡 <strong>How to crop:</strong> Click and drag on the image to select the area you want to keep. 
+                    The selected area will be highlighted in yellow.
+                  </p>
+                </div>
+              )}
               
               {/* Hidden canvases for image processing */}
               <canvas ref={canvasRef} className="hidden" />
@@ -398,6 +500,8 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                     item.isSelected
                       ? 'border-retro-accent-light bg-retro-accent bg-opacity-10'
                       : 'border-retro-accent opacity-60'
+                  } ${
+                    cropMode === item.tempId ? 'ring-2 ring-retro-warning' : ''
                   }`}
                 >
                   <div className="space-y-pixel-2">
@@ -413,6 +517,11 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                         <div>
                           <h3 className="font-pixel text-retro-accent">
                             Item {index + 1}
+                            {cropMode === item.tempId && (
+                              <span className="ml-2 text-retro-warning text-xs">
+                                (Cropping)
+                              </span>
+                            )}
                           </h3>
                           {item.aiConfidence && (
                             <Badge variant="default" size="sm">
@@ -431,26 +540,45 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                             icon={RotateCcw}
                             onClick={() => resetCrop(item.tempId)}
                             title="Reset to original"
+                            disabled={cropMode === item.tempId}
                           />
                         )}
                         <Button
-                          variant={cropMode === item.tempId ? 'accent' : 'ghost'}
+                          variant={cropMode === item.tempId ? 'warning' : 'ghost'}
                           size="sm"
                           icon={Crop}
-                          onClick={() => startCrop(item.tempId)}
-                          title="Crop image"
-                        />
+                          onClick={() => {
+                            if (cropMode === item.tempId) {
+                              cancelCrop();
+                            } else {
+                              startCrop(item.tempId);
+                            }
+                          }}
+                          title={cropMode === item.tempId ? "Cancel crop" : "Crop image"}
+                          glow={cropMode === item.tempId}
+                        >
+                          {cropMode === item.tempId ? 'Cancel' : 'Crop'}
+                        </Button>
                       </div>
                     </div>
 
                     {/* Image Preview */}
                     {(croppedImages[item.tempId] || originalImage) && (
-                      <div className="w-24 h-24 border-2 border-retro-accent rounded-pixel overflow-hidden">
-                        <img
-                          src={croppedImages[item.tempId] || originalImage}
-                          alt={`Preview for ${item.name}`}
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="flex items-center gap-2">
+                        <div className={`w-24 h-24 border-2 rounded-pixel overflow-hidden ${
+                          croppedImages[item.tempId] ? 'border-retro-success' : 'border-retro-accent'
+                        }`}>
+                          <img
+                            src={croppedImages[item.tempId] || originalImage}
+                            alt={`Preview for ${item.name}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        {croppedImages[item.tempId] && (
+                          <Badge variant="success" size="sm">
+                            Cropped
+                          </Badge>
+                        )}
                       </div>
                     )}
 
@@ -640,6 +768,11 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
         <div className="flex justify-between items-center pt-pixel-2 border-t border-retro-accent border-opacity-30">
           <div className="text-sm font-pixel-sans text-retro-accent-light">
             {editingItems.filter(item => item.isSelected).length} items selected for saving
+            {Object.keys(croppedImages).length > 0 && (
+              <span className="ml-2 text-retro-success">
+                • {Object.keys(croppedImages).length} image{Object.keys(croppedImages).length !== 1 ? 's' : ''} cropped
+              </span>
+            )}
           </div>
           
           <div className="flex gap-2">
