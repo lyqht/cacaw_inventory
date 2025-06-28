@@ -461,7 +461,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         description: detectedItem.description || prev.description,
         estimatedValue: detectedItem.estimatedValue?.toString() || prev.estimatedValue,
         currency: detectedItem.currency || prev.currency,
-        tags: [...prev.tags, ...(detectedItem.tags || [])]
+        tags: validateAndFilterTags([...prev.tags, ...(detectedItem.tags || [])], detectedItem.type)
       }));
       
       console.log('Populated form with AI detection results');
@@ -570,6 +570,26 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     });
   };
 
+  // NEW: Tag validation function to prevent duplicates with item type
+  const validateAndFilterTags = (tags: string[], itemType?: string): string[] => {
+    if (!itemType) return tags;
+    
+    const normalizedType = itemType.toLowerCase().trim();
+    
+    // Filter out tags that exactly match the item type (case-insensitive)
+    const filteredTags = tags.filter(tag => {
+      const normalizedTag = tag.toLowerCase().trim();
+      return normalizedTag !== normalizedType;
+    });
+    
+    // Remove duplicates while preserving order
+    const uniqueTags = filteredTags.filter((tag, index, array) => 
+      array.findIndex(t => t.toLowerCase() === tag.toLowerCase()) === index
+    );
+    
+    return uniqueTags;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -586,6 +606,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       // Process images for storage
       const processedImages = await processImagesForSave(images);
 
+      // Validate and filter tags before saving
+      const validatedTags = validateAndFilterTags(formData.tags, formData.type);
+
       const itemData: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'> = {
         folderId,
         userId: 'default-user', // Will be replaced with actual auth
@@ -598,7 +621,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         estimatedValue: formData.estimatedValue ? Number(formData.estimatedValue) : undefined,
         purchasePrice: formData.purchasePrice ? Number(formData.purchasePrice) : undefined,
         currency: formData.currency,
-        tags: formData.tags,
+        tags: validatedTags, // Use validated tags
         primaryImage: processedImages.primaryImage,
         additionalImages: processedImages.additionalImages,
         thumbnailImage: processedImages.thumbnailImage,
@@ -622,13 +645,36 @@ export const ItemForm: React.FC<ItemFormProps> = ({
 
   const handleAddTag = () => {
     const tag = newTag.trim().toLowerCase();
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag]
-      }));
+    if (!tag) return;
+    
+    // Validate the new tag against the current item type
+    const validatedTags = validateAndFilterTags([...formData.tags, tag], formData.type);
+    
+    // Check if the tag was filtered out (meaning it matched the type)
+    if (validatedTags.length === formData.tags.length) {
+      // Tag was filtered out, show a warning
+      if (formData.type && tag === formData.type.toLowerCase()) {
+        setErrors({ tag: `Tag "${tag}" matches the item type and will be automatically excluded.` });
+        setTimeout(() => setErrors({}), 3000); // Clear error after 3 seconds
+      }
       setNewTag('');
+      return;
     }
+    
+    // Check for duplicates
+    if (formData.tags.some(existingTag => existingTag.toLowerCase() === tag)) {
+      setErrors({ tag: 'This tag already exists.' });
+      setTimeout(() => setErrors({}), 3000);
+      setNewTag('');
+      return;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      tags: validatedTags
+    }));
+    setNewTag('');
+    setErrors({});
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
@@ -936,7 +982,15 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               <Input
                 label="Type"
                 value={formData.type}
-                onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    type: newType,
+                    // Re-validate tags when type changes
+                    tags: validateAndFilterTags(prev.tags, newType)
+                  }));
+                }}
                 placeholder="e.g., Pokemon Card, Funko Pop..."
                 fullWidth
               />
@@ -1034,6 +1088,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   onKeyPress={handleKeyPress}
                   placeholder="Add a tag..."
                   className="flex-1"
+                  error={errors.tag}
                 />
                 <Button
                   type="button"
@@ -1045,6 +1100,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   Add
                 </Button>
               </div>
+              
+              {/* Tag validation info */}
+              {formData.type && (
+                <div className="text-xs text-retro-accent-light font-pixel-sans">
+                  💡 Tags that match the item type ("{formData.type}") will be automatically excluded to avoid duplicates.
+                </div>
+              )}
               
               {formData.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
