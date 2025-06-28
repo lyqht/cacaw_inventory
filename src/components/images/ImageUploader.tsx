@@ -38,6 +38,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [editingImage, setEditingImage] = useState<ImageFile | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [previewImage, setPreviewImage] = useState<ImageFile | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -109,6 +110,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       return;
     }
 
+    setIsProcessing(true);
+    console.log('Processing files:', fileArray.map(f => f.name));
+
     for (const file of fileArray) {
       const error = validateFile(file);
       if (error) {
@@ -123,9 +127,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       try {
         // Simulate upload progress
-        for (let i = 0; i <= 100; i += 20) {
+        for (let i = 0; i <= 100; i += 25) {
           setUploadProgress(prev => ({ ...prev, [imageId]: i }));
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
 
         // Compress image
@@ -142,6 +146,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         };
 
         newImages.push(imageFile);
+        console.log('Processed image:', imageFile.id, imageFile.url);
         
         // Remove progress indicator
         setUploadProgress(prev => {
@@ -151,6 +156,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         });
 
       } catch (error) {
+        console.error('Error processing file:', file.name, error);
         newErrors.push(`Failed to process ${file.name}`);
         setUploadProgress(prev => {
           const updated = { ...prev };
@@ -168,7 +174,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     const updatedImages = [...images, ...newImages];
     setImages(updatedImages);
+    
+    // Notify parent component immediately
+    console.log('Notifying parent of image changes:', updatedImages);
     onImagesChange(updatedImages);
+    
+    setIsProcessing(false);
   };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -191,11 +202,20 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   }, [images, maxFiles]);
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (e.target.files && e.target.files.length > 0) {
+      console.log('File input changed:', e.target.files.length, 'files');
       processFiles(e.target.files);
     }
-  };
+    
+    // Reset the input value to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [images, maxFiles]);
 
   const removeImage = (imageId: string) => {
     const imageToRemove = images.find(img => img.id === imageId);
@@ -261,6 +281,25 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     setErrors([]);
   };
 
+  const handleBrowseClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
+
+  const handleTakePhotoClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.setAttribute('capture', 'environment');
+      fileInputRef.current.click();
+    }
+  }, []);
+
   return (
     <div className={`space-y-pixel-2 ${className}`}>
       {/* Upload Area */}
@@ -283,15 +322,15 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         >
           <div className="space-y-pixel-2">
             <div className="text-4xl animate-pixel-float">
-              {dragActive ? '📤' : '📷'}
+              {dragActive ? '📤' : isProcessing ? '⚡' : '📷'}
             </div>
             
             <div>
               <h3 className="font-pixel text-retro-accent mb-1">
-                {dragActive ? 'Drop images here' : 'Upload Images'}
+                {dragActive ? 'Drop images here' : isProcessing ? 'Processing...' : 'Upload Images'}
               </h3>
               <p className="text-retro-accent-light font-pixel-sans text-sm">
-                Drag & drop images or click to browse
+                {isProcessing ? 'Please wait while we process your images' : 'Drag & drop images or click to browse'}
               </p>
               <p className="text-retro-accent-light font-pixel-sans text-xs mt-1">
                 Supports JPG, PNG, GIF, WebP • Max {maxFileSize}MB per file • Up to {maxFiles} images
@@ -302,8 +341,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <Button
                 variant="accent"
                 icon={Upload}
-                onClick={() => fileInputRef.current?.click()}
-                disabled={images.length >= maxFiles}
+                onClick={handleBrowseClick}
+                disabled={images.length >= maxFiles || isProcessing}
               >
                 Browse Files
               </Button>
@@ -311,13 +350,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <Button
                 variant="ghost"
                 icon={Camera}
-                onClick={() => {
-                  if (fileInputRef.current) {
-                    fileInputRef.current.setAttribute('capture', 'environment');
-                    fileInputRef.current.click();
-                  }
-                }}
-                disabled={images.length >= maxFiles}
+                onClick={handleTakePhotoClick}
+                disabled={images.length >= maxFiles || isProcessing}
               >
                 Take Photo
               </Button>
@@ -334,12 +368,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         accept={acceptedFormats.join(',')}
         onChange={handleFileInput}
         className="hidden"
+        onClick={(e) => e.stopPropagation()}
       />
 
       {/* Upload Progress */}
       {Object.keys(uploadProgress).length > 0 && (
         <Card variant="outlined" padding="md">
-          <h4 className="font-pixel text-retro-accent mb-2">Uploading...</h4>
+          <h4 className="font-pixel text-retro-accent mb-2">Processing Images...</h4>
           {Object.entries(uploadProgress).map(([id, progress]) => (
             <div key={id} className="mb-2">
               <div className="flex justify-between text-sm mb-1">
@@ -408,7 +443,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                           variant="accent"
                           size="sm"
                           icon={Eye}
-                          onClick={() => setPreviewImage(image)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewImage(image);
+                          }}
                           className="min-w-[32px] min-h-[32px] p-1"
                           title="Preview"
                         />
@@ -416,7 +454,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                           variant="primary"
                           size="sm"
                           icon={Crop}
-                          onClick={() => handleEditImage(image)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditImage(image);
+                          }}
                           className="min-w-[32px] min-h-[32px] p-1"
                           title="Edit"
                         />
@@ -424,7 +465,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                           variant="ghost"
                           size="sm"
                           icon={Trash2}
-                          onClick={() => removeImage(image.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeImage(image.id);
+                          }}
                           className="min-w-[32px] min-h-[32px] p-1 bg-retro-error bg-opacity-80 hover:bg-retro-error text-white"
                           title="Remove"
                         />
@@ -437,6 +481,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                         EDITED
                       </div>
                     )}
+                    
+                    {/* Primary Image Indicator */}
+                    {index === 0 && (
+                      <div className="absolute top-1 left-1 bg-retro-success text-retro-bg-primary px-1 py-0.5 text-xs font-pixel rounded-pixel">
+                        PRIMARY
+                      </div>
+                    )}
                   </div>
                   
                   {/* Alt Text Input */}
@@ -447,6 +498,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                       onChange={(e) => updateAltText(image.id, e.target.value)}
                       className="text-xs"
                       fullWidth
+                      onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                 </Card>

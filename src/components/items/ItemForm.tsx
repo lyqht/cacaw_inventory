@@ -53,6 +53,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const [newTag, setNewTag] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasUnsavedImages, setHasUnsavedImages] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -108,6 +109,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     }
     setErrors({});
     setHasUnsavedImages(false);
+    setIsFormDirty(false);
   }, [item, folderType, isOpen]);
 
   const getDefaultType = (folderType: FolderType): string => {
@@ -160,6 +162,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     console.log('Images changed in form:', newImages);
     setImages(newImages);
     setHasUnsavedImages(true);
+    setIsFormDirty(true);
   };
 
   // Convert image files to data URLs for storage
@@ -181,10 +184,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     // Convert first image to primary
     if (imageFiles[0]) {
       try {
-        // If it's already a URL (existing image), keep it
-        if (imageFiles[0].url.startsWith('blob:') || imageFiles[0].url.startsWith('data:')) {
-          processedImages.primaryImage = imageFiles[0].url;
-          processedImages.thumbnailImage = imageFiles[0].url;
+        // If it's already a data URL or blob URL, use it directly
+        if (imageFiles[0].url.startsWith('data:') || imageFiles[0].url.startsWith('blob:')) {
+          // For blob URLs, convert to data URL for persistence
+          if (imageFiles[0].url.startsWith('blob:')) {
+            const dataUrl = await fileToDataUrl(imageFiles[0].file);
+            processedImages.primaryImage = dataUrl;
+            processedImages.thumbnailImage = dataUrl;
+          } else {
+            processedImages.primaryImage = imageFiles[0].url;
+            processedImages.thumbnailImage = imageFiles[0].url;
+          }
         } else {
           // For new files, convert to data URL
           const dataUrl = await fileToDataUrl(imageFiles[0].file);
@@ -199,8 +209,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     // Convert additional images
     for (let i = 1; i < imageFiles.length; i++) {
       try {
-        if (imageFiles[i].url.startsWith('blob:') || imageFiles[i].url.startsWith('data:')) {
+        if (imageFiles[i].url.startsWith('data:')) {
           processedImages.additionalImages.push(imageFiles[i].url);
+        } else if (imageFiles[i].url.startsWith('blob:')) {
+          const dataUrl = await fileToDataUrl(imageFiles[i].file);
+          processedImages.additionalImages.push(dataUrl);
         } else {
           const dataUrl = await fileToDataUrl(imageFiles[i].file);
           processedImages.additionalImages.push(dataUrl);
@@ -287,6 +300,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         tags: [...prev.tags, tag]
       }));
       setNewTag('');
+      setIsFormDirty(true);
     }
   };
 
@@ -295,6 +309,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
+    setIsFormDirty(true);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -305,13 +320,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   };
 
   const handleClose = () => {
-    if (hasUnsavedImages) {
-      if (window.confirm('You have unsaved image changes. Are you sure you want to close?')) {
+    if (isFormDirty || hasUnsavedImages) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
         onClose();
       }
     } else {
       onClose();
     }
+  };
+
+  const handleFormChange = () => {
+    setIsFormDirty(true);
   };
 
   return (
@@ -388,7 +407,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             <Input
               label="Item Name *"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, name: e.target.value }));
+                handleFormChange();
+              }}
               error={errors.name}
               placeholder="Enter item name..."
               fullWidth
@@ -398,7 +420,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             <Input
               label="Type"
               value={formData.type}
-              onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, type: e.target.value }));
+                handleFormChange();
+              }}
               placeholder="e.g., Pokemon Card, Funko Pop..."
               fullWidth
             />
@@ -406,7 +431,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             <Input
               label="Series/Set"
               value={formData.series}
-              onChange={(e) => setFormData(prev => ({ ...prev, series: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, series: e.target.value }));
+                handleFormChange();
+              }}
               placeholder="e.g., Base Set, Marvel..."
               fullWidth
             />
@@ -417,7 +445,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               </label>
               <select
                 value={formData.condition}
-                onChange={(e) => setFormData(prev => ({ ...prev, condition: e.target.value as ItemCondition }))}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, condition: e.target.value as ItemCondition }));
+                  handleFormChange();
+                }}
                 className="pixel-input w-full"
               >
                 {conditions.map(condition => (
@@ -444,7 +475,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               step="0.01"
               min="0"
               value={formData.estimatedValue}
-              onChange={(e) => setFormData(prev => ({ ...prev, estimatedValue: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, estimatedValue: e.target.value }));
+                handleFormChange();
+              }}
               error={errors.estimatedValue}
               placeholder="0.00"
               fullWidth
@@ -456,7 +490,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               step="0.01"
               min="0"
               value={formData.purchasePrice}
-              onChange={(e) => setFormData(prev => ({ ...prev, purchasePrice: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, purchasePrice: e.target.value }));
+                handleFormChange();
+              }}
               error={errors.purchasePrice}
               placeholder="0.00"
               fullWidth
@@ -468,7 +505,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               </label>
               <select
                 value={formData.currency}
-                onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, currency: e.target.value }));
+                  handleFormChange();
+                }}
                 className="pixel-input w-full"
               >
                 <option value="USD">USD ($)</option>
@@ -538,7 +578,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, description: e.target.value }));
+                  handleFormChange();
+                }}
                 rows={3}
                 className="pixel-input w-full resize-none"
                 placeholder="Brief description of the item..."
@@ -551,7 +594,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               </label>
               <textarea
                 value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, notes: e.target.value }));
+                  handleFormChange();
+                }}
                 rows={3}
                 className="pixel-input w-full resize-none"
                 placeholder="Personal notes, storage location, etc..."
