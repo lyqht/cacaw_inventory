@@ -79,7 +79,7 @@ export class AIDetectionService {
   }
 
   private getDetectionPrompt(folderType?: FolderType): string {
-    const basePrompt = `Analyze this image and identify any collectible items. For each item, provide its location in the image using normalized coordinates (0.0 to 1.0). Return a JSON response with the following structure:
+    const basePrompt = `Analyze this image and identify any collectible items. Return a JSON response with the following structure:
 
 {
   "items": [
@@ -92,13 +92,7 @@ export class AIDetectionService {
       "estimatedValue": 0.00,
       "currency": "USD",
       "tags": ["tag1", "tag2"],
-      "confidence": 0.95,
-      "boundingBox": {
-        "x": 0.1,
-        "y": 0.2,
-        "width": 0.3,
-        "height": 0.4
-      }
+      "confidence": 0.95
     }
   ],
   "overallConfidence": 0.90,
@@ -106,20 +100,13 @@ export class AIDetectionService {
   "notes": "Additional observations"
 }
 
-IMPORTANT: For boundingBox coordinates:
-- x, y: Top-left corner position (0.0 = left/top edge, 1.0 = right/bottom edge)
-- width, height: Size of the bounding box (0.0 to 1.0)
-- All coordinates should be normalized relative to the image dimensions
-- Be as precise as possible with the bounding boxes to ensure clean cropping
-
 Guidelines:
 - Be specific with item names (include character names, card numbers, etc.)
 - Estimate condition based on visible wear, scratches, or damage
 - Provide realistic market value estimates in USD
 - Include relevant tags for categorization
 - Confidence should be 0.0-1.0 based on image clarity and certainty
-- Ensure bounding boxes tightly fit around each item
-- If multiple items are visible, list each separately with its own bounding box`;
+- If multiple items are visible, list each separately`;
 
     const typeSpecificPrompts = {
       'trading-cards': `
@@ -129,8 +116,7 @@ Focus on trading cards. Look for:
 - Rarity symbols
 - Condition indicators (corners, edges, surface)
 - Holographic or special features
-- Visible damage or wear
-- Precise bounding boxes around each individual card`,
+- Visible damage or wear`,
 
       'action-figures': `
 Focus on action figures and collectible figures. Look for:
@@ -139,8 +125,7 @@ Focus on action figures and collectible figures. Look for:
 - Scale or size
 - Packaging condition if in box
 - Missing accessories or parts
-- Paint wear or defects
-- Tight bounding boxes around each figure including any accessories`,
+- Paint wear or defects`,
 
       'plushies': `
 Focus on plush toys and stuffed animals. Look for:
@@ -149,8 +134,7 @@ Focus on plush toys and stuffed animals. Look for:
 - Tags or labels
 - Condition of fabric and stuffing
 - Missing parts or accessories
-- Cleanliness and wear
-- Bounding boxes that include the full plushie shape`,
+- Cleanliness and wear`,
 
       'comics': `
 Focus on comic books and graphic novels. Look for:
@@ -159,8 +143,7 @@ Focus on comic books and graphic novels. Look for:
 - Cover condition
 - Spine condition
 - Page quality
-- Special editions or variants
-- Precise bounding boxes around each comic book`,
+- Special editions or variants`,
 
       'games': `
 Focus on video games and board games. Look for:
@@ -169,8 +152,7 @@ Focus on video games and board games. Look for:
 - Condition of case/box
 - Completeness (manual, inserts)
 - Disc/cartridge condition
-- Special or limited editions
-- Bounding boxes around complete game packages`
+- Special or limited editions`
     };
 
     if (folderType && typeSpecificPrompts[folderType]) {
@@ -268,29 +250,57 @@ Focus on video games and board games. Look for:
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         
-        // Validate and clean bounding box data
+        // Validate and clean the response
         if (parsed.items && Array.isArray(parsed.items)) {
           parsed.items = parsed.items.map((item: any) => {
-            if (item.boundingBox) {
-              // Ensure bounding box values are valid numbers between 0 and 1
+            // Clean up the item data
+            const cleanItem = {
+              name: item.name || 'Unknown Item',
+              type: item.type || undefined,
+              series: item.series || undefined,
+              condition: item.condition || 'good',
+              description: item.description || undefined,
+              estimatedValue: typeof item.estimatedValue === 'number' ? item.estimatedValue : undefined,
+              currency: item.currency || 'USD',
+              tags: Array.isArray(item.tags) ? item.tags : ['ai-detected'],
+              confidence: typeof item.confidence === 'number' ? item.confidence : 0.5
+            };
+
+            // Handle bounding box if present and valid
+            if (item.boundingBox && typeof item.boundingBox === 'object') {
               const bbox = item.boundingBox;
-              item.boundingBox = {
-                x: Math.max(0, Math.min(1, Number(bbox.x) || 0)),
-                y: Math.max(0, Math.min(1, Number(bbox.y) || 0)),
-                width: Math.max(0.01, Math.min(1, Number(bbox.width) || 0.1)),
-                height: Math.max(0.01, Math.min(1, Number(bbox.height) || 0.1))
-              };
-              
-              // Ensure bounding box doesn't exceed image bounds
-              if (item.boundingBox.x + item.boundingBox.width > 1) {
-                item.boundingBox.width = 1 - item.boundingBox.x;
-              }
-              if (item.boundingBox.y + item.boundingBox.height > 1) {
-                item.boundingBox.height = 1 - item.boundingBox.y;
+              if (typeof bbox.x === 'number' && typeof bbox.y === 'number' && 
+                  typeof bbox.width === 'number' && typeof bbox.height === 'number') {
+                // Ensure bounding box values are valid numbers between 0 and 1
+                cleanItem.boundingBox = {
+                  x: Math.max(0, Math.min(1, Number(bbox.x) || 0)),
+                  y: Math.max(0, Math.min(1, Number(bbox.y) || 0)),
+                  width: Math.max(0.01, Math.min(1, Number(bbox.width) || 0.1)),
+                  height: Math.max(0.01, Math.min(1, Number(bbox.height) || 0.1))
+                };
+                
+                // Ensure bounding box doesn't exceed image bounds
+                if (cleanItem.boundingBox.x + cleanItem.boundingBox.width > 1) {
+                  cleanItem.boundingBox.width = 1 - cleanItem.boundingBox.x;
+                }
+                if (cleanItem.boundingBox.y + cleanItem.boundingBox.height > 1) {
+                  cleanItem.boundingBox.height = 1 - cleanItem.boundingBox.y;
+                }
               }
             }
-            return item;
+            
+            return cleanItem;
           });
+        } else {
+          // If no items array, create a default item
+          parsed.items = [{
+            name: 'Detected Item',
+            type: 'Collectible',
+            condition: 'good',
+            currency: 'USD',
+            tags: ['ai-detected'],
+            confidence: 0.5
+          }];
         }
         
         return parsed;
@@ -318,14 +328,7 @@ Focus on video games and board games. Look for:
         estimatedValue: 0,
         currency: 'USD',
         tags: ['ai-detected'],
-        confidence: 0.5,
-        // Default bounding box covering most of the image
-        boundingBox: {
-          x: 0.1,
-          y: 0.1,
-          width: 0.8,
-          height: 0.8
-        }
+        confidence: 0.5
       }],
       overallConfidence: 0.5,
       detectedText: '',
@@ -381,7 +384,7 @@ Focus on video games and board games. Look for:
         throw new Error('Gemini API key not configured. Please check your environment variables or add a custom API key.');
       }
 
-      console.log('Starting AI detection with auto-cropping for image:', imageBlob.size, 'bytes');
+      console.log('Starting AI detection for image:', imageBlob.size, 'bytes');
       console.log('Using custom API key:', isUsingCustomKey, 'Remaining free detections:', remaining);
 
       // Convert image to base64
@@ -465,9 +468,9 @@ Focus on video games and board games. Look for:
 
       // Parse the response
       const parsedResponse = this.parseGeminiResponse(responseText);
-      console.log('Parsed response with bounding boxes:', parsedResponse);
+      console.log('Parsed response:', parsedResponse);
 
-      // Process items and create cropped images
+      // Process items and create cropped images if bounding boxes are available
       const processedItems: DetectedItemWithBounds[] = [];
       
       if (parsedResponse.items && Array.isArray(parsedResponse.items)) {
@@ -506,7 +509,7 @@ Focus on video games and board games. Look for:
             syncStatus: 'local-only' as const,
             isArchived: false,
             additionalImages: [],
-            primaryImage: croppedImage, // Use cropped image as primary
+            primaryImage: croppedImage, // Use cropped image as primary if available
             thumbnailImage: croppedImage,
             boundingBox: item.boundingBox,
             croppedImage
@@ -522,7 +525,7 @@ Focus on video games and board games. Look for:
         rawResponse: responseText
       };
 
-      console.log('Final detection result with cropped images:', detectionResult);
+      console.log('Final detection result:', detectionResult);
       return detectionResult;
 
     } catch (error) {
