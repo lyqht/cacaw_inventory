@@ -77,36 +77,45 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     }
   }, [detectionResult]);
 
-  // Image cropping functionality
+  // Enhanced image cropping functionality with better event handling
   const startCrop = (itemId: string) => {
     setCropMode(itemId);
     setCropArea(null);
     setIsDragging(false);
+    console.log('Started crop mode for item:', itemId);
   };
 
   const cancelCrop = () => {
     setCropMode(null);
     setCropArea(null);
     setIsDragging(false);
+    console.log('Cancelled crop mode');
   };
 
-  const getRelativeCoordinates = (e: React.MouseEvent, element: HTMLElement) => {
+  const getRelativeCoordinates = (e: React.MouseEvent | MouseEvent, element: HTMLElement) => {
     const rect = element.getBoundingClientRect();
+    const clientX = 'clientX' in e ? e.clientX : e.clientX;
+    const clientY = 'clientY' in e ? e.clientY : e.clientY;
+    
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: Math.max(0, Math.min(clientX - rect.left, rect.width)),
+      y: Math.max(0, Math.min(clientY - rect.top, rect.height))
     };
   };
 
+  // Mouse event handlers for cropping
   const handleCropMouseDown = (e: React.MouseEvent) => {
-    // Only handle crop events when in crop mode
-    if (!cropMode || !imageRef.current) return;
+    if (!cropMode || !imageRef.current) {
+      console.log('Not in crop mode or no image ref');
+      return;
+    }
     
-    // Prevent default to avoid image dragging
+    // Prevent all default behaviors
     e.preventDefault();
     e.stopPropagation();
     
     const coords = getRelativeCoordinates(e, imageRef.current);
+    console.log('Mouse down at:', coords);
     
     setIsDragging(true);
     setDragStart(coords);
@@ -116,48 +125,61 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
       width: 0, 
       height: 0 
     });
+
+    // Add global mouse event listeners for better tracking
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!imageRef.current || !cropMode) return;
+      
+      e.preventDefault();
+      const coords = getRelativeCoordinates(e, imageRef.current);
+      
+      setCropArea({
+        x: Math.min(dragStart.x, coords.x),
+        y: Math.min(dragStart.y, coords.y),
+        width: Math.abs(coords.x - dragStart.x),
+        height: Math.abs(coords.y - dragStart.y)
+      });
+    };
+
+    const handleGlobalMouseUp = (e: MouseEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      console.log('Mouse up - crop selection complete');
+      
+      // Remove global listeners
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+
+    // Add global listeners
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
   };
 
-  const handleCropMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !cropMode || !imageRef.current) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const coords = getRelativeCoordinates(e, imageRef.current);
-    
-    setCropArea({
-      x: Math.min(dragStart.x, coords.x),
-      y: Math.min(dragStart.y, coords.y),
-      width: Math.abs(coords.x - dragStart.x),
-      height: Math.abs(coords.y - dragStart.y)
-    });
-  };
-
-  const handleCropMouseUp = (e: React.MouseEvent) => {
-    if (!cropMode) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    setIsDragging(false);
-  };
-
-  // Prevent context menu on crop area
+  // Prevent context menu and other interactions during crop
   const handleContextMenu = (e: React.MouseEvent) => {
     if (cropMode) {
       e.preventDefault();
     }
   };
 
+  const handleImageLoad = () => {
+    console.log('Image loaded, ready for cropping');
+  };
+
   const applyCrop = async () => {
-    if (!cropArea || !cropMode || !imageRef.current || !canvasRef.current) return;
+    if (!cropArea || !cropMode || !imageRef.current || !canvasRef.current) {
+      console.log('Missing requirements for crop:', { cropArea, cropMode, imageRef: !!imageRef.current, canvasRef: !!canvasRef.current });
+      return;
+    }
     
     // Validate crop area
     if (cropArea.width < 10 || cropArea.height < 10) {
-      alert('Crop area is too small. Please select a larger area.');
+      alert('Crop area is too small. Please select a larger area (minimum 10x10 pixels).');
       return;
     }
+    
+    console.log('Applying crop with area:', cropArea);
     
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -174,6 +196,8 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
       width: cropArea.width * scaleX,
       height: cropArea.height * scaleY
     };
+
+    console.log('Actual crop dimensions:', actualCrop);
 
     // Set canvas size to crop area
     canvas.width = actualCrop.width;
@@ -196,6 +220,8 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
     setCroppedImages(prev => ({ ...prev, [cropMode]: croppedDataUrl }));
     
+    console.log('Crop applied successfully for item:', cropMode);
+    
     // Exit crop mode
     cancelCrop();
   };
@@ -206,6 +232,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
       delete updated[itemId];
       return updated;
     });
+    console.log('Reset crop for item:', itemId);
   };
 
   // Tag management
@@ -391,6 +418,12 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
               <div 
                 ref={cropContainerRef}
                 className="relative select-none"
+                style={{ 
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  MozUserSelect: 'none',
+                  msUserSelect: 'none'
+                }}
               >
                 <img
                   ref={imageRef}
@@ -402,15 +435,17 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                       : 'cursor-default'
                   }`}
                   onMouseDown={handleCropMouseDown}
-                  onMouseMove={handleCropMouseMove}
-                  onMouseUp={handleCropMouseUp}
                   onContextMenu={handleContextMenu}
+                  onLoad={handleImageLoad}
+                  onDragStart={(e) => e.preventDefault()}
                   draggable={false}
                   style={{ 
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                     MozUserSelect: 'none',
-                    msUserSelect: 'none'
+                    msUserSelect: 'none',
+                    WebkitUserDrag: 'none',
+                    WebkitTouchCallout: 'none'
                   }}
                 />
                 
@@ -430,15 +465,26 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                     <div className="absolute -top-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
                     <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
                     <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                    
+                    {/* Size indicator */}
+                    <div className="absolute top-1 left-1 bg-retro-warning text-retro-bg-primary px-1 text-xs font-pixel-sans">
+                      {Math.round(cropArea.width)}×{Math.round(cropArea.height)}
+                    </div>
                   </div>
                 )}
                 
-                {/* Crop instructions */}
-                {cropMode && !cropArea && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <div className="text-center text-white p-4 bg-retro-bg-primary border-2 border-retro-warning rounded-pixel">
-                      <p className="font-pixel-sans text-sm mb-2">
-                        Click and drag to select crop area
+                {/* Crop instructions overlay */}
+                {cropMode && !isDragging && (!cropArea || cropArea.width === 0) && (
+                  <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                    <div className="text-center text-white p-4 bg-retro-bg-primary border-2 border-retro-warning rounded-pixel max-w-xs">
+                      <div className="mb-2">
+                        <Move className="w-8 h-8 text-retro-warning mx-auto animate-pixel-pulse" />
+                      </div>
+                      <p className="font-pixel text-retro-warning text-sm mb-2">
+                        CROP MODE ACTIVE
+                      </p>
+                      <p className="font-pixel-sans text-xs mb-2">
+                        Click and drag on the image to select the area you want to keep
                       </p>
                       <p className="font-pixel-sans text-xs text-retro-accent-light">
                         Drag from top-left to bottom-right
@@ -456,7 +502,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                       icon={Check}
                       onClick={applyCrop}
                       disabled={!cropArea || cropArea.width < 10 || cropArea.height < 10}
-                      glow
+                      glow={cropArea && cropArea.width >= 10 && cropArea.height >= 10}
                     >
                       Apply Crop
                     </Button>
@@ -476,8 +522,23 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
               {cropMode && (
                 <div className="mt-2 p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
                   <p className="text-retro-warning font-pixel-sans text-xs">
-                    💡 <strong>How to crop:</strong> Click and drag on the image to select the area you want to keep. 
-                    The selected area will be highlighted in yellow.
+                    <strong>🎯 Cropping Tips:</strong>
+                  </p>
+                  <ul className="text-retro-warning font-pixel-sans text-xs mt-1 space-y-1">
+                    <li>• Click and drag to select the crop area</li>
+                    <li>• Minimum size: 10×10 pixels</li>
+                    <li>• The selected area will be highlighted in yellow</li>
+                    <li>• Use "Apply Crop" to save your selection</li>
+                  </ul>
+                </div>
+              )}
+              
+              {/* Debug info for development */}
+              {cropMode && cropArea && (
+                <div className="mt-2 p-2 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
+                  <p className="text-retro-accent-light font-pixel-sans text-xs">
+                    Debug: {Math.round(cropArea.x)}, {Math.round(cropArea.y)} - {Math.round(cropArea.width)}×{Math.round(cropArea.height)}
+                    {isDragging && <span className="text-retro-warning"> (dragging)</span>}
                   </p>
                 </div>
               )}
@@ -518,8 +579,8 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                           <h3 className="font-pixel text-retro-accent">
                             Item {index + 1}
                             {cropMode === item.tempId && (
-                              <span className="ml-2 text-retro-warning text-xs">
-                                (Cropping)
+                              <span className="ml-2 text-retro-warning text-xs animate-pixel-pulse">
+                                (Cropping Active)
                               </span>
                             )}
                           </h3>
@@ -576,7 +637,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                         </div>
                         {croppedImages[item.tempId] && (
                           <Badge variant="success" size="sm">
-                            Cropped
+                            ✂️ Cropped
                           </Badge>
                         )}
                       </div>
