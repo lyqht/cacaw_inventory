@@ -16,11 +16,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   
   const [isStreaming, setIsStreaming] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   const startCamera = useCallback(async () => {
     try {
@@ -83,19 +85,22 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     }, 'image/jpeg', 0.8);
   }, [stopCamera]);
 
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    // Validate file type
+  const validateFile = (file: File): string | null => {
     if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file.');
-      return;
+      return 'Please select a valid image file.';
     }
     
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      setError('Image file is too large. Please select a file under 10MB.');
+      return 'Image file is too large. Please select a file under 10MB.';
+    }
+    
+    return null;
+  };
+
+  const processFile = useCallback((file: File) => {
+    const error = validateFile(file);
+    if (error) {
+      setError(error);
       return;
     }
     
@@ -103,6 +108,35 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     setCapturedImage(imageUrl);
     setError(null);
   }, []);
+
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    processFile(file);
+  }, [processFile]);
+
+  // Drag and drop handlers
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      processFile(file);
+    }
+  }, [processFile]);
 
   const confirmImage = useCallback(async () => {
     if (!capturedImage) return;
@@ -146,28 +180,69 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     };
   }, [stopCamera, capturedImage]);
 
+  const handleBrowseClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
+
+  const handleTakePhotoClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.setAttribute('capture', 'environment');
+      fileInputRef.current.click();
+    }
+  }, []);
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <div className="space-y-4">
         <div className="text-center">
-          <h2 className="text-xl font-pixel text-pixel-gray-900 mb-2">
+          <h2 className="text-xl font-pixel text-retro-accent mb-2">
             Capture Item Photo
           </h2>
-          <p className="text-pixel-gray-600 font-pixel-sans">
-            Take a photo or upload an image of your collectible item
+          <p className="text-retro-accent-light font-pixel-sans">
+            Take a photo, upload an image, or drag & drop from your computer
           </p>
         </div>
 
         {error && (
-          <div className="bg-pixel-error bg-opacity-10 border-2 border-pixel-error rounded-pixel p-3">
-            <p className="text-pixel-error font-pixel-sans text-sm">{error}</p>
+          <div className="bg-retro-error bg-opacity-10 border-2 border-retro-error rounded-pixel p-3">
+            <p className="text-retro-error font-pixel-sans text-sm">{error}</p>
           </div>
         )}
 
-        <div className="relative bg-pixel-gray-900 rounded-pixel overflow-hidden aspect-video">
+        <div 
+          ref={dropZoneRef}
+          className={`relative bg-retro-bg-tertiary rounded-pixel overflow-hidden aspect-video transition-all duration-200 ${
+            dragActive 
+              ? 'border-4 border-retro-accent-light bg-retro-accent bg-opacity-10 scale-105' 
+              : 'border-2 border-retro-accent'
+          }`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-pixel-gray-800">
+            <div className="absolute inset-0 flex items-center justify-center bg-retro-bg-tertiary z-10">
               <LoadingSpinner size="lg" />
+            </div>
+          )}
+
+          {/* Drag overlay */}
+          {dragActive && (
+            <div className="absolute inset-0 flex items-center justify-center bg-retro-accent bg-opacity-20 z-20">
+              <div className="text-center text-retro-accent">
+                <Upload className="w-16 h-16 mx-auto mb-4 animate-pixel-pulse" />
+                <p className="font-pixel text-lg">Drop image here</p>
+                <p className="font-pixel-sans text-sm">Release to upload</p>
+              </div>
             </div>
           )}
 
@@ -186,10 +261,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               muted
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-pixel-gray-400">
+            <div className="flex items-center justify-center h-full text-retro-accent-light">
               <div className="text-center">
                 <Camera className="w-16 h-16 mx-auto mb-4" />
                 <p className="font-pixel-sans">Camera preview will appear here</p>
+                <p className="font-pixel-sans text-sm mt-2">
+                  Or drag & drop an image file
+                </p>
               </div>
             </div>
           )}
@@ -202,7 +280,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
             <>
               {!isStreaming ? (
                 <Button
-                  variant="secondary"
+                  variant="accent"
                   icon={Camera}
                   onClick={startCamera}
                   disabled={isLoading}
@@ -211,7 +289,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 </Button>
               ) : (
                 <Button
-                  variant="secondary"
+                  variant="accent"
                   icon={Camera}
                   onClick={capturePhoto}
                   disabled={isLoading}
@@ -221,27 +299,39 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               )}
 
               <Button
-                variant="secondary"
+                variant="primary"
                 icon={Upload}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleBrowseClick}
                 disabled={isLoading}
               >
                 Upload File
               </Button>
+
+              {onCancel && (
+                <Button
+                  variant="ghost"
+                  icon={X}
+                  onClick={onCancel}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+              )}
             </>
           ) : (
             <>
               <Button
-                variant="primary"
+                variant="accent"
                 icon={Check}
                 onClick={confirmImage}
                 disabled={isLoading}
+                glow
               >
                 Use This Photo
               </Button>
 
               <Button
-                variant="secondary"
+                variant="ghost"
                 icon={RotateCcw}
                 onClick={retakePhoto}
                 disabled={isLoading}
@@ -252,12 +342,22 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           )}
         </div>
 
+        {/* Drag and drop instructions */}
+        {!capturedImage && !isStreaming && (
+          <div className="text-center p-3 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
+            <p className="text-retro-accent font-pixel-sans text-sm">
+              💡 <strong>Pro tip:</strong> You can drag image files directly from your computer onto the preview area above
+            </p>
+          </div>
+        )}
+
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={handleFileUpload}
           className="hidden"
+          onClick={(e) => e.stopPropagation()}
         />
       </div>
     </Card>

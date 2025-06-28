@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, Camera, X, RotateCw, Crop, Sliders, Save, Trash2, Eye, GripVertical, Star, Plus } from 'lucide-react';
+import { Upload, Camera, X, RotateCcw, Check, Trash2, Eye, GripVertical, Star, Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Input } from '../ui/Input';
@@ -410,7 +410,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           padding="md"
           className={`transition-all duration-200 ${
             dragActive 
-              ? 'border-retro-accent-light bg-retro-accent bg-opacity-10' 
+              ? 'border-retro-accent-light bg-retro-accent bg-opacity-10 scale-105' 
               : 'border-retro-accent hover:border-retro-accent-light'
           }`}
         >
@@ -432,62 +432,91 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                   {dragActive ? 'Drop images here' : isProcessing ? 'Processing...' : 'Upload Images'}
                 </h3>
                 <p className="text-retro-accent-light font-pixel-sans text-sm">
-                  {isProcessing ? 'Please wait while we process your images' : 'Drag & drop images or click to browse'}
+                  {isProcessing ? 'Please wait while we process your images' : 'Drag & drop images, click to browse, or take a photo'}
                 </p>
                 <p className="text-retro-accent-light font-pixel-sans text-xs mt-1">
                   Supports JPG, PNG, GIF, WebP • Max {maxFileSize}MB per file • Up to {maxFiles} images
                 </p>
               </div>
               
-              <div className="flex justify-center gap-2">
-                <Button
-                  variant="accent"
-                  icon={Upload}
-                  onClick={handleBrowseClick}
-                  disabled={images.length >= maxFiles || isProcessing}
-                >
-                  Browse Files
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  icon={Camera}
-                  onClick={handleTakePhotoClick}
-                  disabled={images.length >= maxFiles || isProcessing}
-                >
-                  Take Photo
-                </Button>
-              </div>
+              {!dragActive && !isProcessing && (
+                <div className="flex justify-center gap-2">
+                  <Button
+                    variant="accent"
+                    icon={Upload}
+                    onClick={handleBrowseClick}
+                    disabled={images.length >= maxFiles || isProcessing}
+                  >
+                    Browse Files
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    icon={Camera}
+                    onClick={handleTakePhotoClick}
+                    disabled={images.length >= maxFiles || isProcessing}
+                  >
+                    Take Photo
+                  </Button>
+                </div>
+              )}
+
+              {dragActive && (
+                <div className="text-retro-accent animate-pixel-pulse">
+                  <Upload className="w-8 h-8 mx-auto mb-2" />
+                  <p className="font-pixel text-sm">Release to upload</p>
+                </div>
+              )}
             </div>
           </div>
         </Card>
       ) : (
         /* Compact Add More Button for Existing Images */
-        <div className="flex justify-between items-center">
-          <div className="flex gap-2">
-            <Button
-              variant="accent"
-              icon={Plus}
-              size="sm"
-              onClick={handleBrowseClick}
-              disabled={images.length >= maxFiles || isProcessing}
-            >
-              Add More Images
-            </Button>
+        <div 
+          className={`transition-all duration-200 ${
+            dragActive 
+              ? 'bg-retro-accent bg-opacity-10 border-2 border-retro-accent-light rounded-pixel p-2' 
+              : ''
+          }`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <div className="flex justify-between items-center">
+            <div className="flex gap-2">
+              <Button
+                variant="accent"
+                icon={Plus}
+                size="sm"
+                onClick={handleBrowseClick}
+                disabled={images.length >= maxFiles || isProcessing}
+              >
+                Add More Images
+              </Button>
+              
+              <Button
+                variant="ghost"
+                icon={Camera}
+                size="sm"
+                onClick={handleTakePhotoClick}
+                disabled={images.length >= maxFiles || isProcessing}
+              >
+                Take Photo
+              </Button>
+            </div>
             
-            <Button
-              variant="ghost"
-              icon={Camera}
-              size="sm"
-              onClick={handleTakePhotoClick}
-              disabled={images.length >= maxFiles || isProcessing}
-            >
-              Take Photo
-            </Button>
-          </div>
-          
-          <div className="text-xs text-retro-accent-light font-pixel-sans">
-            {images.length}/{maxFiles} images • Max {maxFileSize}MB each
+            <div className="text-xs text-retro-accent-light font-pixel-sans">
+              {dragActive ? (
+                <span className="text-retro-accent font-pixel animate-pixel-pulse">
+                  Drop to add more images
+                </span>
+              ) : (
+                <span>
+                  {images.length}/{maxFiles} images • Max {maxFileSize}MB each
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -621,7 +650,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                         <Button
                           variant="primary"
                           size="sm"
-                          icon={Crop}
+                          icon={RotateCcw}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEditImage(image);
@@ -643,14 +672,14 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                           />
                         )}
                         <Button
-                          variant="ghost"
+                          variant="danger"
                           size="sm"
                           icon={Trash2}
                           onClick={(e) => {
                             e.stopPropagation();
                             removeImage(image.id);
                           }}
-                          className="min-w-[32px] min-h-[32px] p-1 bg-retro-error bg-opacity-80 hover:bg-retro-error text-white"
+                          className="min-w-[32px] min-h-[32px] p-1"
                           title="Remove"
                         />
                       </div>
@@ -689,7 +718,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           <div className="mt-pixel-2 p-2 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
             <p className="text-retro-accent-light font-pixel-sans text-xs">
               💡 <strong>Tips:</strong> Drag images to reorder them. The first image will be used as the primary image. 
-              Click the star button to quickly make any image primary.
+              Click the star button to quickly make any image primary. You can also drag & drop new images anywhere to add them.
             </p>
           </div>
         </Card>
