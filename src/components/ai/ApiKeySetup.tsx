@@ -30,7 +30,12 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({
 
   useEffect(() => {
     setApiKey(currentApiKey);
-    setConnectionStatus('idle');
+    // If there's already a current API key, consider it as tested
+    if (currentApiKey && currentApiKey.trim()) {
+      setConnectionStatus('success');
+    } else {
+      setConnectionStatus('idle');
+    }
     setError(null);
     loadUsageInfo();
   }, [currentApiKey, isOpen]);
@@ -64,6 +69,7 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({
       
       if (isConnected) {
         setConnectionStatus('success');
+        setError(null);
       } else {
         setConnectionStatus('error');
         setError('Failed to connect to Gemini API. Please check your API key.');
@@ -83,8 +89,31 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({
       return;
     }
 
-    if (connectionStatus !== 'success') {
-      setError('Please test the connection first to ensure the API key is valid.');
+    // Allow saving if:
+    // 1. Connection test was successful, OR
+    // 2. User is updating an existing key (currentApiKey exists), OR
+    // 3. User wants to save without testing (we'll add a bypass option)
+    const canSave = connectionStatus === 'success' || 
+                   (currentApiKey && currentApiKey.trim()) ||
+                   apiKey.trim().length > 20; // Basic validation for API key format
+
+    if (!canSave) {
+      setError('Please test the connection first to ensure the API key is valid, or enter a valid API key.');
+      return;
+    }
+
+    onApiKeySet(apiKey.trim());
+    onClose();
+  };
+
+  const handleSaveWithoutTest = () => {
+    if (!apiKey.trim()) {
+      setError('Please enter an API key.');
+      return;
+    }
+
+    if (apiKey.trim().length < 20) {
+      setError('API key appears to be too short. Please check your key.');
       return;
     }
 
@@ -94,10 +123,13 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({
 
   const handleClose = () => {
     setApiKey(currentApiKey);
-    setConnectionStatus('idle');
+    setConnectionStatus(currentApiKey && currentApiKey.trim() ? 'success' : 'idle');
     setError(null);
     onClose();
   };
+
+  const isValidApiKey = apiKey.trim().length > 20;
+  const canSaveNow = connectionStatus === 'success' || (currentApiKey && currentApiKey.trim());
 
   return (
     <Modal
@@ -318,15 +350,36 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({
             Cancel
           </Button>
           
+          {/* Primary Save Button */}
           <Button
             variant="accent"
             onClick={handleSave}
-            disabled={!apiKey.trim() || connectionStatus !== 'success'}
-            glow
+            disabled={!isValidApiKey}
+            glow={canSaveNow}
           >
             Save API Key
           </Button>
+
+          {/* Alternative Save Button (if connection test failed but key looks valid) */}
+          {!canSaveNow && isValidApiKey && connectionStatus === 'error' && (
+            <Button
+              variant="primary"
+              onClick={handleSaveWithoutTest}
+              disabled={!isValidApiKey}
+            >
+              Save Anyway
+            </Button>
+          )}
         </div>
+
+        {/* Help Text */}
+        {!canSaveNow && isValidApiKey && (
+          <div className="text-center">
+            <p className="text-xs text-retro-accent-light font-pixel-sans">
+              💡 Click "Test Connection" first, or use "Save Anyway" if you're sure the key is correct
+            </p>
+          </div>
+        )}
       </div>
     </Modal>
   );
