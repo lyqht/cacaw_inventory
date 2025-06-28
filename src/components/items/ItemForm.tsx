@@ -52,12 +52,17 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const [images, setImages] = useState<ImageFile[]>([]);
   const [newTag, setNewTag] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [hasUnsavedImages, setHasUnsavedImages] = useState(false);
-  const [isFormDirty, setIsFormDirty] = useState(false);
+  
+  // Track initial state to detect real changes
+  const [initialFormData, setInitialFormData] = useState(formData);
+  const [initialImageUrls, setInitialImageUrls] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (item) {
-      setFormData({
+    if (isOpen) {
+      console.log('ItemForm: Initializing form for item:', item?.id);
+      
+      const newFormData = item ? {
         name: item.name,
         type: item.type || '',
         series: item.series || '',
@@ -68,11 +73,34 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         purchasePrice: item.purchasePrice?.toString() || '',
         currency: item.currency,
         tags: [...item.tags]
-      });
+      } : {
+        name: '',
+        type: getDefaultType(folderType),
+        series: '',
+        condition: 'excellent' as ItemCondition,
+        description: '',
+        notes: '',
+        estimatedValue: '',
+        purchasePrice: '',
+        currency: 'USD',
+        tags: []
+      };
+
+      // Set form data
+      setFormData(newFormData);
+      setInitialFormData(newFormData);
+
+      // Set initial image URLs for comparison
+      const imageUrls = item ? [
+        item.primaryImage,
+        ...item.additionalImages
+      ].filter(Boolean) : [];
+      
+      setInitialImageUrls(imageUrls);
 
       // Load existing images
       const existingImages: ImageFile[] = [];
-      if (item.primaryImage) {
+      if (item?.primaryImage) {
         existingImages.push({
           id: 'primary',
           file: new File([], 'primary.jpg'),
@@ -81,7 +109,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
           isEdited: false
         });
       }
-      item.additionalImages.forEach((url, index) => {
+      item?.additionalImages.forEach((url, index) => {
         existingImages.push({
           id: `additional-${index}`,
           file: new File([], `additional-${index}.jpg`),
@@ -91,25 +119,20 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         });
       });
       setImages(existingImages);
+
+      // Reset other states
+      setErrors({});
+      setNewTag('');
+      
+      // Mark as initialized after a brief delay to allow ImageUploader to settle
+      setTimeout(() => {
+        setIsInitialized(true);
+        console.log('ItemForm: Initialization complete');
+      }, 100);
     } else {
-      // Reset form for new item
-      setFormData({
-        name: '',
-        type: getDefaultType(folderType),
-        series: '',
-        condition: 'excellent',
-        description: '',
-        notes: '',
-        estimatedValue: '',
-        purchasePrice: '',
-        currency: 'USD',
-        tags: []
-      });
-      setImages([]);
+      // Reset when modal closes
+      setIsInitialized(false);
     }
-    setErrors({});
-    setHasUnsavedImages(false);
-    setIsFormDirty(false);
   }, [item, folderType, isOpen]);
 
   const getDefaultType = (folderType: FolderType): string => {
@@ -139,6 +162,40 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     { value: 'damaged', label: 'Damaged', color: 'text-retro-error' }
   ];
 
+  // Check if form data has actually changed
+  const hasFormDataChanged = (): boolean => {
+    if (!isInitialized) return false;
+    
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  };
+
+  // Check if images have actually changed
+  const hasImagesChanged = (): boolean => {
+    if (!isInitialized) return false;
+    
+    const currentImageUrls = images.map(img => img.url);
+    
+    // Compare lengths first
+    if (currentImageUrls.length !== initialImageUrls.length) {
+      return true;
+    }
+    
+    // Compare URLs in order
+    for (let i = 0; i < currentImageUrls.length; i++) {
+      if (currentImageUrls[i] !== initialImageUrls[i]) {
+        return true;
+      }
+    }
+    
+    // Check if any images have been edited
+    return images.some(img => img.isEdited);
+  };
+
+  // Check if there are any unsaved changes
+  const hasUnsavedChanges = (): boolean => {
+    return hasFormDataChanged() || hasImagesChanged();
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -159,10 +216,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   };
 
   const handleImagesChange = (newImages: ImageFile[]) => {
-    console.log('Images changed in form:', newImages);
+    console.log('Images changed in form:', newImages.length, 'images');
     setImages(newImages);
-    setHasUnsavedImages(true);
-    setIsFormDirty(true);
   };
 
   // Convert image files to data URLs for storage
@@ -248,7 +303,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     if (!validateForm()) return;
 
     // Show confirmation if there are unsaved image changes
-    if (hasUnsavedImages && images.some(img => img.isEdited)) {
+    if (hasImagesChanged() && images.some(img => img.isEdited)) {
       if (!window.confirm('You have edited images. Do you want to save these changes?')) {
         return;
       }
@@ -300,7 +355,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         tags: [...prev.tags, tag]
       }));
       setNewTag('');
-      setIsFormDirty(true);
     }
   };
 
@@ -309,7 +363,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
-    setIsFormDirty(true);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -320,17 +373,16 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   };
 
   const handleClose = () => {
-    if (isFormDirty || hasUnsavedImages) {
+    const unsavedChanges = hasUnsavedChanges();
+    console.log('Attempting to close form. Has unsaved changes:', unsavedChanges);
+    
+    if (unsavedChanges) {
       if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
         onClose();
       }
     } else {
       onClose();
     }
-  };
-
-  const handleFormChange = () => {
-    setIsFormDirty(true);
   };
 
   return (
@@ -356,7 +408,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             maxFileSize={5}
           />
           
-          {hasUnsavedImages && (
+          {isInitialized && hasImagesChanged() && (
             <div className="mt-2 p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
               <p className="text-retro-warning font-pixel-sans text-sm">
                 ⚠️ You have unsaved image changes. Save the item to apply these changes.
@@ -376,10 +428,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             <Input
               label="Item Name *"
               value={formData.name}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, name: e.target.value }));
-                handleFormChange();
-              }}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               error={errors.name}
               placeholder="Enter item name..."
               fullWidth
@@ -389,10 +438,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             <Input
               label="Type"
               value={formData.type}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, type: e.target.value }));
-                handleFormChange();
-              }}
+              onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
               placeholder="e.g., Pokemon Card, Funko Pop..."
               fullWidth
             />
@@ -400,10 +446,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             <Input
               label="Series/Set"
               value={formData.series}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, series: e.target.value }));
-                handleFormChange();
-              }}
+              onChange={(e) => setFormData(prev => ({ ...prev, series: e.target.value }))}
               placeholder="e.g., Base Set, Marvel..."
               fullWidth
             />
@@ -414,10 +457,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               </label>
               <select
                 value={formData.condition}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, condition: e.target.value as ItemCondition }));
-                  handleFormChange();
-                }}
+                onChange={(e) => setFormData(prev => ({ ...prev, condition: e.target.value as ItemCondition }))}
                 className="pixel-input w-full"
               >
                 {conditions.map(condition => (
@@ -444,10 +484,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               step="0.01"
               min="0"
               value={formData.estimatedValue}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, estimatedValue: e.target.value }));
-                handleFormChange();
-              }}
+              onChange={(e) => setFormData(prev => ({ ...prev, estimatedValue: e.target.value }))}
               error={errors.estimatedValue}
               placeholder="0.00"
               fullWidth
@@ -459,10 +496,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               step="0.01"
               min="0"
               value={formData.purchasePrice}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, purchasePrice: e.target.value }));
-                handleFormChange();
-              }}
+              onChange={(e) => setFormData(prev => ({ ...prev, purchasePrice: e.target.value }))}
               error={errors.purchasePrice}
               placeholder="0.00"
               fullWidth
@@ -474,10 +508,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               </label>
               <select
                 value={formData.currency}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, currency: e.target.value }));
-                  handleFormChange();
-                }}
+                onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
                 className="pixel-input w-full"
               >
                 <option value="USD">USD ($)</option>
@@ -547,10 +578,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, description: e.target.value }));
-                  handleFormChange();
-                }}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
                 className="pixel-input w-full resize-none"
                 placeholder="Brief description of the item..."
@@ -563,10 +591,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               </label>
               <textarea
                 value={formData.notes}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, notes: e.target.value }));
-                  handleFormChange();
-                }}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                 rows={3}
                 className="pixel-input w-full resize-none"
                 placeholder="Personal notes, storage location, etc..."
