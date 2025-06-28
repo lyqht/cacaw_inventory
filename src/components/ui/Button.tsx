@@ -27,11 +27,16 @@ export const Button: React.FC<ButtonProps> = ({
   const baseClasses = 'pixel-button inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
   
   const variantClasses = {
-    primary: 'bg-retro-accent text-retro-white border-retro-accent hover:bg-retro-accent-light hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    accent: 'bg-retro-primary text-retro-accent border-retro-primary hover:bg-retro-primary-light hover:border-retro-primary-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    ghost: 'bg-retro-bg-secondary text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-white hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    // Primary: Light blue background with navy text (light theme)
+    primary: 'bg-retro-primary text-retro-accent border-retro-primary hover:bg-retro-primary-light hover:border-retro-primary-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    // Accent: Navy background with white text (for emphasis)
+    accent: 'bg-retro-accent text-retro-white border-retro-accent hover:bg-retro-accent-light hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    // Ghost: Transparent with navy border and text
+    ghost: 'bg-transparent text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-white hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    // Danger: Red background with white text
     danger: 'bg-retro-error text-retro-white border-retro-error hover:bg-red-600 hover:border-red-500 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    warning: 'bg-retro-warning text-retro-accent border-retro-warning hover:bg-yellow-400 hover:border-yellow-400 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5'
+    // Warning: Dark goldenrod background with navy text
+    warning: 'bg-retro-warning text-retro-accent border-retro-warning hover:bg-yellow-600 hover:border-yellow-600 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5'
   };
   
   const sizeClasses = {
