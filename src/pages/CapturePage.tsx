@@ -10,7 +10,7 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { ArrowLeft, Sparkles, Settings, Key, Zap, AlertTriangle, CreditCard } from 'lucide-react';
+import { ArrowLeft, Sparkles, Zap, AlertTriangle, CreditCard } from 'lucide-react';
 import { DetectionResult, CollectibleData, Folder } from '../types';
 
 const storageService = StorageService.getInstance();
@@ -297,7 +297,7 @@ export const CapturePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid p-pixel-2">
       <div className="max-w-4xl mx-auto space-y-pixel-2">
-        {/* Header */}
+        {/* Header - Removed API Setup button */}
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
@@ -311,17 +311,8 @@ export const CapturePage: React.FC = () => {
             Capture Item
           </h1>
           
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              icon={Key}
-              size="sm"
-              onClick={() => setShowApiSetup(true)}
-              title="Setup AI API"
-            >
-              API Setup
-            </Button>
-          </div>
+          {/* Empty div for spacing - removed API setup button */}
+          <div />
         </div>
 
         {/* AI Usage Status */}
@@ -335,11 +326,7 @@ export const CapturePage: React.FC = () => {
                 isUsingCustomKey ? 'bg-retro-success' : 
                 remainingDetections > 0 ? 'bg-retro-accent' : 'bg-retro-warning'
               }`}>
-                {isUsingCustomKey ? (
-                  <Key className="w-4 h-4 text-retro-bg-primary" />
-                ) : (
-                  <Zap className="w-4 h-4 text-retro-bg-primary" />
-                )}
+                <Zap className="w-4 h-4 text-retro-bg-primary" />
               </div>
               <div>
                 <h3 className="font-pixel text-retro-accent">
@@ -367,11 +354,10 @@ export const CapturePage: React.FC = () => {
               <Button
                 variant={remainingDetections === 0 && !isUsingCustomKey ? 'accent' : 'ghost'}
                 size="sm"
-                icon={remainingDetections === 0 && !isUsingCustomKey ? CreditCard : Settings}
                 onClick={() => setShowApiSetup(true)}
                 glow={remainingDetections === 0 && !isUsingCustomKey}
               >
-                {remainingDetections === 0 && !isUsingCustomKey ? 'Add API Key' : 'Setup'}
+                Setup
               </Button>
             </div>
           </div>
@@ -393,7 +379,6 @@ export const CapturePage: React.FC = () => {
               <Button
                 variant="accent"
                 size="sm"
-                icon={Key}
                 onClick={() => setShowApiSetup(true)}
                 glow
               >
@@ -476,7 +461,6 @@ export const CapturePage: React.FC = () => {
               <Button
                 variant="success"
                 size="sm"
-                icon={Key}
                 onClick={() => setShowApiSetup(true)}
               >
                 Setup API Key
