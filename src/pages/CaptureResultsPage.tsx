@@ -449,7 +449,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                   }}
                 />
                 
-                {/* Crop overlay */}
+                {/* Crop overlay - ONLY shows selection area, not blocking overlay */}
                 {cropMode && cropArea && cropArea.width > 0 && cropArea.height > 0 && (
                   <div
                     className="absolute border-2 border-retro-warning bg-retro-warning bg-opacity-20 pointer-events-none"
@@ -472,30 +472,26 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                     </div>
                   </div>
                 )}
-                
-                {/* Crop instructions overlay */}
-                {cropMode && !isDragging && (!cropArea || cropArea.width === 0) && (
-                  <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
-                    <div className="text-center text-white p-4 bg-retro-bg-primary border-2 border-retro-warning rounded-pixel max-w-xs">
-                      <div className="mb-2">
-                        <Move className="w-8 h-8 text-retro-warning mx-auto animate-pixel-pulse" />
-                      </div>
-                      <p className="font-pixel text-retro-warning text-sm mb-2">
-                        CROP MODE ACTIVE
-                      </p>
-                      <p className="font-pixel-sans text-xs mb-2">
-                        Click and drag on the image to select the area you want to keep
-                      </p>
-                      <p className="font-pixel-sans text-xs text-retro-accent-light">
-                        Drag from top-left to bottom-right
-                      </p>
-                    </div>
+              </div>
+              
+              {/* Crop Instructions - BELOW the image, not overlaying it */}
+              {cropMode && (
+                <div className="mt-2 p-3 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Move className="w-4 h-4 text-retro-warning animate-pixel-pulse" />
+                    <p className="font-pixel text-retro-warning text-sm">
+                      CROP MODE ACTIVE
+                    </p>
                   </div>
-                )}
-                
-                {/* Crop controls */}
-                {cropMode && (
-                  <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2">
+                  <p className="font-pixel-sans text-xs text-retro-warning mb-2">
+                    <strong>Click and drag on the image above</strong> to select the area you want to keep
+                  </p>
+                  <p className="font-pixel-sans text-xs text-retro-accent-light">
+                    Drag from top-left to bottom-right • Minimum size: 10×10 pixels
+                  </p>
+                  
+                  {/* Crop controls */}
+                  <div className="flex justify-center gap-2 mt-3">
                     <Button
                       variant="accent"
                       size="sm"
@@ -515,20 +511,20 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                       Cancel
                     </Button>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
               
-              {/* Crop Instructions */}
-              {cropMode && (
-                <div className="mt-2 p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
-                  <p className="text-retro-warning font-pixel-sans text-xs">
+              {/* Crop Tips - Only show when NOT in crop mode */}
+              {!cropMode && (
+                <div className="mt-2 p-2 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
+                  <p className="text-retro-accent font-pixel-sans text-xs">
                     <strong>🎯 Cropping Tips:</strong>
                   </p>
-                  <ul className="text-retro-warning font-pixel-sans text-xs mt-1 space-y-1">
-                    <li>• Click and drag to select the crop area</li>
-                    <li>• Minimum size: 10×10 pixels</li>
-                    <li>• The selected area will be highlighted in yellow</li>
-                    <li>• Use "Apply Crop" to save your selection</li>
+                  <ul className="text-retro-accent-light font-pixel-sans text-xs mt-1 space-y-1">
+                    <li>• Click "Crop" button next to any item to start</li>
+                    <li>• Click and drag on the image to select area</li>
+                    <li>• Yellow border indicates crop mode is active</li>
+                    <li>• Cropped images get a green checkmark</li>
                   </ul>
                 </div>
               )}
