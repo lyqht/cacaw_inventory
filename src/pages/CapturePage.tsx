@@ -10,7 +10,7 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { ArrowLeft, Sparkles, Zap, AlertTriangle, CreditCard } from 'lucide-react';
+import { ArrowLeft, Sparkles, Zap, AlertTriangle, CreditCard, Code } from 'lucide-react';
 import { DetectionResult, CollectibleData, Folder } from '../types';
 
 const storageService = StorageService.getInstance();
@@ -51,6 +51,16 @@ export const CapturePage: React.FC = () => {
         const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
         setRemainingDetections(remaining);
         setIsUsingCustomKey(usingCustom);
+
+        // Log development mode info
+        if (aiService.isDevelopmentMode()) {
+          const limits = aiService.getDetectionLimits();
+          console.log('🔧 Development Mode Detection Limits:', limits);
+          
+          if (limits.unlimited) {
+            console.log('✨ Unlimited AI detections enabled for development!');
+          }
+        }
       } catch (error) {
         console.error('Error loading API info:', error);
       }
@@ -252,6 +262,9 @@ export const CapturePage: React.FC = () => {
     setDetectionResult(null);
   };
 
+  // Check if we're in development mode with unlimited detections
+  const isDevUnlimited = aiService.isUnlimitedDetectionsEnabled();
+
   // Processing step UI
   if (captureStep === 'processing') {
     return (
@@ -315,26 +328,36 @@ export const CapturePage: React.FC = () => {
           <div />
         </div>
 
-        {/* AI Usage Status */}
+        {/* AI Usage Status with Development Mode Indicator */}
         <Card variant="outlined" padding="md" className={
           isUsingCustomKey ? 'border-retro-success' : 
+          isDevUnlimited ? 'border-retro-primary' :
           remainingDetections > 0 ? 'border-retro-accent' : 'border-retro-warning'
         }>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-pixel flex items-center justify-center ${
                 isUsingCustomKey ? 'bg-retro-success' : 
+                isDevUnlimited ? 'bg-retro-primary' :
                 remainingDetections > 0 ? 'bg-retro-accent' : 'bg-retro-warning'
               }`}>
-                <Zap className="w-4 h-4 text-retro-bg-primary" />
+                {isDevUnlimited ? (
+                  <Code className="w-4 h-4 text-retro-white" />
+                ) : (
+                  <Zap className="w-4 h-4 text-retro-bg-primary" />
+                )}
               </div>
               <div>
                 <h3 className="font-pixel text-retro-accent">
-                  {isUsingCustomKey ? 'Custom API Key Active' : 'Free AI Detections'}
+                  {isUsingCustomKey ? 'Custom API Key Active' : 
+                   isDevUnlimited ? 'Development Mode - Unlimited' :
+                   'Free AI Detections'}
                 </h3>
                 <p className="text-retro-accent-light font-pixel-sans text-sm">
                   {isUsingCustomKey 
                     ? 'Unlimited AI detections with your own API key'
+                    : isDevUnlimited
+                    ? 'Unlimited AI detections enabled for development'
                     : `${remainingDetections} of 5 free detections remaining`
                   }
                 </p>
@@ -342,7 +365,7 @@ export const CapturePage: React.FC = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              {!isUsingCustomKey && (
+              {!isUsingCustomKey && !isDevUnlimited && (
                 <Badge 
                   variant={remainingDetections > 0 ? 'default' : 'warning'}
                   glow={remainingDetections === 0}
@@ -351,11 +374,17 @@ export const CapturePage: React.FC = () => {
                 </Badge>
               )}
               
+              {isDevUnlimited && (
+                <Badge variant="default" glow>
+                  DEV
+                </Badge>
+              )}
+              
               <Button
-                variant={remainingDetections === 0 && !isUsingCustomKey ? 'accent' : 'ghost'}
+                variant={remainingDetections === 0 && !isUsingCustomKey && !isDevUnlimited ? 'accent' : 'ghost'}
                 size="sm"
                 onClick={() => setShowApiSetup(true)}
-                glow={remainingDetections === 0 && !isUsingCustomKey}
+                glow={remainingDetections === 0 && !isUsingCustomKey && !isDevUnlimited}
               >
                 Setup
               </Button>
@@ -363,8 +392,8 @@ export const CapturePage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Free Limit Warning */}
-        {!isUsingCustomKey && remainingDetections === 0 && (
+        {/* Free Limit Warning (only show if not in dev unlimited mode) */}
+        {!isUsingCustomKey && !isDevUnlimited && remainingDetections === 0 && (
           <Card variant="outlined" className="border-retro-error">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -384,6 +413,21 @@ export const CapturePage: React.FC = () => {
               >
                 Add API Key
               </Button>
+            </div>
+          </Card>
+        )}
+
+        {/* Development Mode Info */}
+        {isDevUnlimited && (
+          <Card variant="outlined" padding="md" className="border-retro-primary bg-retro-primary bg-opacity-10">
+            <div className="flex items-center gap-2">
+              <Code className="w-5 h-5 text-retro-primary" />
+              <div>
+                <h3 className="font-pixel text-retro-primary">Development Mode Active</h3>
+                <p className="text-retro-accent-light font-pixel-sans text-sm">
+                  Unlimited AI detections enabled for development. Usage tracking is disabled.
+                </p>
+              </div>
             </div>
           </Card>
         )}
@@ -430,8 +474,8 @@ export const CapturePage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Pricing Info for Free Users */}
-        {!isUsingCustomKey && (
+        {/* Pricing Info for Free Users (only show if not in dev unlimited mode) */}
+        {!isUsingCustomKey && !isDevUnlimited && (
           <Card variant="outlined" padding="md" className="border-retro-success">
             <h3 className="font-pixel text-retro-success mb-2 flex items-center gap-2">
               <CreditCard className="w-4 h-4" />

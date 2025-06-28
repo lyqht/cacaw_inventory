@@ -19,6 +19,10 @@ export class AIDetectionService {
   // Default API key from environment variable
   private defaultApiKey = import.meta.env.VITE_GEMINI_API_KEY;
   private maxFreeDetections = parseInt(import.meta.env.VITE_FREE_DETECTION_LIMIT) || 5;
+  
+  // Development settings
+  private isDevelopment = import.meta.env.DEV;
+  private devUnlimitedDetections = import.meta.env.VITE_DEV_UNLIMITED_DETECTIONS === 'true';
 
   static getInstance(): AIDetectionService {
     if (!AIDetectionService.instance) {
@@ -34,6 +38,17 @@ export class AIDetectionService {
     if (!this.defaultApiKey) {
       console.warn('VITE_GEMINI_API_KEY not found in environment variables');
     }
+
+    // Log development settings
+    if (this.isDevelopment) {
+      console.log('🔧 AI Detection Service - Development Mode');
+      console.log('📊 Free detection limit:', this.maxFreeDetections);
+      console.log('🚀 Unlimited detections enabled:', this.devUnlimitedDetections);
+      
+      if (this.devUnlimitedDetections) {
+        console.log('✨ Development mode: Unlimited AI detections enabled!');
+      }
+    }
   }
 
   setApiKey(apiKey: string) {
@@ -41,12 +56,23 @@ export class AIDetectionService {
   }
 
   async getRemainingFreeDetections(): Promise<number> {
+    // In development with unlimited detections enabled, always return max
+    if (this.isDevelopment && this.devUnlimitedDetections) {
+      return this.maxFreeDetections;
+    }
+
     const storageService = StorageService.getInstance();
     const usedDetections = await storageService.getSetting('used_free_detections') || 0;
     return Math.max(0, this.maxFreeDetections - usedDetections);
   }
 
   async incrementUsedDetections(): Promise<void> {
+    // In development with unlimited detections enabled, don't increment usage
+    if (this.isDevelopment && this.devUnlimitedDetections) {
+      console.log('🔧 Development mode: Skipping detection usage increment');
+      return;
+    }
+
     const storageService = StorageService.getInstance();
     const usedDetections = await storageService.getSetting('used_free_detections') || 0;
     await storageService.setSetting('used_free_detections', usedDetections + 1);
@@ -59,6 +85,15 @@ export class AIDetectionService {
     // If user has their own API key, they can use unlimited detections
     if (customApiKey && customApiKey !== this.defaultApiKey) {
       return { canUse: true, remaining: -1, isUsingCustomKey: true };
+    }
+
+    // In development with unlimited detections enabled
+    if (this.isDevelopment && this.devUnlimitedDetections) {
+      return { 
+        canUse: true, 
+        remaining: this.maxFreeDetections, // Always show max for UI consistency
+        isUsingCustomKey: false 
+      };
     }
 
     // Check free usage limit
@@ -252,6 +287,11 @@ Focus on video games and board games. Look for:
 
       console.log('Starting AI detection for image:', imageBlob.size, 'bytes');
       console.log('Using custom API key:', isUsingCustomKey, 'Remaining free detections:', remaining);
+      
+      // Log development mode status
+      if (this.isDevelopment && this.devUnlimitedDetections) {
+        console.log('🔧 Development mode: Unlimited detections enabled');
+      }
 
       // Convert image to base64
       const base64Image = await this.convertImageToBase64(imageBlob);
@@ -326,10 +366,15 @@ Focus on video games and board games. Look for:
       const responseText = geminiResponse.candidates[0].content.parts[0].text;
       console.log('Gemini response text:', responseText);
 
-      // Increment usage counter only if using default API key
+      // Increment usage counter only if using default API key and not in dev unlimited mode
       if (!isUsingCustomKey) {
         await this.incrementUsedDetections();
-        console.log('Incremented free detection usage. Remaining:', remaining - 1);
+        
+        if (this.isDevelopment && this.devUnlimitedDetections) {
+          console.log('🔧 Development mode: Detection completed (usage not incremented)');
+        } else {
+          console.log('Incremented free detection usage. Remaining:', remaining - 1);
+        }
       }
 
       // Parse the response
@@ -451,5 +496,26 @@ Focus on video games and board games. Look for:
       console.error('API connection test failed:', error);
       return false;
     }
+  }
+
+  // Development helper methods
+  isDevelopmentMode(): boolean {
+    return this.isDevelopment;
+  }
+
+  isUnlimitedDetectionsEnabled(): boolean {
+    return this.isDevelopment && this.devUnlimitedDetections;
+  }
+
+  getDetectionLimits(): { 
+    maxFree: number; 
+    isDev: boolean; 
+    unlimited: boolean; 
+  } {
+    return {
+      maxFree: this.maxFreeDetections,
+      isDev: this.isDevelopment,
+      unlimited: this.devUnlimitedDetections
+    };
   }
 }
