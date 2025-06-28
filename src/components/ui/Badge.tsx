@@ -25,8 +25,8 @@ export const Badge: React.FC<BadgeProps> = ({
   };
   
   const sizeClasses = {
-    sm: 'px-1 py-0.5 text-xs',
-    md: 'px-2 py-1 text-sm'
+    sm: 'px-2 py-1 text-xs min-h-[24px]', // Increased minimum height for better readability
+    md: 'px-3 py-2 text-sm min-h-[32px]'
   };
   
   const glowClasses = glow ? 'animate-glow-pulse' : '';

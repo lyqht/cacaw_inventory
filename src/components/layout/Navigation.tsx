@@ -21,7 +21,7 @@ export const Navigation: React.FC = () => {
           <div className="flex items-center space-x-pixel">
             <AnimatedLogo size="md" />
             <div>
-              <h1 className="text-retro-accent [data-theme='light']_&:text-retro-light-text font-pixel text-lg">
+              <h1 className="text-retro-accent [data-theme='light']_&:text-retro-light-text font-pixel text-lg font-medium">
                 CacawInventory
               </h1>
               <p className="text-retro-accent-light [data-theme='light']_&:text-retro-light-text-muted font-pixel-sans text-xs">
@@ -40,9 +40,11 @@ export const Navigation: React.FC = () => {
                 icon={item.icon}
                 onClick={() => setCurrentView(item.id)}
                 glow={currentView === item.id}
-                className="flex-shrink-0"
+                className="flex-shrink-0 min-w-[44px] min-h-[44px]"
+                aria-current={currentView === item.id ? 'page' : undefined}
               >
-                <span className="hidden sm:inline">{item.label}</span>
+                <span className="hidden sm:inline font-medium">{item.label}</span>
+                <span className="sr-only sm:hidden">{item.label}</span>
               </Button>
             ))}
           </div>

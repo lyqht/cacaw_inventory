@@ -24,7 +24,7 @@ export const Card: React.FC<CardProps> = ({
   const variantClasses = {
     default: 'pixel-card',
     elevated: 'pixel-card-elevated',
-    outlined: 'bg-transparent border-2 border-retro-accent text-retro-white [data-theme="light"]_&:bg-transparent [data-theme="light"]_&:border-retro-light-accent [data-theme="light"]_&:text-retro-light-text'
+    outlined: 'bg-transparent border-2 border-retro-accent text-retro-white [data-theme="light"]_&:bg-transparent [data-theme="light"]_&:border-retro-light-border [data-theme="light"]_&:text-retro-light-text'
   };
   
   const paddingClasses = {
@@ -35,7 +35,7 @@ export const Card: React.FC<CardProps> = ({
   };
   
   const interactiveClasses = hoverable || onClick ? 
-    'hover:shadow-pixel-lg hover:border-retro-accent-light cursor-pointer hover:animate-pixel-float' : '';
+    'hover:shadow-pixel-lg hover:border-retro-accent-light cursor-pointer hover:animate-pixel-float [data-theme="light"]_&:hover:border-retro-light-text' : '';
   
   const glowClasses = glow ? 'pixel-glow' : '';
   

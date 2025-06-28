@@ -30,14 +30,14 @@ export const Button: React.FC<ButtonProps> = ({
     primary: 'pixel-button-primary',
     accent: 'pixel-button-accent',
     ghost: 'pixel-button-ghost',
-    danger: 'bg-retro-error text-retro-white border-retro-error hover:bg-red-600 hover:border-red-500 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    warning: 'bg-retro-warning text-retro-bg-primary border-retro-warning hover:bg-yellow-400 hover:border-yellow-400 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5'
+    danger: 'pixel-button-danger bg-retro-error text-retro-white border-retro-error hover:bg-red-600 hover:border-red-500 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5 [data-theme="light"]_&:bg-retro-light-error [data-theme="light"]_&:text-white [data-theme="light"]_&:border-retro-light-error-dark [data-theme="light"]_&:hover:bg-retro-light-error-dark',
+    warning: 'pixel-button-warning bg-retro-warning text-retro-bg-primary border-retro-warning hover:bg-yellow-400 hover:border-yellow-400 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5 [data-theme="light"]_&:bg-retro-light-warning [data-theme="light"]_&:text-white [data-theme="light"]_&:border-retro-light-warning-dark [data-theme="light"]_&:hover:bg-retro-light-warning-dark'
   };
   
   const sizeClasses = {
-    sm: 'px-3 py-2 text-sm min-h-[32px]',
-    md: 'px-4 py-3 text-base min-h-[40px]',
-    lg: 'px-6 py-4 text-lg min-h-[48px]'
+    sm: 'px-4 py-2 text-sm min-h-[44px] min-w-[44px]', // WCAG compliant touch targets
+    md: 'px-6 py-3 text-base min-h-[44px] min-w-[44px]',
+    lg: 'px-8 py-4 text-lg min-h-[48px] min-w-[48px]'
   };
   
   const iconSizeClasses = {
@@ -68,7 +68,7 @@ export const Button: React.FC<ButtonProps> = ({
       {isLoading ? (
         <div className={`${iconSizeClasses[size]} bg-current rounded-pixel animate-pixel-pulse flex-shrink-0`} />
       ) : (
-        children && <span className="truncate">{children}</span>
+        children && <span className="truncate font-medium">{children}</span>
       )}
       
       {Icon && iconPosition === 'right' && (
