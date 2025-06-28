@@ -50,21 +50,21 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
   const getConditionColor = (condition: string) => {
     switch (condition) {
       case 'mint':
-        return 'text-retro-success';
+        return 'text-retro-success font-bold';
       case 'near-mint':
-        return 'text-green-400';
+        return 'text-green-300 font-bold';
       case 'excellent':
-        return 'text-retro-accent';
+        return 'text-retro-accent font-bold';
       case 'good':
-        return 'text-yellow-400';
+        return 'text-yellow-300 font-bold';
       case 'fair':
-        return 'text-orange-400';
+        return 'text-orange-300 font-bold';
       case 'poor':
-        return 'text-red-400';
+        return 'text-red-300 font-bold';
       case 'damaged':
-        return 'text-retro-error';
+        return 'text-retro-error font-bold';
       default:
-        return 'text-retro-accent-light';
+        return 'text-retro-accent-light font-bold';
     }
   };
 
@@ -220,7 +220,7 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
             </Card>
           )}
 
-          {/* Image Preview - Updated for full display */}
+          {/* Image Preview - Smaller for desktop */}
           {originalImage && (
             <Card variant="outlined" padding="sm">
               <div className="flex items-center justify-between mb-2">
@@ -240,14 +240,16 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
               <div 
                 className="w-full bg-retro-bg-tertiary border border-retro-accent rounded-pixel overflow-hidden cursor-pointer hover:border-retro-accent-light transition-colors"
                 onClick={() => setShowImageModal(true)}
-                style={{ maxHeight: '300px' }}
+                style={{ 
+                  maxHeight: window.innerWidth >= 768 ? '200px' : '300px' // Smaller on desktop
+                }}
               >
                 <img
                   src={originalImage}
                   alt="Analyzed image"
                   className="w-full h-full object-contain"
                   style={{ 
-                    maxHeight: '300px',
+                    maxHeight: window.innerWidth >= 768 ? '200px' : '300px',
                     objectFit: 'contain'
                   }}
                 />
@@ -392,6 +394,14 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                               </option>
                             ))}
                           </select>
+                          {/* Display condition with better contrast */}
+                          <div className="mt-1">
+                            <span className={`text-xs font-pixel-sans ${getConditionColor(item.condition || 'good')}`}>
+                              Current: {(item.condition || 'good').split('-').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1)
+                              ).join(' ')}
+                            </span>
+                          </div>
                         </div>
 
                         <Input
@@ -439,7 +449,7 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                         />
                       </div>
 
-                      {/* Tags */}
+                      {/* Tags - Made smaller */}
                       {item.tags && item.tags.length > 0 && (
                         <div>
                           <label className="block text-sm font-pixel text-retro-accent mb-1">
@@ -447,9 +457,12 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                           </label>
                           <div className="flex flex-wrap gap-1">
                             {item.tags.map((tag, tagIndex) => (
-                              <Badge key={tagIndex} variant="default" size="sm">
+                              <span 
+                                key={tagIndex} 
+                                className="inline-flex items-center px-1.5 py-0.5 text-xs font-pixel bg-retro-accent text-retro-bg-primary border border-retro-accent-teal shadow-pixel-glow rounded-pixel-sm"
+                              >
                                 {tag}
-                              </Badge>
+                              </span>
                             ))}
                           </div>
                         </div>
