@@ -1,12 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 export const BoltBadge: React.FC = () => {
-  const [imageError, setImageError] = useState(false);
-
-  const handleImageError = () => {
-    setImageError(true);
-  };
-
   return (
     <div className="fixed bottom-4 right-4 z-50">
       <a
@@ -17,14 +11,11 @@ export const BoltBadge: React.FC = () => {
         title="Made with Bolt.new"
       >
         <div className="w-full h-full rounded-full overflow-hidden">
-         
-            <img
-              src="/black_circle_360x360.png"
-              alt="Made with Bolt.new"
-              className="w-full h-full object-cover"
-              onError={handleImageError}
-            />
-          
+          <img
+            src="/black_circle_360x360.png"
+            alt="Made with Bolt.new"
+            className="w-full h-full object-cover"
+          />
         </div>
       </a>
     </div>
