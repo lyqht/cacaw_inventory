@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Save, X, Camera, Tag, DollarSign, FileText, Image, Sparkles, Zap } from 'lucide-react';
+import { Save, X, Camera, Tag, DollarSign, FileText, Image } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 import { ImageUploader } from '../images/ImageUploader';
-import { DetectionResultsModal } from '../ai/DetectionResultsModal';
-import { CollectibleData, ItemCondition, FolderType, DetectionResult } from '../../types';
-import { AIDetectionService } from '../../services/aiDetection';
+import { CollectibleData, ItemCondition, FolderType } from '../../types';
 
 interface ImageFile {
   id: string;
@@ -55,18 +53,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const [newTag, setNewTag] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   
-  // AI Detection states
-  const [showAIDetection, setShowAIDetection] = useState(false);
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [detectionResult, setDetectionResult] = useState<DetectionResult | null>(null);
-  const [showDetectionResults, setShowDetectionResults] = useState(false);
-  
   // Track initial state to detect real changes
   const [initialFormData, setInitialFormData] = useState(formData);
   const [initialImageUrls, setInitialImageUrls] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
-
-  const aiService = AIDetectionService.getInstance();
 
   useEffect(() => {
     if (isOpen) {
@@ -133,8 +123,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       // Reset other states
       setErrors({});
       setNewTag('');
-      setDetectionResult(null);
-      setShowDetectionResults(false);
       
       // Mark as initialized after a brief delay to allow ImageUploader to settle
       setTimeout(() => {
@@ -230,93 +218,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const handleImagesChange = (newImages: ImageFile[]) => {
     console.log('Images changed in form:', newImages.length, 'images');
     setImages(newImages);
-  };
-
-  // AI Detection functionality
-  const handleRunAIDetection = async () => {
-    if (images.length === 0) {
-      setErrors({ ai: 'Please upload an image first before running AI detection' });
-      return;
-    }
-
-    setIsDetecting(true);
-    setErrors({});
-
-    try {
-      // Check if detection is available
-      const { canUse, remaining, isUsingCustomKey } = await aiService.canUseDetection();
-      
-      if (!canUse) {
-        throw new Error(`You have used all free AI detections. Please add your own Gemini API key to continue.`);
-      }
-
-      // Use the first image for detection
-      const firstImage = images[0];
-      let imageBlob: Blob;
-
-      if (firstImage.url.startsWith('data:')) {
-        // Convert data URL to blob
-        const response = await fetch(firstImage.url);
-        imageBlob = await response.blob();
-      } else if (firstImage.url.startsWith('blob:')) {
-        // Convert blob URL to blob
-        const response = await fetch(firstImage.url);
-        imageBlob = await response.blob();
-      } else {
-        // Use the file directly
-        imageBlob = firstImage.file;
-      }
-
-      // Run AI detection with folder type optimization
-      const result = await aiService.detectItems(
-        imageBlob,
-        folderType,
-        undefined // Use default prompt
-      );
-
-      setDetectionResult(result);
-      
-      if (result.items.length > 0) {
-        setShowDetectionResults(true);
-      } else if (result.error) {
-        setErrors({ ai: result.error });
-      } else {
-        setErrors({ ai: 'No items detected in the image. The AI may not have recognized any collectibles.' });
-      }
-
-    } catch (error) {
-      console.error('AI detection error:', error);
-      setErrors({ ai: error instanceof Error ? error.message : 'AI detection failed' });
-    } finally {
-      setIsDetecting(false);
-    }
-  };
-
-  const handleSaveDetectionResults = async (detectedItems: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'>[]) => {
-    if (detectedItems.length === 0) return;
-
-    try {
-      // Use the first detected item to populate the form
-      const detectedItem = detectedItems[0];
-      
-      setFormData(prev => ({
-        ...prev,
-        name: detectedItem.name || prev.name,
-        type: detectedItem.type || prev.type,
-        series: detectedItem.series || prev.series,
-        condition: detectedItem.condition || prev.condition,
-        description: detectedItem.description || prev.description,
-        estimatedValue: detectedItem.estimatedValue?.toString() || prev.estimatedValue,
-        currency: detectedItem.currency || prev.currency,
-        tags: [...new Set([...prev.tags, ...(detectedItem.tags || [])])] // Merge tags
-      }));
-
-      setShowDetectionResults(false);
-      setDetectionResult(null);
-    } catch (error) {
-      console.error('Error applying detection results:', error);
-      setErrors({ ai: 'Failed to apply detection results' });
-    }
   };
 
   // Convert image files to data URLs for storage
@@ -428,9 +329,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         primaryImage: processedImages.primaryImage,
         additionalImages: processedImages.additionalImages,
         thumbnailImage: processedImages.thumbnailImage,
-        aiDetected: detectionResult ? true : false,
-        aiConfidence: detectionResult?.confidence,
-        aiPromptUsed: detectionResult ? 'Gemini 2.0 Flash detection' : undefined,
+        aiDetected: false,
+        aiConfidence: undefined,
+        aiPromptUsed: undefined,
         ocrText: undefined,
         lastViewedAt: undefined,
         syncStatus: 'local-only',
@@ -485,321 +386,250 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   };
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen && !showDetectionResults}
-        onClose={handleClose}
-        title={item ? 'Edit Item' : 'Add New Item'}
-        size="xl"
-      >
-        <form onSubmit={handleSubmit} className="space-y-pixel-2">
-          {/* Images Section with AI Detection */}
-          <Card variant="outlined" padding="md">
-            <div className="flex items-center justify-between mb-pixel-2">
-              <h3 className="font-pixel text-retro-accent flex items-center gap-2">
-                <Image className="w-4 h-4" />
-                Images {images.length > 0 && `(${images.length})`}
-              </h3>
-              
-              {/* AI Detection Button */}
-              {images.length > 0 && (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    icon={Sparkles}
-                    onClick={handleRunAIDetection}
-                    disabled={isDetecting || isLoading}
-                    isLoading={isDetecting}
-                    glow={!isDetecting}
-                  >
-                    {isDetecting ? 'Analyzing...' : 'AI Detection'}
-                  </Button>
-                </div>
-              )}
-            </div>
-            
-            {/* AI Detection Status */}
-            {detectionResult && !showDetectionResults && (
-              <Card variant="outlined" padding="sm" className="mb-pixel-2 border-retro-success bg-retro-success bg-opacity-10">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-retro-success" />
-                  <div>
-                    <p className="font-pixel text-retro-success text-sm">
-                      AI Detection Complete!
-                    </p>
-                    <p className="text-retro-accent-light font-pixel-sans text-xs">
-                      {detectionResult.items.length} items detected with {Math.round(detectionResult.confidence)}% confidence. 
-                      Form has been auto-filled with detected data.
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-            
-            {/* Single ImageUploader Component */}
-            <ImageUploader
-              existingImages={item ? [item.primaryImage, ...item.additionalImages].filter(Boolean) : []}
-              onImagesChange={handleImagesChange}
-              maxFiles={10}
-              maxFileSize={5}
-            />
-            
-            {/* AI Detection Info */}
-            {images.length > 0 && !detectionResult && (
-              <Card variant="outlined" padding="sm" className="mt-2 bg-retro-bg-tertiary">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-retro-primary animate-pixel-pulse" />
-                  <p className="text-retro-accent font-pixel-sans text-xs">
-                    💡 <strong>Tip:</strong> Click "AI Detection" to automatically fill item details from your image!
-                  </p>
-                </div>
-              </Card>
-            )}
-            
-            {isInitialized && hasImagesChanged() && (
-              <div className="mt-2 p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
-                <p className="text-retro-warning font-pixel-sans text-sm">
-                  ⚠️ You have unsaved image changes. Save the item to apply these changes.
-                </p>
-              </div>
-            )}
-          </Card>
-
-          {/* Basic Information */}
-          <Card variant="outlined" padding="md">
-            <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Basic Information
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-pixel-2">
-              <Input
-                label="Item Name *"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                error={errors.name}
-                placeholder="Enter item name..."
-                fullWidth
-                showCursor
-              />
-              
-              <Input
-                label="Type"
-                value={formData.type}
-                onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                placeholder="e.g., Pokemon Card, Funko Pop..."
-                fullWidth
-              />
-              
-              <Input
-                label="Series/Set"
-                value={formData.series}
-                onChange={(e) => setFormData(prev => ({ ...prev, series: e.target.value }))}
-                placeholder="e.g., Base Set, Marvel..."
-                fullWidth
-              />
-              
-              <div>
-                <label className="block text-sm font-pixel text-retro-accent mb-1">
-                  Condition *
-                </label>
-                <select
-                  value={formData.condition}
-                  onChange={(e) => setFormData(prev => ({ ...prev, condition: e.target.value as ItemCondition }))}
-                  className="pixel-input w-full"
-                >
-                  {conditions.map(condition => (
-                    <option key={condition.value} value={condition.value}>
-                      {condition.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </Card>
-
-          {/* Valuation */}
-          <Card variant="outlined" padding="md">
-            <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
-              Valuation
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-pixel-2">
-              <Input
-                label="Estimated Value"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.estimatedValue}
-                onChange={(e) => setFormData(prev => ({ ...prev, estimatedValue: e.target.value }))}
-                error={errors.estimatedValue}
-                placeholder="0.00"
-                fullWidth
-              />
-              
-              <Input
-                label="Purchase Price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.purchasePrice}
-                onChange={(e) => setFormData(prev => ({ ...prev, purchasePrice: e.target.value }))}
-                error={errors.purchasePrice}
-                placeholder="0.00"
-                fullWidth
-              />
-              
-              <div>
-                <label className="block text-sm font-pixel text-retro-accent mb-1">
-                  Currency
-                </label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
-                  className="pixel-input w-full"
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                  <option value="CAD">CAD ($)</option>
-                  <option value="JPY">JPY (¥)</option>
-                </select>
-              </div>
-            </div>
-          </Card>
-
-          {/* Tags */}
-          <Card variant="outlined" padding="md">
-            <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
-              <Tag className="w-4 h-4" />
-              Tags
-            </h3>
-            
-            <div className="space-y-pixel">
-              <div className="flex gap-2">
-                <Input
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Add a tag..."
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="accent"
-                  size="sm"
-                  onClick={handleAddTag}
-                  disabled={!newTag.trim()}
-                >
-                  Add
-                </Button>
-              </div>
-              
-              {formData.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {formData.tags.map((tag, index) => (
-                    <Badge
-                      key={index}
-                      variant="default"
-                      className="cursor-pointer hover:bg-retro-error transition-colors"
-                      onClick={() => handleRemoveTag(tag)}
-                    >
-                      {tag} ×
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Description & Notes */}
-          <Card variant="outlined" padding="md">
-            <h3 className="font-pixel text-retro-accent mb-pixel-2">
-              Additional Details
-            </h3>
-            
-            <div className="space-y-pixel-2">
-              <div>
-                <label className="block text-sm font-pixel text-retro-accent mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className="pixel-input w-full resize-none"
-                  placeholder="Brief description of the item..."
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-pixel text-retro-accent mb-1">
-                  Notes
-                </label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  rows={3}
-                  className="pixel-input w-full resize-none"
-                  placeholder="Personal notes, storage location, etc..."
-                />
-              </div>
-            </div>
-          </Card>
-
-          {/* Error Display */}
-          {(errors.submit || errors.ai) && (
-            <div className="bg-retro-error bg-opacity-20 border-2 border-retro-error rounded-pixel p-pixel">
-              <p className="text-retro-error font-pixel-sans text-sm">
-                {errors.submit || errors.ai}
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={item ? 'Edit Item' : 'Add New Item'}
+      size="xl"
+    >
+      <form onSubmit={handleSubmit} className="space-y-pixel-2">
+        {/* Images Section - Streamlined */}
+        <Card variant="outlined" padding="md">
+          <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
+            <Image className="w-4 h-4" />
+            Images {images.length > 0 && `(${images.length})`}
+          </h3>
+          
+          {/* Single ImageUploader Component - No Duplicate Preview */}
+          <ImageUploader
+            existingImages={item ? [item.primaryImage, ...item.additionalImages].filter(Boolean) : []}
+            onImagesChange={handleImagesChange}
+            maxFiles={10}
+            maxFileSize={5}
+          />
+          
+          {isInitialized && hasImagesChanged() && (
+            <div className="mt-2 p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
+              <p className="text-retro-warning font-pixel-sans text-sm">
+                ⚠️ You have unsaved image changes. Save the item to apply these changes.
               </p>
             </div>
           )}
+        </Card>
 
-          {/* Form Actions */}
-          <div className="flex justify-end gap-2 pt-pixel-2">
-            <Button
-              type="button"
-              variant="ghost"
-              icon={X}
-              onClick={handleClose}
-              disabled={isLoading || isDetecting}
-            >
-              Cancel
-            </Button>
+        {/* Basic Information */}
+        <Card variant="outlined" padding="md">
+          <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Basic Information
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-pixel-2">
+            <Input
+              label="Item Name *"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              error={errors.name}
+              placeholder="Enter item name..."
+              fullWidth
+              showCursor
+            />
             
-            <Button
-              type="submit"
-              variant="accent"
-              icon={Save}
-              isLoading={isLoading}
-              disabled={isDetecting}
-              glow
-            >
-              {item ? 'Update Item' : 'Save Item'}
-            </Button>
+            <Input
+              label="Type"
+              value={formData.type}
+              onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+              placeholder="e.g., Pokemon Card, Funko Pop..."
+              fullWidth
+            />
+            
+            <Input
+              label="Series/Set"
+              value={formData.series}
+              onChange={(e) => setFormData(prev => ({ ...prev, series: e.target.value }))}
+              placeholder="e.g., Base Set, Marvel..."
+              fullWidth
+            />
+            
+            <div>
+              <label className="block text-sm font-pixel text-retro-accent mb-1">
+                Condition *
+              </label>
+              <select
+                value={formData.condition}
+                onChange={(e) => setFormData(prev => ({ ...prev, condition: e.target.value as ItemCondition }))}
+                className="pixel-input w-full"
+              >
+                {conditions.map(condition => (
+                  <option key={condition.value} value={condition.value}>
+                    {condition.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </form>
-      </Modal>
+        </Card>
 
-      {/* AI Detection Results Modal */}
-      {detectionResult && (
-        <DetectionResultsModal
-          isOpen={showDetectionResults}
-          onClose={() => {
-            setShowDetectionResults(false);
-            setDetectionResult(null);
-          }}
-          detectionResult={detectionResult}
-          originalImage={images[0]?.url || null}
-          onSaveItems={handleSaveDetectionResults}
-          onRetryDetection={handleRunAIDetection}
-          isLoading={isDetecting}
-        />
-      )}
-    </>
+        {/* Valuation */}
+        <Card variant="outlined" padding="md">
+          <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
+            <DollarSign className="w-4 h-4" />
+            Valuation
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-pixel-2">
+            <Input
+              label="Estimated Value"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.estimatedValue}
+              onChange={(e) => setFormData(prev => ({ ...prev, estimatedValue: e.target.value }))}
+              error={errors.estimatedValue}
+              placeholder="0.00"
+              fullWidth
+            />
+            
+            <Input
+              label="Purchase Price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.purchasePrice}
+              onChange={(e) => setFormData(prev => ({ ...prev, purchasePrice: e.target.value }))}
+              error={errors.purchasePrice}
+              placeholder="0.00"
+              fullWidth
+            />
+            
+            <div>
+              <label className="block text-sm font-pixel text-retro-accent mb-1">
+                Currency
+              </label>
+              <select
+                value={formData.currency}
+                onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+                className="pixel-input w-full"
+              >
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="CAD">CAD ($)</option>
+                <option value="JPY">JPY (¥)</option>
+              </select>
+            </div>
+          </div>
+        </Card>
+
+        {/* Tags */}
+        <Card variant="outlined" padding="md">
+          <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
+            <Tag className="w-4 h-4" />
+            Tags
+          </h3>
+          
+          <div className="space-y-pixel">
+            <div className="flex gap-2">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Add a tag..."
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="accent"
+                size="sm"
+                onClick={handleAddTag}
+                disabled={!newTag.trim()}
+              >
+                Add
+              </Button>
+            </div>
+            
+            {formData.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {formData.tags.map((tag, index) => (
+                  <Badge
+                    key={index}
+                    variant="default"
+                    className="cursor-pointer hover:bg-retro-error transition-colors"
+                    onClick={() => handleRemoveTag(tag)}
+                  >
+                    {tag} ×
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Description & Notes */}
+        <Card variant="outlined" padding="md">
+          <h3 className="font-pixel text-retro-accent mb-pixel-2">
+            Additional Details
+          </h3>
+          
+          <div className="space-y-pixel-2">
+            <div>
+              <label className="block text-sm font-pixel text-retro-accent mb-1">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+                className="pixel-input w-full resize-none"
+                placeholder="Brief description of the item..."
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-pixel text-retro-accent mb-1">
+                Notes
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                rows={3}
+                className="pixel-input w-full resize-none"
+                placeholder="Personal notes, storage location, etc..."
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* Error Display */}
+        {errors.submit && (
+          <div className="bg-retro-error bg-opacity-20 border-2 border-retro-error rounded-pixel p-pixel">
+            <p className="text-retro-error font-pixel-sans text-sm">{errors.submit}</p>
+          </div>
+        )}
+
+        {/* Form Actions */}
+        <div className="flex justify-end gap-2 pt-pixel-2">
+          <Button
+            type="button"
+            variant="ghost"
+            icon={X}
+            onClick={handleClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          
+          <Button
+            type="submit"
+            variant="accent"
+            icon={Save}
+            isLoading={isLoading}
+            glow
+          >
+            {item ? 'Update Item' : 'Save Item'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };

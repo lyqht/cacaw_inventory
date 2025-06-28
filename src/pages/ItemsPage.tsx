@@ -9,7 +9,6 @@ import { ItemCard } from '../components/items/ItemCard';
 import { ItemForm } from '../components/items/ItemForm';
 import { ItemDetailModal } from '../components/items/ItemDetailModal';
 import { ItemSearch } from '../components/items/ItemSearch';
-import { ItemAIDetectionModal } from '../components/items/ItemAIDetectionModal';
 import { CollectibleData, Folder } from '../types';
 
 const storageService = StorageService.getInstance();
@@ -50,7 +49,6 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
   const [editingItem, setEditingItem] = useState<CollectibleData | null>(null);
   const [viewingItem, setViewingItem] = useState<CollectibleData | null>(null);
   const [deletingItem, setDeletingItem] = useState<CollectibleData | null>(null);
-  const [aiDetectionItem, setAiDetectionItem] = useState<CollectibleData | null>(null);
 
   useEffect(() => {
     loadItems();
@@ -225,20 +223,6 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
     setViewingItem(item);
   };
 
-  const handleAIDetection = (item: CollectibleData) => {
-    setAiDetectionItem(item);
-  };
-
-  const handleItemUpdated = async (updatedItem: CollectibleData) => {
-    try {
-      await storageService.updateItem(updatedItem.id, updatedItem);
-      await loadItems();
-    } catch (error) {
-      console.error('Error updating item:', error);
-      setError('Failed to update item. Please try again.');
-    }
-  };
-
   if (isLoading && items.length === 0) {
     return (
       <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid flex items-center justify-center">
@@ -376,7 +360,6 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
                 onEdit={handleEditItem}
                 onDelete={handleDeleteItem}
                 onView={handleViewItem}
-                onAIDetection={handleAIDetection}
               />
             ))}
           </div>
@@ -402,14 +385,6 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
           onClose={() => setViewingItem(null)}
           onEdit={handleEditItem}
           onDelete={handleDeleteItem}
-        />
-
-        <ItemAIDetectionModal
-          item={aiDetectionItem}
-          folder={folder}
-          isOpen={!!aiDetectionItem}
-          onClose={() => setAiDetectionItem(null)}
-          onItemUpdated={handleItemUpdated}
         />
       </div>
     </div>
