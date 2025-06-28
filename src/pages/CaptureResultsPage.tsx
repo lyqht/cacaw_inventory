@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Save, X, Plus, GripVertical, Crop, RotateCcw, Check, Edit2, Trash2, Move } from 'lucide-react';
+import { ArrowLeft, Save, X, Plus, GripVertical, Crop, RotateCcw, Check, Edit2, Trash2, Move, Search, Image as ImageIcon } from 'lucide-react';
 import { DetectionResult, CollectibleData, ItemCondition, Folder } from '../types';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { ImageSearchModal } from '../components/capture/ImageSearchModal';
 
 interface CaptureResultsPageProps {
   detectionResult: DetectionResult;
@@ -40,12 +41,15 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
 }) => {
   const [editingItems, setEditingItems] = useState<EditableItem[]>([]);
   const [croppedImages, setCroppedImages] = useState<Record<string, string>>({});
+  const [alternativeImages, setAlternativeImages] = useState<Record<string, string>>({});
   const [cropMode, setCropMode] = useState<string | null>(null);
   const [cropArea, setCropArea] = useState<CropArea | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [editingTag, setEditingTag] = useState<{ itemId: string; tagIndex: number } | null>(null);
   const [newTagInputs, setNewTagInputs] = useState<Record<string, string>>({});
+  const [showImageSearch, setShowImageSearch] = useState<string | null>(null);
+  const [currentDisplayImage, setCurrentDisplayImage] = useState<string>(originalImage);
   
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -76,6 +80,14 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
       setEditingItems(items);
     }
   }, [detectionResult]);
+
+  // Get the current image for display (alternative > cropped > original)
+  const getCurrentImage = (itemId?: string): string => {
+    if (itemId) {
+      return alternativeImages[itemId] || croppedImages[itemId] || currentDisplayImage;
+    }
+    return currentDisplayImage;
+  };
 
   // Enhanced image cropping functionality with better event handling
   const startCrop = (itemId: string) => {
@@ -235,6 +247,49 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     console.log('Reset crop for item:', itemId);
   };
 
+  // Handle alternative image selection from search
+  const handleAlternativeImageSelected = async (imageBlob: Blob, imageUrl: string, itemId: string) => {
+    try {
+      // Convert blob to data URL for storage
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageBlob);
+      });
+
+      // Store the alternative image for this item
+      setAlternativeImages(prev => ({ ...prev, [itemId]: dataUrl }));
+      
+      // Update the main display image if this is the first item or no specific item
+      if (editingItems.length === 1 || !itemId) {
+        setCurrentDisplayImage(dataUrl);
+      }
+
+      console.log('Alternative image set for item:', itemId);
+    } catch (error) {
+      console.error('Error processing alternative image:', error);
+      alert('Failed to process the selected image. Please try again.');
+    }
+  };
+
+  const resetToOriginalImage = (itemId: string) => {
+    setAlternativeImages(prev => {
+      const updated = { ...prev };
+      delete updated[itemId];
+      return updated;
+    });
+    
+    // Also reset crop if it exists
+    setCroppedImages(prev => {
+      const updated = { ...prev };
+      delete updated[itemId];
+      return updated;
+    });
+    
+    console.log('Reset to original image for item:', itemId);
+  };
+
   // Tag management
   const addTag = (itemId: string) => {
     const newTag = newTagInputs[itemId]?.trim();
@@ -316,9 +371,9 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
         purchasePrice: item.purchasePrice,
         currency: item.currency || 'USD',
         tags: item.tags || [],
-        primaryImage: croppedImages[item.tempId] || originalImage,
+        primaryImage: getCurrentImage(item.tempId),
         additionalImages: [],
-        thumbnailImage: croppedImages[item.tempId] || originalImage,
+        thumbnailImage: getCurrentImage(item.tempId),
         aiDetected: true,
         aiConfidence: item.aiConfidence,
         aiPromptUsed: detectionResult.rawResponse ? 'Gemini 2.0 Flash detection' : undefined,
@@ -336,7 +391,9 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
   };
 
   const hasUnsavedChanges = () => {
-    return editingItems.some(item => item.isSelected) || Object.keys(croppedImages).length > 0;
+    return editingItems.some(item => item.isSelected) || 
+           Object.keys(croppedImages).length > 0 || 
+           Object.keys(alternativeImages).length > 0;
   };
 
   const handleCancel = () => {
@@ -406,13 +463,23 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
           <div className="lg:col-span-1">
             <Card variant="outlined" padding="md">
               <div className="flex items-center justify-between mb-pixel-2">
-                <h3 className="font-pixel text-retro-accent">Original Image</h3>
-                {cropMode && (
-                  <Badge variant="warning" glow>
-                    <Move className="w-3 h-3 mr-1" />
-                    Crop Mode Active
-                  </Badge>
-                )}
+                <h3 className="font-pixel text-retro-accent">
+                  {Object.keys(alternativeImages).length > 0 ? 'Selected Image' : 'Original Image'}
+                </h3>
+                <div className="flex gap-1">
+                  {cropMode && (
+                    <Badge variant="warning" glow>
+                      <Move className="w-3 h-3 mr-1" />
+                      Crop Mode Active
+                    </Badge>
+                  )}
+                  {Object.keys(alternativeImages).length > 0 && (
+                    <Badge variant="success" size="sm">
+                      <ImageIcon className="w-3 h-3 mr-1" />
+                      Alternative
+                    </Badge>
+                  )}
+                </div>
               </div>
               
               <div 
@@ -427,8 +494,8 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
               >
                 <img
                   ref={imageRef}
-                  src={originalImage}
-                  alt="Original capture"
+                  src={getCurrentImage()}
+                  alt="Current image for editing"
                   className={`w-full h-auto border-2 border-retro-accent rounded-pixel transition-all duration-200 ${
                     cropMode 
                       ? 'cursor-crosshair border-retro-warning shadow-pixel-glow' 
@@ -474,6 +541,34 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                 )}
               </div>
               
+              {/* Image Controls */}
+              <div className="mt-2 flex gap-2">
+                <Button
+                  variant="accent"
+                  size="sm"
+                  icon={Search}
+                  onClick={() => setShowImageSearch('global')}
+                  disabled={cropMode !== null}
+                >
+                  Find Similar
+                </Button>
+                
+                {Object.keys(alternativeImages).length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={RotateCcw}
+                    onClick={() => {
+                      setAlternativeImages({});
+                      setCurrentDisplayImage(originalImage);
+                    }}
+                    disabled={cropMode !== null}
+                  >
+                    Use Original
+                  </Button>
+                )}
+              </div>
+              
               {/* Crop Instructions - BELOW the image, not overlaying it */}
               {cropMode && (
                 <div className="mt-2 p-3 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
@@ -514,28 +609,18 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                 </div>
               )}
               
-              {/* Crop Tips - Only show when NOT in crop mode */}
+              {/* Image Tips - Only show when NOT in crop mode */}
               {!cropMode && (
                 <div className="mt-2 p-2 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
                   <p className="text-retro-accent font-pixel-sans text-xs">
-                    <strong>🎯 Cropping Tips:</strong>
+                    <strong>🖼️ Image Options:</strong>
                   </p>
                   <ul className="text-retro-accent-light font-pixel-sans text-xs mt-1 space-y-1">
-                    <li>• Click "Crop" button next to any item to start</li>
-                    <li>• Click and drag on the image to select area</li>
-                    <li>• Yellow border indicates crop mode is active</li>
-                    <li>• Cropped images get a green checkmark</li>
+                    <li>• <strong>Find Similar:</strong> Search for product images online</li>
+                    <li>• <strong>Crop:</strong> Select specific area of current image</li>
+                    <li>• <strong>Per-Item:</strong> Each item can have its own image</li>
+                    <li>• Alternative images get priority over cropped versions</li>
                   </ul>
-                </div>
-              )}
-              
-              {/* Debug info for development */}
-              {cropMode && cropArea && (
-                <div className="mt-2 p-2 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
-                  <p className="text-retro-accent-light font-pixel-sans text-xs">
-                    Debug: {Math.round(cropArea.x)}, {Math.round(cropArea.y)} - {Math.round(cropArea.width)}×{Math.round(cropArea.height)}
-                    {isDragging && <span className="text-retro-warning"> (dragging)</span>}
-                  </p>
                 </div>
               )}
               
@@ -590,12 +675,26 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                       
                       {/* Image Controls */}
                       <div className="flex gap-1">
-                        {croppedImages[item.tempId] && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={Search}
+                          onClick={() => setShowImageSearch(item.tempId)}
+                          disabled={cropMode === item.tempId}
+                          title="Find similar image for this item"
+                        >
+                          Find Image
+                        </Button>
+                        
+                        {(croppedImages[item.tempId] || alternativeImages[item.tempId]) && (
                           <Button
                             variant="ghost"
                             size="sm"
                             icon={RotateCcw}
-                            onClick={() => resetCrop(item.tempId)}
+                            onClick={() => {
+                              resetCrop(item.tempId);
+                              resetToOriginalImage(item.tempId);
+                            }}
                             title="Reset to original"
                             disabled={cropMode === item.tempId}
                           />
@@ -620,24 +719,35 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                     </div>
 
                     {/* Image Preview */}
-                    {(croppedImages[item.tempId] || originalImage) && (
-                      <div className="flex items-center gap-2">
-                        <div className={`w-24 h-24 border-2 rounded-pixel overflow-hidden ${
-                          croppedImages[item.tempId] ? 'border-retro-success' : 'border-retro-accent'
-                        }`}>
-                          <img
-                            src={croppedImages[item.tempId] || originalImage}
-                            alt={`Preview for ${item.name}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-24 h-24 border-2 rounded-pixel overflow-hidden ${
+                        alternativeImages[item.tempId] ? 'border-retro-primary' :
+                        croppedImages[item.tempId] ? 'border-retro-success' : 'border-retro-accent'
+                      }`}>
+                        <img
+                          src={getCurrentImage(item.tempId)}
+                          alt={`Preview for ${item.name}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {alternativeImages[item.tempId] && (
+                          <Badge variant="default" size="sm">
+                            🔍 Found Image
+                          </Badge>
+                        )}
                         {croppedImages[item.tempId] && (
                           <Badge variant="success" size="sm">
                             ✂️ Cropped
                           </Badge>
                         )}
+                        {!alternativeImages[item.tempId] && !croppedImages[item.tempId] && (
+                          <Badge variant="default" size="sm">
+                            📷 Original
+                          </Badge>
+                        )}
                       </div>
-                    )}
+                    </div>
 
                     {/* Editable Fields */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-pixel">
@@ -830,6 +940,11 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                 • {Object.keys(croppedImages).length} image{Object.keys(croppedImages).length !== 1 ? 's' : ''} cropped
               </span>
             )}
+            {Object.keys(alternativeImages).length > 0 && (
+              <span className="ml-2 text-retro-primary">
+                • {Object.keys(alternativeImages).length} alternative image{Object.keys(alternativeImages).length !== 1 ? 's' : ''} found
+              </span>
+            )}
           </div>
           
           <div className="flex gap-2">
@@ -853,6 +968,21 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Image Search Modal */}
+      <ImageSearchModal
+        isOpen={!!showImageSearch}
+        onClose={() => setShowImageSearch(null)}
+        onImageSelected={(imageBlob, imageUrl) => {
+          if (showImageSearch) {
+            handleAlternativeImageSelected(imageBlob, imageUrl, showImageSearch);
+          }
+          setShowImageSearch(null);
+        }}
+        itemName={showImageSearch ? editingItems.find(item => item.tempId === showImageSearch)?.name || '' : ''}
+        itemType={showImageSearch ? editingItems.find(item => item.tempId === showImageSearch)?.type : undefined}
+        series={showImageSearch ? editingItems.find(item => item.tempId === showImageSearch)?.series : undefined}
+      />
     </div>
   );
 };
