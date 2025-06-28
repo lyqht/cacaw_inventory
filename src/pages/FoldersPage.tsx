@@ -10,6 +10,7 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { FolderCard } from '../components/folders/FolderCard';
 import { FolderDeleteModal } from '../components/folders/FolderDeleteModal';
 import { FolderCreateModal } from '../components/folders/FolderCreateModal';
+import { FolderEditModal } from '../components/folders/FolderEditModal';
 import { Folder, FolderType } from '../types';
 
 const storageService = StorageService.getInstance();
@@ -98,6 +99,42 @@ export const FoldersPage: React.FC = () => {
     }
   };
 
+  const handleUpdateFolder = async (folderId: string, updates: {
+    name: string;
+    description: string;
+    type: FolderType;
+  }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Check for duplicate names (excluding current folder)
+      const existingFolder = folders.find(f => 
+        f.id !== folderId && f.name.toLowerCase() === updates.name.toLowerCase()
+      );
+      if (existingFolder) {
+        throw new Error('A folder with this name already exists');
+      }
+
+      await storageService.updateFolder(folderId, {
+        name: updates.name,
+        description: updates.description || undefined,
+        type: updates.type,
+        updatedAt: new Date()
+      });
+
+      // Reload folders to update the UI
+      await loadFolders();
+      
+      setEditingFolder(null);
+    } catch (error) {
+      console.error('Error updating folder:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeleteFolder = async (folder: Folder) => {
     try {
       setLoading(true);
@@ -120,8 +157,6 @@ export const FoldersPage: React.FC = () => {
 
   const handleEditFolder = (folder: Folder) => {
     setEditingFolder(folder);
-    // TODO: Implement folder edit modal
-    console.log('Edit folder:', folder);
   };
 
   const filteredFolders = folders.filter(folder =>
@@ -284,6 +319,14 @@ export const FoldersPage: React.FC = () => {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onCreateFolder={handleCreateFolder}
+          isLoading={isLoading}
+        />
+
+        <FolderEditModal
+          folder={editingFolder}
+          isOpen={!!editingFolder}
+          onClose={() => setEditingFolder(null)}
+          onUpdateFolder={handleUpdateFolder}
           isLoading={isLoading}
         />
 
