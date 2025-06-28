@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, X, Camera, Tag, DollarSign, FileText, Image, Sparkles } from 'lucide-react';
+import { Save, X, Camera, Tag, DollarSign, FileText, Image, Sparkles, Zap, AlertTriangle, Key } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
@@ -7,7 +7,12 @@ import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 import { ImageUploader } from '../images/ImageUploader';
 import { CameraCapture } from '../capture/CameraCapture';
-import { CollectibleData, ItemCondition, FolderType } from '../../types';
+import { DetectionResultsModal } from '../ai/DetectionResultsModal';
+import { ApiKeySetup } from '../ai/ApiKeySetup';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { CollectibleData, ItemCondition, FolderType, DetectionResult } from '../../types';
+import { AIDetectionService } from '../../services/aiDetection';
+import { StorageService } from '../../services/storage';
 
 interface ImageFile {
   id: string;
@@ -55,10 +60,47 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCameraCapture, setShowCameraCapture] = useState(false);
   
+  // AI Detection states
+  const [showApiSetup, setShowApiSetup] = useState(false);
+  const [apiKey, setApiKey] = useState<string>('');
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [detectionResult, setDetectionResult] = useState<DetectionResult | null>(null);
+  const [showDetectionResults, setShowDetectionResults] = useState(false);
+  const [capturedImageForDetection, setCapturedImageForDetection] = useState<string | null>(null);
+  const [remainingDetections, setRemainingDetections] = useState<number>(5);
+  const [isUsingCustomKey, setIsUsingCustomKey] = useState(false);
+  
   // Track initial state to detect real changes
   const [initialFormData, setInitialFormData] = useState(formData);
   const [initialImageUrls, setInitialImageUrls] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const aiService = AIDetectionService.getInstance();
+  const storageService = StorageService.getInstance();
+
+  // Load API key and usage info on component mount
+  useEffect(() => {
+    const loadApiInfo = async () => {
+      try {
+        const savedApiKey = await storageService.getSetting('gemini_api_key');
+        if (savedApiKey) {
+          setApiKey(savedApiKey);
+          aiService.setApiKey(savedApiKey);
+        }
+        
+        // Load usage information
+        const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+        setRemainingDetections(remaining);
+        setIsUsingCustomKey(usingCustom);
+      } catch (error) {
+        console.error('Error loading API info:', error);
+      }
+    };
+    
+    if (isOpen) {
+      loadApiInfo();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -125,6 +167,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       // Reset other states
       setErrors({});
       setNewTag('');
+      setDetectionResult(null);
+      setShowDetectionResults(false);
+      setCapturedImageForDetection(null);
       
       // Mark as initialized after a brief delay to allow ImageUploader to settle
       setTimeout(() => {
@@ -236,6 +281,111 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     // Add to existing images
     setImages(prev => [newImage, ...prev]);
     setShowCameraCapture(false);
+  };
+
+  // AI Detection functionality
+  const handleAIDetection = async (imageBlob: Blob, imageUrl: string) => {
+    // Check if AI detection is available
+    const { canUse, remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+    
+    if (!canUse) {
+      setShowApiSetup(true);
+      return;
+    }
+
+    setIsDetecting(true);
+    setCapturedImageForDetection(imageUrl);
+
+    try {
+      console.log('Starting AI detection for captured image');
+      
+      const result = await aiService.detectItems(
+        imageBlob,
+        folderType,
+        undefined // Use default prompt
+      );
+
+      console.log('AI Detection Result:', result);
+      setDetectionResult(result);
+      setShowDetectionResults(true);
+
+      // Update usage info after detection
+      const { remaining: newRemaining, isUsingCustomKey: newUsingCustom } = await aiService.canUseDetection();
+      setRemainingDetections(newRemaining);
+      setIsUsingCustomKey(newUsingCustom);
+
+    } catch (error) {
+      console.error('Error in AI detection:', error);
+      
+      // Create error result
+      const errorResult: DetectionResult = {
+        items: [],
+        confidence: 0,
+        processingTime: 0,
+        rawResponse: '',
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+      
+      setDetectionResult(errorResult);
+      setShowDetectionResults(true);
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
+  const handleCameraCaptureWithAI = async (imageBlob: Blob) => {
+    // First add the image to the form
+    handleCameraCapture(imageBlob);
+    
+    // Then run AI detection on it
+    const imageUrl = URL.createObjectURL(imageBlob);
+    await handleAIDetection(imageBlob, imageUrl);
+  };
+
+  const handleDetectionResultsSave = async (items: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'>[]) => {
+    if (items.length > 0) {
+      // Take the first detected item and populate the form
+      const detectedItem = items[0];
+      
+      setFormData(prev => ({
+        ...prev,
+        name: detectedItem.name || prev.name,
+        type: detectedItem.type || prev.type,
+        series: detectedItem.series || prev.series,
+        condition: detectedItem.condition || prev.condition,
+        description: detectedItem.description || prev.description,
+        estimatedValue: detectedItem.estimatedValue?.toString() || prev.estimatedValue,
+        currency: detectedItem.currency || prev.currency,
+        tags: [...prev.tags, ...(detectedItem.tags || [])]
+      }));
+      
+      console.log('Populated form with AI detection results');
+    }
+    
+    setShowDetectionResults(false);
+    setDetectionResult(null);
+    if (capturedImageForDetection) {
+      URL.revokeObjectURL(capturedImageForDetection);
+      setCapturedImageForDetection(null);
+    }
+  };
+
+  const handleApiKeySet = async (newApiKey: string) => {
+    setApiKey(newApiKey);
+    aiService.setApiKey(newApiKey);
+    
+    // Save API key to local storage
+    try {
+      await storageService.setSetting('gemini_api_key', newApiKey);
+      console.log('API key saved successfully');
+      
+      // Update usage info
+      const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+      setRemainingDetections(remaining);
+      setIsUsingCustomKey(usingCustom);
+    } catch (error) {
+      console.error('Error saving API key:', error);
+    }
   };
 
   // Convert image files to data URLs for storage
@@ -403,6 +553,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     }
   };
 
+  // Check if we're in development mode with unlimited detections
+  const isDevUnlimited = aiService.isUnlimitedDetectionsEnabled();
+  const shouldShowFreeLimitWarning = !isUsingCustomKey && !isDevUnlimited && remainingDetections === 0;
+
   return (
     <>
       <Modal
@@ -412,7 +566,65 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         size="xl"
       >
         <form onSubmit={handleSubmit} className="space-y-pixel-2">
-          {/* Enhanced Images Section - Matching Capture Page */}
+          {/* AI Usage Status */}
+          <Card variant="outlined" padding="md" className={
+            isUsingCustomKey ? 'border-retro-success' : 
+            isDevUnlimited ? 'border-retro-primary' :
+            remainingDetections > 0 ? 'border-retro-accent' : 'border-retro-warning'
+          }>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`w-6 h-6 rounded-pixel flex items-center justify-center ${
+                  isUsingCustomKey ? 'bg-retro-success' : 
+                  isDevUnlimited ? 'bg-retro-primary' :
+                  remainingDetections > 0 ? 'bg-retro-accent' : 'bg-retro-warning'
+                }`}>
+                  {isUsingCustomKey ? (
+                    <Key className="w-3 h-3 text-retro-bg-primary" />
+                  ) : (
+                    <Zap className="w-3 h-3 text-retro-bg-primary" />
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-pixel text-retro-accent text-sm">
+                    {isUsingCustomKey ? 'Custom API Key Active' : 
+                     isDevUnlimited ? 'Development Mode' :
+                     'Free AI Detections'}
+                  </h4>
+                  <p className="text-retro-accent-light font-pixel-sans text-xs">
+                    {isUsingCustomKey 
+                      ? 'Unlimited AI detections available'
+                      : isDevUnlimited
+                      ? 'Unlimited detections for development'
+                      : `${remainingDetections} of 5 free detections remaining`
+                    }
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {!isUsingCustomKey && !isDevUnlimited && (
+                  <Badge 
+                    variant={remainingDetections > 0 ? 'default' : 'warning'}
+                    size="sm"
+                  >
+                    {remainingDetections}/5
+                  </Badge>
+                )}
+                
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowApiSetup(true)}
+                >
+                  Setup
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Enhanced Images Section with AI Detection */}
           <Card variant="outlined" padding="md">
             <div className="space-y-pixel-2">
               <div className="flex items-center justify-between">
@@ -428,25 +640,112 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                     size="sm"
                     icon={Camera}
                     onClick={() => setShowCameraCapture(true)}
-                    disabled={isLoading}
+                    disabled={isLoading || isDetecting}
                   >
                     Take Photo
                   </Button>
+                  
+                  {images.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      icon={Sparkles}
+                      onClick={async () => {
+                        if (images[0] && images[0].file.size > 0) {
+                          await handleAIDetection(images[0].file, images[0].url);
+                        } else {
+                          alert('Please add an image first to use AI detection.');
+                        }
+                      }}
+                      disabled={isLoading || isDetecting || shouldShowFreeLimitWarning}
+                      isLoading={isDetecting}
+                      glow={!shouldShowFreeLimitWarning}
+                    >
+                      AI Detect
+                    </Button>
+                  )}
                 </div>
               </div>
+
+              {/* AI Detection Status */}
+              {isDetecting && (
+                <Card variant="outlined" padding="md" className="bg-retro-accent bg-opacity-10 border-retro-accent">
+                  <div className="flex items-center gap-2">
+                    <LoadingSpinner size="sm" variant="accent" />
+                    <div>
+                      <p className="font-pixel text-retro-accent text-sm">AI Detection in Progress</p>
+                      <p className="text-retro-accent-light font-pixel-sans text-xs">
+                        Analyzing image and extracting item details...
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* Free Limit Warning */}
+              {shouldShowFreeLimitWarning && (
+                <Card variant="outlined" className="border-retro-error">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-retro-error" />
+                      <div>
+                        <h4 className="font-pixel text-retro-error text-sm">Free Limit Reached</h4>
+                        <p className="text-retro-error font-pixel-sans text-xs">
+                          Add your own Gemini API key to continue using AI detection.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="accent"
+                      size="sm"
+                      onClick={() => setShowApiSetup(true)}
+                    >
+                      Add API Key
+                    </Button>
+                  </div>
+                </Card>
+              )}
 
               {/* Camera Capture or Image Uploader */}
               {showCameraCapture ? (
                 <div className="space-y-pixel-2">
                   <Card variant="outlined" padding="md" className="bg-retro-bg-tertiary">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Camera className="w-5 h-5 text-retro-accent" />
-                      <h4 className="font-pixel text-retro-accent">Camera Capture</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Camera className="w-5 h-5 text-retro-accent" />
+                        <h4 className="font-pixel text-retro-accent">Camera Capture with AI Detection</h4>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="accent"
+                          size="sm"
+                          onClick={() => {
+                            // Switch to AI-enabled capture mode
+                            setShowCameraCapture(false);
+                            // Show a special AI capture mode
+                          }}
+                          disabled={shouldShowFreeLimitWarning}
+                        >
+                          AI Mode
+                        </Button>
+                      </div>
                     </div>
                     <CameraCapture
-                      onImageCapture={handleCameraCapture}
+                      onImageCapture={shouldShowFreeLimitWarning ? handleCameraCapture : handleCameraCaptureWithAI}
                       onCancel={() => setShowCameraCapture(false)}
                     />
+                    
+                    {!shouldShowFreeLimitWarning && (
+                      <div className="mt-2 p-2 bg-retro-accent bg-opacity-20 border border-retro-accent rounded-pixel">
+                        <p className="text-retro-accent font-pixel-sans text-xs">
+                          ✨ <strong>AI Detection Enabled:</strong> After taking a photo, AI will automatically 
+                          analyze it and suggest item details to fill in the form.
+                        </p>
+                      </div>
+                    )}
                   </Card>
                 </div>
               ) : (
@@ -470,12 +769,14 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               <Card variant="outlined" padding="md" className="bg-retro-bg-tertiary">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-4 h-4 text-retro-accent" />
-                  <h4 className="font-pixel text-retro-accent text-sm">Pro Tip</h4>
+                  <h4 className="font-pixel text-retro-accent text-sm">AI-Powered Item Detection</h4>
                 </div>
-                <p className="text-retro-accent-light font-pixel-sans text-xs">
-                  For best results, use the <strong>Capture page</strong> with AI detection to automatically 
-                  identify items and extract details. This form is for manual entry or editing existing items.
-                </p>
+                <div className="space-y-1 text-xs font-pixel-sans text-retro-accent-light">
+                  <p>• <strong>Take Photo:</strong> Capture with automatic AI analysis</p>
+                  <p>• <strong>AI Detect:</strong> Analyze existing images for item details</p>
+                  <p>• <strong>Auto-Fill:</strong> Detected information populates the form</p>
+                  <p>• <strong>Manual Edit:</strong> Review and adjust all detected details</p>
+                </div>
               </Card>
             </div>
           </Card>
@@ -677,7 +978,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               variant="ghost"
               icon={X}
               onClick={handleClose}
-              disabled={isLoading}
+              disabled={isLoading || isDetecting}
             >
               Cancel
             </Button>
@@ -687,6 +988,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               variant="accent"
               icon={Save}
               isLoading={isLoading}
+              disabled={isDetecting}
               glow
             >
               {item ? 'Update Item' : 'Save Item'}
@@ -695,20 +997,35 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         </form>
       </Modal>
 
-      {/* Camera Capture Modal */}
-      {showCameraCapture && (
-        <Modal
-          isOpen={showCameraCapture}
-          onClose={() => setShowCameraCapture(false)}
-          title="Take Photo"
-          size="lg"
-        >
-          <CameraCapture
-            onImageCapture={handleCameraCapture}
-            onCancel={() => setShowCameraCapture(false)}
-          />
-        </Modal>
-      )}
+      {/* API Key Setup Modal */}
+      <ApiKeySetup
+        isOpen={showApiSetup}
+        onClose={() => setShowApiSetup(false)}
+        onApiKeySet={handleApiKeySet}
+        currentApiKey={apiKey}
+      />
+
+      {/* AI Detection Results Modal */}
+      <DetectionResultsModal
+        isOpen={showDetectionResults}
+        onClose={() => {
+          setShowDetectionResults(false);
+          setDetectionResult(null);
+          if (capturedImageForDetection) {
+            URL.revokeObjectURL(capturedImageForDetection);
+            setCapturedImageForDetection(null);
+          }
+        }}
+        detectionResult={detectionResult}
+        originalImage={capturedImageForDetection}
+        onSaveItems={handleDetectionResultsSave}
+        onRetryDetection={async () => {
+          if (images[0] && images[0].file.size > 0) {
+            await handleAIDetection(images[0].file, images[0].url);
+          }
+        }}
+        isLoading={isDetecting}
+      />
     </>
   );
 };
