@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, Camera, X, RotateCw, Crop, Sliders, Save, Trash2, Eye, GripVertical, Star } from 'lucide-react';
+import { Upload, Camera, X, RotateCw, Crop, Sliders, Save, Trash2, Eye, GripVertical, Star, Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Input } from '../ui/Input';
@@ -367,63 +367,95 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   return (
     <div className={`space-y-pixel-2 ${className}`}>
-      {/* Upload Area */}
-      <Card
-        variant="outlined"
-        padding="md"
-        className={`transition-all duration-200 ${
-          dragActive 
-            ? 'border-retro-accent-light bg-retro-accent bg-opacity-10' 
-            : 'border-retro-accent hover:border-retro-accent-light'
-        }`}
-      >
-        <div
-          ref={dropZoneRef}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          className="text-center py-pixel-3"
+      {/* Conditional Upload Interface */}
+      {images.length === 0 ? (
+        /* Full Upload Area for No Images */
+        <Card
+          variant="outlined"
+          padding="md"
+          className={`transition-all duration-200 ${
+            dragActive 
+              ? 'border-retro-accent-light bg-retro-accent bg-opacity-10' 
+              : 'border-retro-accent hover:border-retro-accent-light'
+          }`}
         >
-          <div className="space-y-pixel-2">
-            <div className="text-4xl animate-pixel-float">
-              {dragActive ? '📤' : isProcessing ? '⚡' : '📷'}
-            </div>
-            
-            <div>
-              <h3 className="font-pixel text-retro-accent mb-1">
-                {dragActive ? 'Drop images here' : isProcessing ? 'Processing...' : 'Upload Images'}
-              </h3>
-              <p className="text-retro-accent-light font-pixel-sans text-sm">
-                {isProcessing ? 'Please wait while we process your images' : 'Drag & drop images or click to browse'}
-              </p>
-              <p className="text-retro-accent-light font-pixel-sans text-xs mt-1">
-                Supports JPG, PNG, GIF, WebP • Max {maxFileSize}MB per file • Up to {maxFiles} images
-              </p>
-            </div>
-            
-            <div className="flex justify-center gap-2">
-              <Button
-                variant="accent"
-                icon={Upload}
-                onClick={handleBrowseClick}
-                disabled={images.length >= maxFiles || isProcessing}
-              >
-                Browse Files
-              </Button>
+          <div
+            ref={dropZoneRef}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            className="text-center py-pixel-3"
+          >
+            <div className="space-y-pixel-2">
+              <div className="text-4xl animate-pixel-float">
+                {dragActive ? '📤' : isProcessing ? '⚡' : '📷'}
+              </div>
               
-              <Button
-                variant="ghost"
-                icon={Camera}
-                onClick={handleTakePhotoClick}
-                disabled={images.length >= maxFiles || isProcessing}
-              >
-                Take Photo
-              </Button>
+              <div>
+                <h3 className="font-pixel text-retro-accent mb-1">
+                  {dragActive ? 'Drop images here' : isProcessing ? 'Processing...' : 'Upload Images'}
+                </h3>
+                <p className="text-retro-accent-light font-pixel-sans text-sm">
+                  {isProcessing ? 'Please wait while we process your images' : 'Drag & drop images or click to browse'}
+                </p>
+                <p className="text-retro-accent-light font-pixel-sans text-xs mt-1">
+                  Supports JPG, PNG, GIF, WebP • Max {maxFileSize}MB per file • Up to {maxFiles} images
+                </p>
+              </div>
+              
+              <div className="flex justify-center gap-2">
+                <Button
+                  variant="accent"
+                  icon={Upload}
+                  onClick={handleBrowseClick}
+                  disabled={images.length >= maxFiles || isProcessing}
+                >
+                  Browse Files
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  icon={Camera}
+                  onClick={handleTakePhotoClick}
+                  disabled={images.length >= maxFiles || isProcessing}
+                >
+                  Take Photo
+                </Button>
+              </div>
             </div>
           </div>
+        </Card>
+      ) : (
+        /* Compact Add More Button for Existing Images */
+        <div className="flex justify-between items-center">
+          <div className="flex gap-2">
+            <Button
+              variant="accent"
+              icon={Plus}
+              size="sm"
+              onClick={handleBrowseClick}
+              disabled={images.length >= maxFiles || isProcessing}
+            >
+              Add More Images
+            </Button>
+            
+            <Button
+              variant="ghost"
+              icon={Camera}
+              size="sm"
+              onClick={handleTakePhotoClick}
+              disabled={images.length >= maxFiles || isProcessing}
+            >
+              Take Photo
+            </Button>
+          </div>
+          
+          <div className="text-xs text-retro-accent-light font-pixel-sans">
+            {images.length}/{maxFiles} images • Max {maxFileSize}MB each
+          </div>
         </div>
-      </Card>
+      )}
 
       {/* Hidden File Input */}
       <input
