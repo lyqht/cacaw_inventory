@@ -157,6 +157,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   };
 
   const handleImagesChange = (newImages: ImageFile[]) => {
+    console.log('Images changed:', newImages); // Debug log
     setImages(newImages);
     setHasUnsavedImages(true);
   };
@@ -254,8 +255,40 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         <Card variant="outlined" padding="md">
           <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
             <Image className="w-4 h-4" />
-            Images
+            Images {images.length > 0 && `(${images.length})`}
           </h3>
+          
+          {/* Current Images Preview */}
+          {images.length > 0 && (
+            <div className="mb-pixel-2">
+              <h4 className="text-sm font-pixel-sans text-retro-accent-light mb-2">
+                Current Images:
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {images.map((image, index) => (
+                  <div key={image.id} className="relative">
+                    <div className="aspect-square bg-retro-bg-tertiary border border-retro-accent rounded-pixel overflow-hidden">
+                      <img
+                        src={image.url}
+                        alt={image.altText || `Image ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {index === 0 && (
+                      <div className="absolute top-1 left-1 bg-retro-accent text-retro-bg-primary px-1 py-0.5 text-xs font-pixel rounded-pixel">
+                        PRIMARY
+                      </div>
+                    )}
+                    {image.isEdited && (
+                      <div className="absolute top-1 right-1 bg-retro-warning text-retro-bg-primary px-1 py-0.5 text-xs font-pixel rounded-pixel">
+                        EDITED
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           <ImageUploader
             existingImages={item ? [item.primaryImage, ...item.additionalImages].filter(Boolean) : []}
