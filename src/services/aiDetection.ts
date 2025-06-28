@@ -24,6 +24,9 @@ export class AIDetectionService {
   private isDevelopment = import.meta.env.DEV;
   private devUnlimitedDetections = import.meta.env.VITE_DEV_UNLIMITED_DETECTIONS === 'true';
 
+  // Track if we're using a custom API key from storage
+  private customApiKeyFromStorage: string | null = null;
+
   static getInstance(): AIDetectionService {
     if (!AIDetectionService.instance) {
       AIDetectionService.instance = new AIDetectionService();
@@ -53,14 +56,18 @@ export class AIDetectionService {
 
   setApiKey(apiKey: string) {
     this.apiKey = apiKey;
+    // Mark this as a custom key if it's different from the default
+    if (apiKey && apiKey !== this.defaultApiKey) {
+      this.customApiKeyFromStorage = apiKey;
+    }
     console.log('🔑 API key updated. Is custom key:', this.isUsingCustomApiKey());
   }
 
   private isUsingCustomApiKey(): boolean {
-    // Check if current API key is different from default
-    return this.apiKey !== null && 
-           this.apiKey !== this.defaultApiKey && 
-           this.apiKey.trim().length > 0;
+    // Check if we have a custom API key from storage that's different from default
+    return this.customApiKeyFromStorage !== null && 
+           this.customApiKeyFromStorage !== this.defaultApiKey && 
+           this.customApiKeyFromStorage.trim().length > 0;
   }
 
   async getRemainingFreeDetections(): Promise<number> {
