@@ -9,6 +9,7 @@ import { ItemsPage } from './pages/ItemsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { AnimatedLogo } from './components/ui/AnimatedLogo';
+import { BoltBadge } from './components/ui/BoltBadge';
 
 const storageService = StorageService.getInstance();
 
@@ -116,6 +117,9 @@ function App() {
         <main>
           {renderCurrentPage()}
         </main>
+        
+        {/* Bolt.new Badge */}
+        <BoltBadge />
       </div>
     </ErrorBoundary>
   );
