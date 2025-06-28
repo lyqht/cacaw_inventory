@@ -14,7 +14,7 @@ interface GeminiResponse {
 export class AIDetectionService {
   private static instance: AIDetectionService;
   private apiKey: string | null = null;
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-exp:generateContent';
+  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
   
   // Default API key from environment variable
   private defaultApiKey = import.meta.env.VITE_GEMINI_API_KEY;
