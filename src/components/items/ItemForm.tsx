@@ -70,6 +70,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const [remainingDetections, setRemainingDetections] = useState<number>(5);
   const [isUsingCustomKey, setIsUsingCustomKey] = useState(false);
   
+  // NEW: AI Detection checkbox state
+  const [runAIDetection, setRunAIDetection] = useState(true);
+  const [pendingImageForDetection, setPendingImageForDetection] = useState<ImageFile | null>(null);
+  
   // Track initial state to detect real changes
   const [initialFormData, setInitialFormData] = useState(formData);
   const [initialImageUrls, setInitialImageUrls] = useState<string[]>([]);
@@ -101,6 +105,28 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       loadApiInfo();
     }
   }, [isOpen]);
+
+  // Refresh usage info when API key changes
+  useEffect(() => {
+    const refreshUsageInfo = async () => {
+      try {
+        const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+        setRemainingDetections(remaining);
+        setIsUsingCustomKey(usingCustom);
+        
+        console.log('🔄 Refreshed usage info:', {
+          remaining,
+          isUsingCustomKey: usingCustom
+        });
+      } catch (error) {
+        console.error('Error refreshing usage info:', error);
+      }
+    };
+
+    if (apiKey) {
+      refreshUsageInfo();
+    }
+  }, [apiKey]);
 
   useEffect(() => {
     if (isOpen) {
@@ -170,6 +196,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       setDetectionResult(null);
       setShowDetectionResults(false);
       setCapturedImageForDetection(null);
+      setPendingImageForDetection(null);
       
       // Mark as initialized after a brief delay to allow ImageUploader to settle
       setTimeout(() => {
@@ -262,9 +289,26 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleImagesChange = (newImages: ImageFile[]) => {
+  const handleImagesChange = async (newImages: ImageFile[]) => {
     console.log('Images changed in form:', newImages.length, 'images');
     setImages(newImages);
+    
+    // NEW: Check if we should run AI detection on new images
+    if (runAIDetection && newImages.length > 0) {
+      // Find the newest image (one that wasn't in the previous images array)
+      const previousUrls = images.map(img => img.url);
+      const newImage = newImages.find(img => !previousUrls.includes(img.url));
+      
+      if (newImage && newImage.file.size > 0) {
+        console.log('New image detected, checking if AI detection should run...');
+        setPendingImageForDetection(newImage);
+        
+        // Automatically trigger AI detection after a short delay
+        setTimeout(() => {
+          handleAIDetectionForImage(newImage);
+        }, 500);
+      }
+    }
   };
 
   const handleCameraCapture = (imageBlob: Blob) => {
@@ -281,6 +325,65 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     // Add to existing images
     setImages(prev => [newImage, ...prev]);
     setShowCameraCapture(false);
+    
+    // NEW: Automatically run AI detection if enabled
+    if (runAIDetection) {
+      setPendingImageForDetection(newImage);
+      setTimeout(() => {
+        handleAIDetectionForImage(newImage);
+      }, 500);
+    }
+  };
+
+  // NEW: AI Detection functionality for uploaded images
+  const handleAIDetectionForImage = async (imageFile: ImageFile) => {
+    // Check if AI detection is available
+    const { canUse, remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+    
+    if (!canUse) {
+      setShowApiSetup(true);
+      return;
+    }
+
+    setIsDetecting(true);
+    setCapturedImageForDetection(imageFile.url);
+
+    try {
+      console.log('Starting AI detection for uploaded image');
+      
+      const result = await aiService.detectItems(
+        imageFile.file,
+        folderType,
+        undefined // Use default prompt
+      );
+
+      console.log('AI Detection Result:', result);
+      setDetectionResult(result);
+      setShowDetectionResults(true);
+
+      // Update usage info after detection
+      const { remaining: newRemaining, isUsingCustomKey: newUsingCustom } = await aiService.canUseDetection();
+      setRemainingDetections(newRemaining);
+      setIsUsingCustomKey(newUsingCustom);
+
+    } catch (error) {
+      console.error('Error in AI detection:', error);
+      
+      // Create error result
+      const errorResult: DetectionResult = {
+        items: [],
+        confidence: 0,
+        processingTime: 0,
+        rawResponse: '',
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+      
+      setDetectionResult(errorResult);
+      setShowDetectionResults(true);
+    } finally {
+      setIsDetecting(false);
+      setPendingImageForDetection(null);
+    }
   };
 
   // AI Detection functionality
@@ -337,9 +440,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     // First add the image to the form
     handleCameraCapture(imageBlob);
     
-    // Then run AI detection on it
-    const imageUrl = URL.createObjectURL(imageBlob);
-    await handleAIDetection(imageBlob, imageUrl);
+    // Then run AI detection on it if enabled
+    if (runAIDetection) {
+      const imageUrl = URL.createObjectURL(imageBlob);
+      await handleAIDetection(imageBlob, imageUrl);
+    }
   };
 
   const handleDetectionResultsSave = async (items: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'>[]) => {
@@ -653,7 +758,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                       icon={Sparkles}
                       onClick={async () => {
                         if (images[0] && images[0].file.size > 0) {
-                          await handleAIDetection(images[0].file, images[0].url);
+                          await handleAIDetectionForImage(images[0]);
                         } else {
                           alert('Please add an image first to use AI detection.');
                         }
@@ -668,6 +773,50 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                 </div>
               </div>
 
+              {/* NEW: AI Detection Checkbox */}
+              <Card variant="outlined" padding="md" className="bg-retro-bg-tertiary">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="runAIDetection"
+                      checked={runAIDetection}
+                      onChange={(e) => setRunAIDetection(e.target.checked)}
+                      className="w-4 h-4 text-retro-accent bg-retro-bg-tertiary border-retro-accent rounded focus:ring-retro-accent"
+                      disabled={shouldShowFreeLimitWarning}
+                    />
+                    <label htmlFor="runAIDetection" className="font-pixel text-retro-accent text-sm">
+                      Run AI detection
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    {runAIDetection && (
+                      <Badge variant="success" size="sm" glow>
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        Auto-detect
+                      </Badge>
+                    )}
+                    
+                    {isDetecting && (
+                      <Badge variant="warning" size="sm">
+                        <LoadingSpinner size="sm" className="mr-1" />
+                        Analyzing...
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <p className="text-retro-accent-light font-pixel-sans text-xs mt-2">
+                  {runAIDetection 
+                    ? shouldShowFreeLimitWarning
+                      ? 'AI detection disabled - free limit reached. Add your API key to enable.'
+                      : 'AI will automatically analyze uploaded images and suggest item details'
+                    : 'AI detection disabled - images will be uploaded without analysis'
+                  }
+                </p>
+              </div>
+
               {/* AI Detection Status */}
               {isDetecting && (
                 <Card variant="outlined" padding="md" className="bg-retro-accent bg-opacity-10 border-retro-accent">
@@ -676,7 +825,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                     <div>
                       <p className="font-pixel text-retro-accent text-sm">AI Detection in Progress</p>
                       <p className="text-retro-accent-light font-pixel-sans text-xs">
-                        Analyzing image and extracting item details...
+                        Analyzing {pendingImageForDetection ? 'uploaded image' : 'image'} and extracting item details...
                       </p>
                     </div>
                   </div>
@@ -715,30 +864,15 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Camera className="w-5 h-5 text-retro-accent" />
-                        <h4 className="font-pixel text-retro-accent">Camera Capture with AI Detection</h4>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="accent"
-                          size="sm"
-                          onClick={() => {
-                            // Switch to AI-enabled capture mode
-                            setShowCameraCapture(false);
-                            // Show a special AI capture mode
-                          }}
-                          disabled={shouldShowFreeLimitWarning}
-                        >
-                          AI Mode
-                        </Button>
+                        <h4 className="font-pixel text-retro-accent">Camera Capture</h4>
                       </div>
                     </div>
                     <CameraCapture
-                      onImageCapture={shouldShowFreeLimitWarning ? handleCameraCapture : handleCameraCaptureWithAI}
+                      onImageCapture={runAIDetection && !shouldShowFreeLimitWarning ? handleCameraCaptureWithAI : handleCameraCapture}
                       onCancel={() => setShowCameraCapture(false)}
                     />
                     
-                    {!shouldShowFreeLimitWarning && (
+                    {runAIDetection && !shouldShowFreeLimitWarning && (
                       <div className="mt-2 p-2 bg-retro-accent bg-opacity-20 border border-retro-accent rounded-pixel">
                         <p className="text-retro-accent font-pixel-sans text-xs">
                           ✨ <strong>AI Detection Enabled:</strong> After taking a photo, AI will automatically 
@@ -772,10 +906,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   <h4 className="font-pixel text-retro-accent text-sm">AI-Powered Item Detection</h4>
                 </div>
                 <div className="space-y-1 text-xs font-pixel-sans text-retro-accent-light">
-                  <p>• <strong>Take Photo:</strong> Capture with automatic AI analysis</p>
-                  <p>• <strong>AI Detect:</strong> Analyze existing images for item details</p>
-                  <p>• <strong>Auto-Fill:</strong> Detected information populates the form</p>
-                  <p>• <strong>Manual Edit:</strong> Review and adjust all detected details</p>
+                  <p>• <strong>Auto-detect:</strong> Enable checkbox to analyze images automatically</p>
+                  <p>• <strong>Manual detect:</strong> Use "AI Detect" button for existing images</p>
+                  <p>• <strong>Form population:</strong> Detected information fills the form fields</p>
+                  <p>• <strong>Review & edit:</strong> Always review and adjust detected details</p>
                 </div>
               </Card>
             </div>
@@ -1021,7 +1155,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         onSaveItems={handleDetectionResultsSave}
         onRetryDetection={async () => {
           if (images[0] && images[0].file.size > 0) {
-            await handleAIDetection(images[0].file, images[0].url);
+            await handleAIDetectionForImage(images[0]);
           }
         }}
         isLoading={isDetecting}
