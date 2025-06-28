@@ -21,63 +21,142 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Base body styling with pixel grid background - Light Theme */
-  body {
-    background-color: #F0F8FF; /* Alice blue */
-    background-image: 
-      linear-gradient(rgba(0, 0, 128, 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 0, 128, 0.1) 1px, transparent 1px);
-    background-size: 8px 8px;
-    color: #000080; /* Navy text */
-    font-family: "Pixelify Sans", sans-serif;
-  }
-
-  /* Theme-based color variables - Updated for Light Theme */
+  /* CSS Custom Properties for Theme System */
   :root {
-    /* Light mode input colors (now default) */
-    --input-bg-light: #FFFFFF;
-    --input-text-light: #000080;
-    --input-border-light: #000080;
-    --input-border-focus-light: #4169E1;
-    --input-placeholder-light: #6C757D;
+    /* Default to light theme */
+    --retro-primary: #ADD8E6;
+    --retro-primary-light: #B8E0F0;
+    --retro-primary-dark: #87CEEB;
+    --retro-accent: #000080;
+    --retro-accent-light: #4169E1;
+    --retro-accent-medium: #191970;
+    --retro-accent-teal: #006666;
+    --retro-accent-teal-dark: #004444;
+    --retro-bg-primary: #F0F8FF;
+    --retro-bg-secondary: #E6F3FF;
+    --retro-bg-tertiary: #D6EBFF;
+    --retro-success: #006400;
+    --retro-warning: #B8860B;
+    --retro-error: #DC143C;
+    --retro-text: #000080;
+    --retro-accent-glow: rgba(0, 0, 128, 0.4);
+    --retro-accent-glow-weak: rgba(0, 0, 128, 0.2);
+    --pixel-grid-pattern: linear-gradient(rgba(0, 0, 128, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 128, 0.1) 1px, transparent 1px);
     
-    /* Dark mode input colors (for dark theme option) */
-    --input-bg-dark: #000055;
-    --input-text-dark: #ADD8E6;
-    --input-border-dark: #87CEEB;
-    --input-border-focus-dark: #ADD8E6;
-    --input-placeholder-dark: #A0A0A0;
+    /* Input colors for light theme */
+    --input-bg: #FFFFFF;
+    --input-text: #000080;
+    --input-border: #000080;
+    --input-border-focus: #4169E1;
+    --input-placeholder: #6C757D;
+    --input-shadow: inset 1px 1px 2px rgba(0, 0, 128, 0.1);
+    --input-focus-shadow: 0 0 0 2px rgba(65, 105, 225, 0.3), inset 1px 1px 2px rgba(0, 0, 128, 0.1);
+    --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23000080' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    --cursor-color: #000080;
+    --focus-outline: #000080;
+    --scrollbar-track: #E6F3FF;
+    --scrollbar-track-border: #000080;
+    --scrollbar-thumb: #000080;
+    --scrollbar-thumb-border: #4169E1;
+    --scrollbar-thumb-hover: #191970;
   }
 
-  /* Auto mode - follows system preference but defaults to light */
-  @media (prefers-color-scheme: light) {
-    :root {
-      --input-bg-auto: var(--input-bg-light);
-      --input-text-auto: var(--input-text-light);
-      --input-border-auto: var(--input-border-light);
-      --input-border-focus-auto: var(--input-border-focus-light);
-      --input-placeholder-auto: var(--input-placeholder-light);
-    }
+  /* Dark theme variables */
+  [data-theme="dark"] {
+    --retro-primary: #000080;
+    --retro-primary-light: #0000CC;
+    --retro-primary-dark: #000066;
+    --retro-accent: #87CEEB;
+    --retro-accent-light: #ADD8E6;
+    --retro-accent-medium: #4682B4;
+    --retro-accent-teal: #008080;
+    --retro-accent-teal-dark: #006666;
+    --retro-bg-primary: #000033;
+    --retro-bg-secondary: #000044;
+    --retro-bg-tertiary: #000055;
+    --retro-success: #00FF00;
+    --retro-warning: #FFFF00;
+    --retro-error: #FF0000;
+    --retro-text: #ADD8E6;
+    --retro-accent-glow: rgba(173, 216, 230, 0.8);
+    --retro-accent-glow-weak: rgba(173, 216, 230, 0.4);
+    --pixel-grid-pattern: linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
+    
+    /* Input colors for dark theme */
+    --input-bg: #000055;
+    --input-text: #ADD8E6;
+    --input-border: #87CEEB;
+    --input-border-focus: #ADD8E6;
+    --input-placeholder: #A0A0A0;
+    --input-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
+    --input-focus-shadow: 0 0 0 2px rgba(173, 216, 230, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.3);
+    --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ADD8E6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    --cursor-color: #ADD8E6;
+    --focus-outline: #ADD8E6;
+    --scrollbar-track: #000044;
+    --scrollbar-track-border: #000080;
+    --scrollbar-thumb: #ADD8E6;
+    --scrollbar-thumb-border: #008080;
+    --scrollbar-thumb-hover: #87CEEB;
   }
 
+  /* Auto theme - follows system preference */
   @media (prefers-color-scheme: dark) {
-    :root {
-      --input-bg-auto: var(--input-bg-dark);
-      --input-text-auto: var(--input-text-dark);
-      --input-border-auto: var(--input-border-dark);
-      --input-border-focus-auto: var(--input-border-focus-dark);
-      --input-placeholder-auto: var(--input-placeholder-dark);
+    [data-theme="auto"] {
+      --retro-primary: #000080;
+      --retro-primary-light: #0000CC;
+      --retro-primary-dark: #000066;
+      --retro-accent: #87CEEB;
+      --retro-accent-light: #ADD8E6;
+      --retro-accent-medium: #4682B4;
+      --retro-accent-teal: #008080;
+      --retro-accent-teal-dark: #006666;
+      --retro-bg-primary: #000033;
+      --retro-bg-secondary: #000044;
+      --retro-bg-tertiary: #000055;
+      --retro-success: #00FF00;
+      --retro-warning: #FFFF00;
+      --retro-error: #FF0000;
+      --retro-text: #ADD8E6;
+      --retro-accent-glow: rgba(173, 216, 230, 0.8);
+      --retro-accent-glow-weak: rgba(173, 216, 230, 0.4);
+      --pixel-grid-pattern: linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
+      
+      --input-bg: #000055;
+      --input-text: #ADD8E6;
+      --input-border: #87CEEB;
+      --input-border-focus: #ADD8E6;
+      --input-placeholder: #A0A0A0;
+      --input-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
+      --input-focus-shadow: 0 0 0 2px rgba(173, 216, 230, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.3);
+      --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ADD8E6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+      --cursor-color: #ADD8E6;
+      --focus-outline: #ADD8E6;
+      --scrollbar-track: #000044;
+      --scrollbar-track-border: #000080;
+      --scrollbar-thumb: #ADD8E6;
+      --scrollbar-thumb-border: #008080;
+      --scrollbar-thumb-hover: #87CEEB;
     }
+  }
+
+  /* Base body styling using CSS variables */
+  body {
+    background-color: var(--retro-bg-primary);
+    background-image: var(--pixel-grid-pattern);
+    background-size: 8px 8px;
+    color: var(--retro-text);
+    font-family: "Pixelify Sans", sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
-/* Enhanced pixel components with light theme styling */
+/* Enhanced pixel components with theme system */
 @layer components {
   .pixel-button {
     @apply font-pixel-sans font-medium transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
     @apply cursor-pointer select-none;
     image-rendering: pixelated;
-    /* Ensure buttons are always visible with high contrast */
     min-height: 32px;
     min-width: 32px;
   }
@@ -92,126 +171,37 @@
     @apply hover:shadow-pixel-glow;
   }
 
-  /* Enhanced input styling with light theme support */
+  /* Enhanced input styling with theme system */
   .pixel-input {
-    @apply font-pixel-sans border-2 rounded-pixel shadow-pixel-inner transition-all duration-200;
-    /* Ensure minimum touch target size */
+    @apply font-pixel-sans border-2 rounded-pixel transition-all duration-200;
     min-height: 32px;
     padding: 8px 12px;
-  }
-
-  /* Default (Light) theme inputs */
-  .pixel-input {
-    background-color: var(--input-bg-light);
-    color: var(--input-text-light);
-    border-color: var(--input-border-light);
-    box-shadow: inset 1px 1px 2px rgba(0, 0, 128, 0.1);
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-color: var(--input-border);
+    box-shadow: var(--input-shadow);
   }
 
   .pixel-input:focus {
     outline: none;
-    border-color: var(--input-border-focus-light);
-    box-shadow: 0 0 0 2px rgba(65, 105, 225, 0.3), inset 1px 1px 2px rgba(0, 0, 128, 0.1);
+    border-color: var(--input-border-focus);
+    box-shadow: var(--input-focus-shadow);
   }
 
   .pixel-input::placeholder {
-    color: var(--input-placeholder-light);
+    color: var(--input-placeholder);
     opacity: 0.7;
   }
 
-  /* Dark theme inputs (when explicitly set) */
-  [data-theme="dark"] body {
-    background-color: #000033;
-    background-image: 
-      linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
-    color: #ADD8E6;
-  }
-
-  [data-theme="dark"] .pixel-input {
-    background-color: var(--input-bg-dark);
-    color: var(--input-text-dark);
-    border-color: var(--input-border-dark);
-    box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
-  }
-
-  [data-theme="dark"] .pixel-input:focus {
-    border-color: var(--input-border-focus-dark);
-    box-shadow: 0 0 0 2px rgba(173, 216, 230, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.3);
-  }
-
-  [data-theme="dark"] .pixel-input::placeholder {
-    color: var(--input-placeholder-dark);
-    opacity: 0.7;
-  }
-
-  /* Auto theme inputs */
-  [data-theme="auto"] .pixel-input {
-    background-color: var(--input-bg-auto);
-    color: var(--input-text-auto);
-    border-color: var(--input-border-auto);
-  }
-
-  [data-theme="auto"] .pixel-input:focus {
-    border-color: var(--input-border-focus-auto);
-  }
-
-  [data-theme="auto"] .pixel-input::placeholder {
-    color: var(--input-placeholder-auto);
-    opacity: 0.7;
-  }
-
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] .pixel-input {
-      box-shadow: inset 1px 1px 2px rgba(0, 0, 128, 0.1);
-    }
-
-    [data-theme="auto"] .pixel-input:focus {
-      box-shadow: 0 0 0 2px rgba(65, 105, 225, 0.3), inset 1px 1px 2px rgba(0, 0, 128, 0.1);
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    [data-theme="auto"] body {
-      background-color: #000033;
-      background-image: 
-        linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
-      color: #ADD8E6;
-    }
-
-    [data-theme="auto"] .pixel-input {
-      box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    [data-theme="auto"] .pixel-input:focus {
-      box-shadow: 0 0 0 2px rgba(173, 216, 230, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.3);
-    }
-  }
-
-  /* Select elements - Light theme arrows */
+  /* Select elements */
   .pixel-input select,
   select.pixel-input {
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23000080' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-image: var(--select-arrow);
     background-position: right 8px center;
     background-repeat: no-repeat;
     background-size: 16px;
     padding-right: 32px;
     appearance: none;
-  }
-
-  /* Dark theme select arrow */
-  [data-theme="dark"] .pixel-input select,
-  [data-theme="dark"] select.pixel-input {
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ADD8E6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-  }
-
-  /* Auto theme select arrow */
-  @media (prefers-color-scheme: dark) {
-    [data-theme="auto"] .pixel-input select,
-    [data-theme="auto"] select.pixel-input {
-      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ADD8E6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-    }
   }
 
   /* Textarea elements */
@@ -221,30 +211,22 @@
     min-height: 64px;
   }
 
-  /* Input error states - Light theme */
+  /* Input error states */
   .pixel-input.error {
-    border-color: #DC143C;
+    border-color: var(--retro-error);
   }
 
   .pixel-input.error:focus {
-    box-shadow: 0 0 0 2px rgba(220, 20, 60, 0.3), inset 1px 1px 2px rgba(0, 0, 128, 0.1);
+    box-shadow: 0 0 0 2px rgba(220, 20, 60, 0.3), var(--input-shadow);
   }
 
-  [data-theme="dark"] .pixel-input.error:focus {
-    box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.3);
-  }
-
-  /* Input success states - Light theme */
+  /* Input success states */
   .pixel-input.success {
-    border-color: #006400;
+    border-color: var(--retro-success);
   }
 
   .pixel-input.success:focus {
-    box-shadow: 0 0 0 2px rgba(0, 100, 0, 0.3), inset 1px 1px 2px rgba(0, 0, 128, 0.1);
-  }
-
-  [data-theme="dark"] .pixel-input.success:focus {
-    box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 2px rgba(0, 100, 0, 0.3), var(--input-shadow);
   }
 
   .pixel-badge {
@@ -277,10 +259,10 @@
 
   .responsive-container-text-only {
     @apply aspect-[3/2];
-    max-height: 8rem; /* 128px */
+    max-height: 8rem;
   }
 
-  /* Enhanced button states for better user feedback - Light theme */
+  /* Enhanced button states for better user feedback */
   .pixel-button:hover {
     @apply transform scale-105;
   }
@@ -365,21 +347,9 @@
 
   .cursor-pixel::after {
     content: '|';
-    color: #000080; /* Navy cursor for light theme */
+    color: var(--cursor-color);
     animation: cursor-blink 1s step-end infinite;
     font-weight: bold;
-  }
-
-  /* Dark theme cursor */
-  [data-theme="dark"] .cursor-pixel::after {
-    color: #ADD8E6;
-  }
-
-  /* Auto theme cursor */
-  @media (prefers-color-scheme: dark) {
-    [data-theme="auto"] .cursor-pixel::after {
-      color: #ADD8E6;
-    }
   }
 
   /* Container sizing utilities */
@@ -412,115 +382,43 @@
   .focus-visible {
     @apply ring-2 ring-retro-accent ring-offset-2;
   }
-
-  /* Theme-specific focus styles */
-  [data-theme="dark"] .focus-visible {
-    @apply ring-2 ring-retro-accent-light ring-offset-2;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    [data-theme="auto"] .focus-visible {
-      @apply ring-2 ring-retro-accent-light ring-offset-2;
-    }
-  }
 }
 
-/* Custom scrollbar with light theme aesthetic */
+/* Custom scrollbar with theme system */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #E6F3FF;
-  border: 2px solid #000080;
+  background: var(--scrollbar-track);
+  border: 2px solid var(--scrollbar-track-border);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #000080;
-  border: 2px solid #4169E1;
-  min-height: 32px; /* Ensure scrollbar thumb is large enough to grab */
+  background: var(--scrollbar-thumb);
+  border: 2px solid var(--scrollbar-thumb-border);
+  min-height: 32px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #191970;
+  background: var(--scrollbar-thumb-hover);
 }
 
-/* Dark theme scrollbar */
-[data-theme="dark"] ::-webkit-scrollbar-track {
-  background: #000044;
-  border: 2px solid #000080;
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: #ADD8E6;
-  border: 2px solid #008080;
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: #87CEEB;
-}
-
-/* Auto theme scrollbar */
-@media (prefers-color-scheme: dark) {
-  [data-theme="auto"] ::-webkit-scrollbar-track {
-    background: #000044;
-    border: 2px solid #000080;
-  }
-
-  [data-theme="auto"] ::-webkit-scrollbar-thumb {
-    background: #ADD8E6;
-    border: 2px solid #008080;
-  }
-
-  [data-theme="auto"] ::-webkit-scrollbar-thumb:hover {
-    background: #87CEEB;
-  }
-}
-
-/* Enhanced focus styles for accessibility - Light theme */
+/* Enhanced focus styles for accessibility */
 *:focus {
   outline: none;
 }
 
 *:focus-visible {
-  outline: 3px solid #000080;
+  outline: 3px solid var(--focus-outline);
   outline-offset: 2px;
 }
 
-/* Dark theme focus */
-[data-theme="dark"] *:focus-visible {
-  outline: 3px solid #ADD8E6;
-  outline-offset: 2px;
-}
-
-/* Auto theme focus */
-@media (prefers-color-scheme: dark) {
-  [data-theme="auto"] *:focus-visible {
-    outline: 3px solid #ADD8E6;
-    outline-offset: 2px;
-  }
-}
-
-/* Ensure sufficient contrast for all text - Light theme */
+/* Ensure sufficient contrast for all text */
 .text-contrast-check {
-  /* Use this class to test contrast ratios */
-  background: #F0F8FF;
-  color: #000080;
-}
-
-/* Dark theme contrast check */
-[data-theme="dark"] .text-contrast-check {
-  background: #000033;
-  color: #ADD8E6;
-}
-
-/* Auto theme contrast check */
-@media (prefers-color-scheme: dark) {
-  [data-theme="auto"] .text-contrast-check {
-    background: #000033;
-    color: #ADD8E6;
-  }
+  background: var(--retro-bg-primary);
+  color: var(--retro-text);
 }
 
 /* Smooth transitions for theme changes */
@@ -528,7 +426,7 @@
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* Print styles - Light theme optimized */
+/* Print styles */
 @media print {
   .pixel-button {
     @apply border border-black text-black bg-white;
@@ -552,7 +450,7 @@
     opacity: 0.9;
   }
   100% { 
-    transform: scale(1);
+    transform: 'scale(1)',
     opacity: 1;
   }
 }

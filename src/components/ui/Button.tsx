@@ -27,22 +27,22 @@ export const Button: React.FC<ButtonProps> = ({
   const baseClasses = 'pixel-button inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
   
   const variantClasses = {
-    // Primary: Light blue background with navy text (light theme)
+    // Primary: Uses theme primary color with accent text
     primary: 'bg-retro-primary text-retro-accent border-retro-primary hover:bg-retro-primary-light hover:border-retro-primary-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    // Accent: Navy background with white text (for emphasis)
+    // Accent: Uses theme accent color with white text (for emphasis)
     accent: 'bg-retro-accent text-retro-white border-retro-accent hover:bg-retro-accent-light hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    // Ghost: Transparent with navy border and text
+    // Ghost: Transparent with theme accent border and text
     ghost: 'bg-transparent text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-white hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    // Danger: Crimson background with white text (updated for light theme)
-    danger: 'bg-retro-error text-retro-white border-retro-error hover:bg-red-700 hover:border-red-700 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    // Warning: Dark goldenrod background with navy text
-    warning: 'bg-retro-warning text-retro-accent border-retro-warning hover:bg-yellow-600 hover:border-yellow-600 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5'
+    // Danger: Uses theme error color with white text
+    danger: 'bg-retro-error text-retro-white border-retro-error hover:opacity-90 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    // Warning: Uses theme warning color with accent text
+    warning: 'bg-retro-warning text-retro-accent border-retro-warning hover:opacity-90 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5'
   };
   
   const sizeClasses = {
-    sm: 'px-3 py-2 text-sm min-h-[32px]', // Ensure minimum 32px height
-    md: 'px-4 py-3 text-base min-h-[40px]', // Ensure minimum 40px height
-    lg: 'px-6 py-4 text-lg min-h-[48px]'   // Ensure minimum 48px height
+    sm: 'px-3 py-2 text-sm min-h-[32px]',
+    md: 'px-4 py-3 text-base min-h-[40px]',
+    lg: 'px-6 py-4 text-lg min-h-[48px]'
   };
   
   const iconSizeClasses = {
