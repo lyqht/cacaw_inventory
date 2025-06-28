@@ -38,7 +38,7 @@ export class StorageService {
     return StorageService.instance;
   }
 
-  // Initialize database and create default data if needed
+  // Initialize database - no default folders created
   async initialize(): Promise<void> {
     try {
       // Prevent multiple initializations
@@ -50,104 +50,11 @@ export class StorageService {
       await db.open();
       console.log('Database opened successfully');
       
-      await this.createDefaultFolders();
       this.isInitialized = true;
-      console.log('Storage initialization complete');
+      console.log('Storage initialization complete - no default folders created');
     } catch (error) {
       console.error('Failed to initialize storage:', error);
       throw error;
-    }
-  }
-
-  // Create default folders for new users - improved duplicate prevention
-  private async createDefaultFolders(): Promise<void> {
-    try {
-      // Check if we already have folders for this user
-      const existingFolders = await db.folders
-        .where('userId')
-        .equals(this.userId)
-        .and(folder => !folder.isArchived)
-        .toArray();
-      
-      console.log('Existing folders found:', existingFolders.length);
-      
-      if (existingFolders.length > 0) {
-        console.log('User already has folders, skipping default creation');
-        return;
-      }
-
-      // Check if we've already marked this user as having default folders created
-      const defaultFoldersCreated = await this.getSetting('default_folders_created');
-      if (defaultFoldersCreated) {
-        console.log('Default folders already marked as created, skipping...');
-        return;
-      }
-
-      console.log('Creating default folders for new user...');
-
-      const defaultFolders: Omit<Folder, 'id'>[] = [
-        {
-          userId: this.userId,
-          name: 'Trading Cards',
-          description: 'Pokemon, Magic, sports cards, and more',
-          type: 'trading-cards',
-          source: 'local',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          tags: ['default', 'cards'],
-          itemCount: 0,
-          isArchived: false,
-          syncStatus: 'local-only',
-          metadata: {
-            sortOrder: 'name',
-            sortDirection: 'asc',
-            viewMode: 'grid'
-          }
-        },
-        {
-          userId: this.userId,
-          name: 'Action Figures',
-          description: 'Funko Pops, anime figures, and collectible toys',
-          type: 'action-figures',
-          source: 'local',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          tags: ['default', 'figures'],
-          itemCount: 0,
-          isArchived: false,
-          syncStatus: 'local-only',
-          metadata: {
-            sortOrder: 'name',
-            sortDirection: 'asc',
-            viewMode: 'grid'
-          }
-        }
-      ];
-
-      // Create folders one by one to avoid race conditions
-      for (const folderData of defaultFolders) {
-        // Double-check that a folder with this name doesn't already exist
-        const existingByName = await db.folders
-          .where('userId')
-          .equals(this.userId)
-          .and(folder => folder.name === folderData.name && !folder.isArchived)
-          .first();
-
-        if (!existingByName) {
-          const folderId = await this.createFolder(folderData);
-          console.log(`Created default folder: ${folderData.name} (${folderId})`);
-        } else {
-          console.log(`Folder "${folderData.name}" already exists, skipping...`);
-        }
-      }
-
-      // Mark that we've created default folders for this user
-      await this.setSetting('default_folders_created', true);
-      console.log('Default folders creation completed and marked');
-
-    } catch (error) {
-      console.error('Error creating default folders:', error);
-      // Don't throw here to prevent app from breaking
     }
   }
 
@@ -489,24 +396,6 @@ export class StorageService {
     this.isInitialized = false;
     
     console.log('All data cleared');
-  }
-
-  // Reset default folders (for testing)
-  async resetDefaultFolders(): Promise<void> {
-    // Remove the flag that prevents default folder creation
-    await db.settings.delete('default_folders_created');
-    
-    // Delete existing default folders
-    await db.folders
-      .where('userId')
-      .equals(this.userId)
-      .and(folder => folder.tags.includes('default'))
-      .delete();
-    
-    // Reset initialization flag to allow re-creation
-    this.isInitialized = false;
-    
-    console.log('Default folders reset');
   }
 
   // Get database statistics
