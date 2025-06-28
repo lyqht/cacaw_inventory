@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Plus, Search, Grid, List } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Plus, Search, Grid, List, Edit, Trash2 } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
 import { StorageService } from '../services/storage';
 import { Button } from '../components/ui/Button';
@@ -7,6 +7,9 @@ import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { FolderCard } from '../components/folders/FolderCard';
+import { FolderDeleteModal } from '../components/folders/FolderDeleteModal';
+import { Folder } from '../types';
 
 const storageService = StorageService.getInstance();
 
@@ -22,6 +25,10 @@ export const FoldersPage: React.FC = () => {
     setSearchQuery,
     navigateToFolder
   } = useAppStore();
+
+  // Local state for folder management
+  const [deletingFolder, setDeletingFolder] = useState<Folder | null>(null);
+  const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
 
   useEffect(() => {
     loadFolders();
@@ -40,6 +47,32 @@ export const FoldersPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteFolder = async (folder: Folder) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Delete the folder and all its items
+      await storageService.deleteFolder(folder.id);
+      
+      // Reload folders to update the UI
+      await loadFolders();
+      
+      setDeletingFolder(null);
+    } catch (err) {
+      console.error('Error deleting folder:', err);
+      setError('Failed to delete folder. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditFolder = (folder: Folder) => {
+    setEditingFolder(folder);
+    // TODO: Implement folder edit modal
+    console.log('Edit folder:', folder);
   };
 
   const filteredFolders = folders.filter(folder =>
@@ -192,70 +225,25 @@ export const FoldersPage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-pixel-2">
             {filteredFolders.map((folder) => (
-              <Card
+              <FolderCard
                 key={folder.id}
-                hoverable
-                glow
-                onClick={() => navigateToFolder(folder)}
-                className="transition-transform hover:scale-105"
-              >
-                <div className="space-y-pixel">
-                  {/* Folder Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="text-3xl animate-pixel-float">
-                      {getFolderIcon(folder.type)}
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="default" glow>
-                        {folder.itemCount} items
-                      </Badge>
-                      {folder.totalValue && (
-                        <div className="text-sm font-pixel-sans text-retro-accent font-medium mt-1">
-                          ${folder.totalValue.toFixed(2)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Folder Info */}
-                  <div>
-                    <h3 className="font-pixel text-retro-accent text-lg mb-1">
-                      {folder.name}
-                    </h3>
-                    <Badge variant="default" size="sm">
-                      {getFolderTypeLabel(folder.type)}
-                    </Badge>
-                    {folder.description && (
-                      <p className="text-sm text-retro-accent-light font-pixel-sans mt-1 line-clamp-2">
-                        {folder.description}
-                      </p>
-                    )}
-                  </div>
-                  
-                  {/* Folder Tags */}
-                  {folder.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {folder.tags.slice(0, 3).map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="default"
-                          size="sm"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                      {folder.tags.length > 3 && (
-                        <Badge variant="default" size="sm">
-                          +{folder.tags.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </Card>
+                folder={folder}
+                onView={navigateToFolder}
+                onEdit={handleEditFolder}
+                onDelete={(folder) => setDeletingFolder(folder)}
+              />
             ))}
           </div>
         )}
+
+        {/* Delete Confirmation Modal */}
+        <FolderDeleteModal
+          folder={deletingFolder}
+          isOpen={!!deletingFolder}
+          onClose={() => setDeletingFolder(null)}
+          onConfirm={handleDeleteFolder}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );

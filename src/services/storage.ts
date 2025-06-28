@@ -131,7 +131,48 @@ export class StorageService {
   }
 
   async deleteFolder(id: string): Promise<void> {
-    // Soft delete - mark as archived
+    try {
+      // Start a transaction to ensure data consistency
+      await db.transaction('rw', db.folders, db.items, db.images, async () => {
+        // Get the folder to check if it exists
+        const folder = await db.folders.get(id);
+        if (!folder) {
+          throw new Error('Folder not found');
+        }
+
+        // Get all items in the folder
+        const items = await db.items
+          .where('folderId')
+          .equals(id)
+          .toArray();
+
+        // Delete all images associated with items in this folder
+        for (const item of items) {
+          await db.images
+            .where('itemId')
+            .equals(item.id)
+            .delete();
+        }
+
+        // Delete all items in the folder
+        await db.items
+          .where('folderId')
+          .equals(id)
+          .delete();
+
+        // Finally, delete the folder itself
+        await db.folders.delete(id);
+      });
+
+      console.log(`Successfully deleted folder ${id} and all associated data`);
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      throw new Error('Failed to delete folder and its contents');
+    }
+  }
+
+  // Soft delete folder (alternative method - keeps data but marks as archived)
+  async archiveFolder(id: string): Promise<void> {
     await db.folders.update(id, {
       isArchived: true,
       updatedAt: new Date()
@@ -142,6 +183,42 @@ export class StorageService {
       .where('folderId')
       .equals(id)
       .modify({ isArchived: true, updatedAt: new Date() });
+  }
+
+  // Get folder statistics for deletion confirmation
+  async getFolderStats(id: string): Promise<{
+    itemCount: number;
+    imageCount: number;
+    totalValue: number;
+  }> {
+    const items = await db.items
+      .where('folderId')
+      .equals(id)
+      .and(item => !item.isArchived)
+      .toArray();
+
+    let imageCount = 0;
+    let totalValue = 0;
+
+    for (const item of items) {
+      // Count images for this item
+      const itemImages = await db.images
+        .where('itemId')
+        .equals(item.id)
+        .count();
+      imageCount += itemImages;
+
+      // Sum up estimated values
+      if (item.estimatedValue) {
+        totalValue += item.estimatedValue;
+      }
+    }
+
+    return {
+      itemCount: items.length,
+      imageCount,
+      totalValue
+    };
   }
 
   // Item operations
@@ -186,11 +263,14 @@ export class StorageService {
     const item = await this.getItem(id);
     if (!item) return;
 
-    // Soft delete - mark as archived
-    await db.items.update(id, {
-      isArchived: true,
-      updatedAt: new Date()
-    });
+    // Delete associated images first
+    await db.images
+      .where('itemId')
+      .equals(id)
+      .delete();
+
+    // Delete the item
+    await db.items.delete(id);
     
     // Update folder item count
     await this.updateFolderItemCount(item.folderId);
@@ -260,8 +340,20 @@ export class StorageService {
       .and(item => !item.isArchived)
       .count();
     
+    // Calculate total value
+    const items = await db.items
+      .where('folderId')
+      .equals(folderId)
+      .and(item => !item.isArchived)
+      .toArray();
+    
+    const totalValue = items.reduce((sum, item) => {
+      return sum + (item.estimatedValue || 0);
+    }, 0);
+    
     await db.folders.update(folderId, { 
       itemCount,
+      totalValue: totalValue > 0 ? totalValue : undefined,
       updatedAt: new Date()
     });
   }
@@ -333,5 +425,29 @@ export class StorageService {
     await db.images.clear();
     await db.detectionLogs.clear();
     await db.settings.clear();
+  }
+
+  // Get database statistics
+  async getDatabaseStats(): Promise<{
+    folders: number;
+    items: number;
+    images: number;
+    totalSize: number;
+  }> {
+    const [folders, items, images] = await Promise.all([
+      db.folders.count(),
+      db.items.count(),
+      db.images.count()
+    ]);
+
+    // Estimate total size (rough calculation)
+    const totalSize = (folders * 1000) + (items * 2000) + (images * 50000); // bytes
+
+    return {
+      folders,
+      items,
+      images,
+      totalSize
+    };
   }
 }
