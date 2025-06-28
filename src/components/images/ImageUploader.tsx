@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, Camera, X, RotateCw, Crop, Sliders, Save, Trash2, Eye, GripVertical, Star, Plus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -39,6 +39,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [showEditor, setShowEditor] = useState(false);
   const [previewImage, setPreviewImage] = useState<ImageFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -48,6 +49,38 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const acceptedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+
+  // Load existing images when component mounts or existingImages changes
+  useEffect(() => {
+    console.log('ImageUploader: existingImages changed:', existingImages);
+    
+    if (existingImages.length > 0 && !isInitialized) {
+      const loadedImages: ImageFile[] = existingImages
+        .filter(url => url && url.trim() !== '') // Filter out empty URLs
+        .map((url, index) => ({
+          id: `existing-${index}`,
+          file: new File([], `existing-image-${index}.jpg`, { type: 'image/jpeg' }),
+          url: url,
+          altText: `Image ${index + 1}`,
+          isEdited: false
+        }));
+      
+      console.log('ImageUploader: Loading existing images:', loadedImages);
+      setImages(loadedImages);
+      onImagesChange(loadedImages);
+      setIsInitialized(true);
+    } else if (existingImages.length === 0 && !isInitialized) {
+      // No existing images, start fresh
+      setImages([]);
+      setIsInitialized(true);
+    }
+  }, [existingImages, isInitialized, onImagesChange]);
+
+  // Reset when existingImages prop changes (e.g., switching between items)
+  useEffect(() => {
+    setIsInitialized(false);
+    setImages([]);
+  }, [existingImages]);
 
   const validateFile = (file: File): string | null => {
     if (!acceptedFormats.includes(file.type)) {
@@ -231,7 +264,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         }
       }
       
-      URL.revokeObjectURL(imageToRemove.url);
+      // Only revoke blob URLs, not data URLs or existing image URLs
+      if (imageToRemove.url.startsWith('blob:')) {
+        URL.revokeObjectURL(imageToRemove.url);
+      }
+      
       const updatedImages = images.filter(img => img.id !== imageId);
       setImages(updatedImages);
       onImagesChange(updatedImages);
@@ -261,8 +298,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     const newUrl = URL.createObjectURL(editedFile);
     
-    // Revoke old URL
-    URL.revokeObjectURL(editingImage.url);
+    // Revoke old URL only if it's a blob URL
+    if (editingImage.url.startsWith('blob:')) {
+      URL.revokeObjectURL(editingImage.url);
+    }
 
     const updatedImages = images.map(img =>
       img.id === editingImage.id
@@ -364,6 +403,16 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     setImages(newImages);
     onImagesChange(newImages);
   };
+
+  // Show loading state while initializing
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <LoadingSpinner size="md" variant="accent" />
+        <span className="ml-2 text-retro-accent-light font-pixel-sans">Loading images...</span>
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-pixel-2 ${className}`}>
@@ -547,6 +596,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                       src={image.url}
                       alt={image.altText || `Image ${index + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('Image failed to load:', image.url);
+                        // Don't hide the image, just log the error
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully:', image.url);
+                      }}
                     />
                     
                     {/* Drag Handle */}
