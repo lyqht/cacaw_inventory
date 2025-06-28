@@ -11,18 +11,6 @@ interface GeminiResponse {
   }>;
 }
 
-interface BoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface DetectedItemWithBounds extends Partial<CollectibleData> {
-  boundingBox?: BoundingBox;
-  croppedImage?: string;
-}
-
 export class AIDetectionService {
   private static instance: AIDetectionService;
   private apiKey: string | null = null;
@@ -79,7 +67,7 @@ export class AIDetectionService {
   }
 
   private getDetectionPrompt(folderType?: FolderType): string {
-    const basePrompt = `Analyze this image and identify any collectible items. For each item, provide its location in the image using normalized coordinates (0.0 to 1.0). Return a JSON response with the following structure:
+    const basePrompt = `Analyze this image and identify any collectible items. Return a JSON response with the following structure:
 
 {
   "items": [
@@ -92,13 +80,7 @@ export class AIDetectionService {
       "estimatedValue": 0.00,
       "currency": "USD",
       "tags": ["tag1", "tag2"],
-      "confidence": 0.95,
-      "boundingBox": {
-        "x": 0.1,
-        "y": 0.2,
-        "width": 0.3,
-        "height": 0.4
-      }
+      "confidence": 0.95
     }
   ],
   "overallConfidence": 0.90,
@@ -106,20 +88,13 @@ export class AIDetectionService {
   "notes": "Additional observations"
 }
 
-IMPORTANT: For boundingBox coordinates:
-- x, y: Top-left corner position (0.0 = left/top edge, 1.0 = right/bottom edge)
-- width, height: Size of the bounding box (0.0 to 1.0)
-- All coordinates should be normalized relative to the image dimensions
-- Be as precise as possible with the bounding boxes to ensure clean cropping
-
 Guidelines:
 - Be specific with item names (include character names, card numbers, etc.)
 - Estimate condition based on visible wear, scratches, or damage
 - Provide realistic market value estimates in USD
 - Include relevant tags for categorization
 - Confidence should be 0.0-1.0 based on image clarity and certainty
-- Ensure bounding boxes tightly fit around each item
-- If multiple items are visible, list each separately with its own bounding box`;
+- If multiple items are visible, list each separately`;
 
     const typeSpecificPrompts = {
       'trading-cards': `
@@ -129,8 +104,7 @@ Focus on trading cards. Look for:
 - Rarity symbols
 - Condition indicators (corners, edges, surface)
 - Holographic or special features
-- Visible damage or wear
-- Precise bounding boxes around each individual card`,
+- Visible damage or wear`,
 
       'action-figures': `
 Focus on action figures and collectible figures. Look for:
@@ -139,8 +113,7 @@ Focus on action figures and collectible figures. Look for:
 - Scale or size
 - Packaging condition if in box
 - Missing accessories or parts
-- Paint wear or defects
-- Tight bounding boxes around each figure including any accessories`,
+- Paint wear or defects`,
 
       'plushies': `
 Focus on plush toys and stuffed animals. Look for:
@@ -149,8 +122,7 @@ Focus on plush toys and stuffed animals. Look for:
 - Tags or labels
 - Condition of fabric and stuffing
 - Missing parts or accessories
-- Cleanliness and wear
-- Bounding boxes that include the full plushie shape`,
+- Cleanliness and wear`,
 
       'comics': `
 Focus on comic books and graphic novels. Look for:
@@ -159,8 +131,7 @@ Focus on comic books and graphic novels. Look for:
 - Cover condition
 - Spine condition
 - Page quality
-- Special editions or variants
-- Precise bounding boxes around each comic book`,
+- Special editions or variants`,
 
       'games': `
 Focus on video games and board games. Look for:
@@ -169,8 +140,7 @@ Focus on video games and board games. Look for:
 - Condition of case/box
 - Completeness (manual, inserts)
 - Disc/cartridge condition
-- Special or limited editions
-- Bounding boxes around complete game packages`
+- Special or limited editions`
     };
 
     if (folderType && typeSpecificPrompts[folderType]) {
@@ -194,106 +164,12 @@ Focus on video games and board games. Look for:
     });
   }
 
-  private async cropImageFromBounds(
-    originalImageBlob: Blob,
-    boundingBox: BoundingBox,
-    padding: number = 0.05
-  ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return;
-      }
-
-      img.onload = () => {
-        try {
-          const imgWidth = img.naturalWidth;
-          const imgHeight = img.naturalHeight;
-
-          // Convert normalized coordinates to pixel coordinates
-          const x = Math.max(0, boundingBox.x * imgWidth - (padding * imgWidth));
-          const y = Math.max(0, boundingBox.y * imgHeight - (padding * imgHeight));
-          const width = Math.min(
-            imgWidth - x,
-            (boundingBox.width * imgWidth) + (2 * padding * imgWidth)
-          );
-          const height = Math.min(
-            imgHeight - y,
-            (boundingBox.height * imgHeight) + (2 * padding * imgHeight)
-          );
-
-          // Ensure minimum crop size
-          const minSize = 100;
-          const finalWidth = Math.max(minSize, width);
-          const finalHeight = Math.max(minSize, height);
-
-          // Set canvas size to the crop dimensions
-          canvas.width = finalWidth;
-          canvas.height = finalHeight;
-
-          // Draw the cropped portion
-          ctx.drawImage(
-            img,
-            x, y, width, height,  // Source rectangle
-            0, 0, finalWidth, finalHeight  // Destination rectangle
-          );
-
-          // Convert to data URL
-          const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-          resolve(croppedDataUrl);
-        } catch (error) {
-          console.error('Error cropping image:', error);
-          reject(error);
-        }
-      };
-
-      img.onerror = () => {
-        reject(new Error('Failed to load image for cropping'));
-      };
-
-      // Load the original image
-      const imageUrl = URL.createObjectURL(originalImageBlob);
-      img.src = imageUrl;
-    });
-  }
-
   private parseGeminiResponse(responseText: string): any {
     try {
       // Try to find JSON in the response
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        
-        // Validate and clean bounding box data
-        if (parsed.items && Array.isArray(parsed.items)) {
-          parsed.items = parsed.items.map((item: any) => {
-            if (item.boundingBox) {
-              // Ensure bounding box values are valid numbers between 0 and 1
-              const bbox = item.boundingBox;
-              item.boundingBox = {
-                x: Math.max(0, Math.min(1, Number(bbox.x) || 0)),
-                y: Math.max(0, Math.min(1, Number(bbox.y) || 0)),
-                width: Math.max(0.01, Math.min(1, Number(bbox.width) || 0.1)),
-                height: Math.max(0.01, Math.min(1, Number(bbox.height) || 0.1))
-              };
-              
-              // Ensure bounding box doesn't exceed image bounds
-              if (item.boundingBox.x + item.boundingBox.width > 1) {
-                item.boundingBox.width = 1 - item.boundingBox.x;
-              }
-              if (item.boundingBox.y + item.boundingBox.height > 1) {
-                item.boundingBox.height = 1 - item.boundingBox.y;
-              }
-            }
-            return item;
-          });
-        }
-        
-        return parsed;
+        return JSON.parse(jsonMatch[0]);
       }
       
       // If no JSON found, try to extract information manually
@@ -318,14 +194,7 @@ Focus on video games and board games. Look for:
         estimatedValue: 0,
         currency: 'USD',
         tags: ['ai-detected'],
-        confidence: 0.5,
-        // Default bounding box covering most of the image
-        boundingBox: {
-          x: 0.1,
-          y: 0.1,
-          width: 0.8,
-          height: 0.8
-        }
+        confidence: 0.5
       }],
       overallConfidence: 0.5,
       detectedText: '',
@@ -381,7 +250,7 @@ Focus on video games and board games. Look for:
         throw new Error('Gemini API key not configured. Please check your environment variables or add a custom API key.');
       }
 
-      console.log('Starting AI detection with auto-cropping for image:', imageBlob.size, 'bytes');
+      console.log('Starting AI detection for image:', imageBlob.size, 'bytes');
       console.log('Using custom API key:', isUsingCustomKey, 'Remaining free detections:', remaining);
 
       // Convert image to base64
@@ -465,64 +334,35 @@ Focus on video games and board games. Look for:
 
       // Parse the response
       const parsedResponse = this.parseGeminiResponse(responseText);
-      console.log('Parsed response with bounding boxes:', parsedResponse);
-
-      // Process items and create cropped images
-      const processedItems: DetectedItemWithBounds[] = [];
-      
-      if (parsedResponse.items && Array.isArray(parsedResponse.items)) {
-        for (let i = 0; i < parsedResponse.items.length; i++) {
-          const item = parsedResponse.items[i];
-          let croppedImage: string | undefined;
-
-          // Attempt to crop the image if bounding box is available
-          if (item.boundingBox) {
-            try {
-              console.log(`Cropping item ${i + 1} with bounding box:`, item.boundingBox);
-              croppedImage = await this.cropImageFromBounds(imageBlob, item.boundingBox);
-              console.log(`Successfully cropped item ${i + 1}`);
-            } catch (error) {
-              console.error(`Failed to crop item ${i + 1}:`, error);
-              // Continue without cropped image
-            }
-          } else {
-            console.log(`No bounding box for item ${i + 1}, skipping crop`);
-          }
-
-          processedItems.push({
-            name: item.name || 'Unknown Item',
-            type: item.type,
-            series: item.series,
-            condition: item.condition || 'good',
-            description: item.description,
-            estimatedValue: item.estimatedValue,
-            currency: item.currency || 'USD',
-            tags: Array.isArray(item.tags) ? item.tags : ['ai-detected'],
-            aiDetected: true,
-            aiConfidence: (item.confidence || parsedResponse.overallConfidence || 0.5) * 100,
-            aiPromptUsed: prompt,
-            ocrText: parsedResponse.detectedText,
-            userId: 'default-user',
-            syncStatus: 'local-only' as const,
-            isArchived: false,
-            additionalImages: [],
-            primaryImage: croppedImage, // Use cropped image as primary
-            thumbnailImage: croppedImage,
-            boundingBox: item.boundingBox,
-            croppedImage
-          });
-        }
-      }
       
       // Convert to our DetectionResult format
       const detectionResult: DetectionResult = {
-        items: processedItems,
+        items: parsedResponse.items?.map((item: any) => ({
+          name: item.name || 'Unknown Item',
+          type: item.type,
+          series: item.series,
+          condition: item.condition || 'good',
+          description: item.description,
+          estimatedValue: item.estimatedValue,
+          currency: item.currency || 'USD',
+          tags: Array.isArray(item.tags) ? item.tags : ['ai-detected'],
+          aiDetected: true,
+          aiConfidence: (item.confidence || parsedResponse.overallConfidence || 0.5) * 100,
+          aiPromptUsed: prompt,
+          ocrText: parsedResponse.detectedText,
+          userId: 'default-user',
+          syncStatus: 'local-only' as const,
+          isArchived: false,
+          additionalImages: [],
+          primaryImage: undefined,
+          thumbnailImage: undefined
+        })) || [],
         confidence: (parsedResponse.overallConfidence || 0.5) * 100,
         processingTime: Date.now() - startTime,
         rawResponse: responseText
       };
 
-      console.log('Final detection result with cropped images:', detectionResult);
+      console.log('Final detection result:', detectionResult);
       return detectionResult;
 
     } catch (error) {

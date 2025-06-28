@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Check, X, Edit, Sparkles, AlertTriangle, RefreshCw, Save, Eye, Crop, Download } from 'lucide-react';
-import { DetectionResult, CollectibleData, ItemCondition, BoundingBox } from '../../types';
+import { Check, X, Edit, Sparkles, AlertTriangle, RefreshCw, Save, Eye } from 'lucide-react';
+import { DetectionResult, CollectibleData, ItemCondition } from '../../types';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -31,7 +31,6 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [showRawResponse, setShowRawResponse] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
-  const [showBoundingBoxes, setShowBoundingBoxes] = useState(true);
 
   // Initialize editing items when detection result changes
   React.useEffect(() => {
@@ -119,56 +118,8 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
     }
   };
 
-  const downloadCroppedImage = (item: Partial<CollectibleData>, index: number) => {
-    if (!item.primaryImage) return;
-    
-    const link = document.createElement('a');
-    link.href = item.primaryImage;
-    link.download = `${item.name || `item-${index + 1}`}-cropped.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const renderBoundingBoxOverlay = () => {
-    if (!originalImage || !showBoundingBoxes) return null;
-
-    return (
-      <div className="absolute inset-0 pointer-events-none">
-        {editingItems.map((item, index) => {
-          if (!item.boundingBox) return null;
-          
-          const bbox = item.boundingBox;
-          const isSelected = selectedItems.has(index);
-          
-          return (
-            <div
-              key={index}
-              className={`absolute border-2 ${
-                isSelected ? 'border-retro-accent' : 'border-retro-warning'
-              } bg-transparent`}
-              style={{
-                left: `${bbox.x * 100}%`,
-                top: `${bbox.y * 100}%`,
-                width: `${bbox.width * 100}%`,
-                height: `${bbox.height * 100}%`,
-              }}
-            >
-              <div className={`absolute -top-6 left-0 px-1 py-0.5 text-xs font-pixel ${
-                isSelected ? 'bg-retro-accent text-retro-bg-primary' : 'bg-retro-warning text-retro-bg-primary'
-              } rounded-pixel-sm`}>
-                {index + 1}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   const hasError = detectionResult.error || detectionResult.items.length === 0;
   const hasLowConfidence = detectionResult.confidence < 50;
-  const hasCroppedImages = editingItems.some(item => item.primaryImage);
 
   return (
     <>
@@ -200,11 +151,6 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                   <span className="font-pixel-sans text-retro-accent-light">
                     • {detectionResult.processingTime}ms
                   </span>
-                  {hasCroppedImages && (
-                    <Badge variant="success" size="sm">
-                      Auto-Cropped
-                    </Badge>
-                  )}
                 </div>
               </div>
             </div>
@@ -228,21 +174,6 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
               />
             </div>
           </div>
-
-          {/* Auto-Cropping Success Info */}
-          {hasCroppedImages && !hasError && (
-            <Card variant="outlined" className="border-retro-success">
-              <div className="flex items-center gap-2 text-retro-success">
-                <Crop className="w-5 h-5" />
-                <div>
-                  <h3 className="font-pixel">Auto-Cropping Successful!</h3>
-                  <p className="font-pixel-sans text-sm mt-1">
-                    Individual images have been automatically cropped for each detected item using AI-powered bounding box detection.
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
 
           {/* Error State */}
           {hasError && (
@@ -289,45 +220,28 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
             </Card>
           )}
 
-          {/* Image Preview with Bounding Boxes */}
+          {/* Image Preview - Smaller for desktop */}
           {originalImage && (
             <Card variant="outlined" padding="sm">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Eye className="w-4 h-4 text-retro-accent" />
                   <span className="font-pixel text-retro-accent text-sm">Original Image</span>
-                  {editingItems.some(item => item.boundingBox) && (
-                    <Badge variant="default" size="sm">
-                      {editingItems.filter(item => item.boundingBox).length} Bounding Boxes
-                    </Badge>
-                  )}
                 </div>
-                <div className="flex gap-2">
-                  {editingItems.some(item => item.boundingBox) && (
-                    <Button
-                      variant={showBoundingBoxes ? 'accent' : 'ghost'}
-                      size="sm"
-                      icon={Crop}
-                      onClick={() => setShowBoundingBoxes(!showBoundingBoxes)}
-                    >
-                      {showBoundingBoxes ? 'Hide' : 'Show'} Boxes
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={Eye}
-                    onClick={() => setShowImageModal(true)}
-                  >
-                    View Full Size
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Eye}
+                  onClick={() => setShowImageModal(true)}
+                >
+                  View Full Size
+                </Button>
               </div>
               <div 
-                className="relative w-full bg-retro-bg-tertiary border border-retro-accent rounded-pixel overflow-hidden cursor-pointer hover:border-retro-accent-light transition-colors"
+                className="w-full bg-retro-bg-tertiary border border-retro-accent rounded-pixel overflow-hidden cursor-pointer hover:border-retro-accent-light transition-colors"
                 onClick={() => setShowImageModal(true)}
                 style={{ 
-                  maxHeight: window.innerWidth >= 768 ? '200px' : '300px'
+                  maxHeight: window.innerWidth >= 768 ? '200px' : '300px' // Smaller on desktop
                 }}
               >
                 <img
@@ -339,10 +253,9 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                     objectFit: 'contain'
                   }}
                 />
-                {renderBoundingBoxOverlay()}
               </div>
               <p className="text-retro-accent-light font-pixel-sans text-xs mt-1 text-center">
-                Click to view full size • {showBoundingBoxes ? 'Bounding boxes shown' : 'Bounding boxes hidden'}
+                Click to view full size
               </p>
             </Card>
           )}
@@ -408,7 +321,7 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                     }`}
                   >
                     <div className="space-y-pixel">
-                      {/* Item Header with Cropped Image Preview */}
+                      {/* Item Header */}
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2">
                           <input
@@ -421,48 +334,21 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                             <h3 className="font-pixel text-retro-accent">
                               Item {index + 1}
                             </h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              {item.aiConfidence && (
+                            {item.aiConfidence && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs font-pixel-sans text-retro-accent-light">
+                                  Confidence:
+                                </span>
                                 <Badge
                                   variant={item.aiConfidence >= 80 ? 'success' : item.aiConfidence >= 60 ? 'default' : 'warning'}
                                   size="sm"
                                 >
-                                  {Math.round(item.aiConfidence)}% confidence
+                                  {Math.round(item.aiConfidence)}%
                                 </Badge>
-                              )}
-                              {item.boundingBox && (
-                                <Badge variant="default" size="sm">
-                                  Auto-Located
-                                </Badge>
-                              )}
-                              {item.primaryImage && (
-                                <Badge variant="success" size="sm">
-                                  Auto-Cropped
-                                </Badge>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         </div>
-                        
-                        {/* Cropped Image Preview */}
-                        {item.primaryImage && (
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 h-16 bg-retro-bg-tertiary border border-retro-accent rounded-pixel overflow-hidden">
-                              <img
-                                src={item.primaryImage}
-                                alt={`Cropped ${item.name || 'item'}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              icon={Download}
-                              onClick={() => downloadCroppedImage(item, index)}
-                              title="Download cropped image"
-                            />
-                          </div>
-                        )}
                       </div>
 
                       {/* Editable Fields */}
@@ -508,6 +394,7 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                               </option>
                             ))}
                           </select>
+                          {/* Display condition with better contrast */}
                           <div className="mt-1">
                             <span className={`text-xs font-pixel-sans ${getConditionColor(item.condition || 'good')}`}>
                               Current: {(item.condition || 'good').split('-').map(word => 
@@ -562,20 +449,7 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                         />
                       </div>
 
-                      {/* Bounding Box Info */}
-                      {item.boundingBox && (
-                        <div>
-                          <label className="block text-sm font-pixel text-retro-accent mb-1">
-                            Detection Location
-                          </label>
-                          <div className="text-xs font-pixel-sans text-retro-accent-light bg-retro-bg-tertiary p-2 rounded-pixel">
-                            Position: ({(item.boundingBox.x * 100).toFixed(1)}%, {(item.boundingBox.y * 100).toFixed(1)}%) • 
-                            Size: {(item.boundingBox.width * 100).toFixed(1)}% × {(item.boundingBox.height * 100).toFixed(1)}%
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Tags */}
+                      {/* Tags - Made smaller */}
                       {item.tags && item.tags.length > 0 && (
                         <div>
                           <label className="block text-sm font-pixel text-retro-accent mb-1">
@@ -633,14 +507,13 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
                 glow
               >
                 Save {selectedItems.size} Item{selectedItems.size !== 1 ? 's' : ''}
-                {hasCroppedImages && ' with Cropped Images'}
               </Button>
             )}
           </div>
         </div>
       </Modal>
 
-      {/* Full Size Image Modal with Bounding Boxes */}
+      {/* Full Size Image Modal */}
       {originalImage && (
         <Modal
           isOpen={showImageModal}
@@ -649,29 +522,16 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
           title="Original Image - Full Size"
         >
           <div className="text-center">
-            <div className="relative bg-retro-bg-tertiary border border-retro-accent rounded-pixel overflow-hidden">
+            <div className="bg-retro-bg-tertiary border border-retro-accent rounded-pixel overflow-hidden">
               <img
                 src={originalImage}
                 alt="Full size analyzed image"
                 className="w-full h-auto max-h-[80vh] object-contain"
               />
-              {showBoundingBoxes && renderBoundingBoxOverlay()}
             </div>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <p className="text-retro-accent-light font-pixel-sans text-sm">
-                This is the image that was analyzed by the AI detection system
-              </p>
-              {editingItems.some(item => item.boundingBox) && (
-                <Button
-                  variant={showBoundingBoxes ? 'accent' : 'ghost'}
-                  size="sm"
-                  icon={Crop}
-                  onClick={() => setShowBoundingBoxes(!showBoundingBoxes)}
-                >
-                  {showBoundingBoxes ? 'Hide' : 'Show'} Boxes
-                </Button>
-              )}
-            </div>
+            <p className="text-retro-accent-light font-pixel-sans text-sm mt-2">
+              This is the image that was analyzed by the AI detection system
+            </p>
           </div>
         </Modal>
       )}
