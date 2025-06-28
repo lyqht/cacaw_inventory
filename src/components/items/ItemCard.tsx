@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2, Eye, DollarSign, Calendar, Tag } from 'lucide-react';
+import { Edit, Trash2, Eye, DollarSign, Calendar, Tag, MoreVertical } from 'lucide-react';
 import { CollectibleData } from '../../types';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -20,24 +20,26 @@ export const ItemCard: React.FC<ItemCardProps> = ({
   onView,
   className = ''
 }) => {
+  const [showActions, setShowActions] = React.useState(false);
+
   const getConditionColor = (condition: string) => {
     switch (condition) {
       case 'mint':
-        return 'text-retro-success';
+        return 'text-retro-success font-bold';
       case 'near-mint':
-        return 'text-green-400';
+        return 'text-green-300 font-bold';
       case 'excellent':
-        return 'text-retro-accent';
+        return 'text-retro-accent font-bold';
       case 'good':
-        return 'text-yellow-400';
+        return 'text-yellow-300 font-bold';
       case 'fair':
-        return 'text-orange-400';
+        return 'text-orange-300 font-bold';
       case 'poor':
-        return 'text-red-400';
+        return 'text-red-300 font-bold';
       case 'damaged':
-        return 'text-retro-error';
+        return 'text-retro-error font-bold';
       default:
-        return 'text-retro-accent-light';
+        return 'text-retro-accent-light font-bold';
     }
   };
 
@@ -86,58 +88,118 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       className={`group transition-all duration-200 hover:scale-105 ${className}`}
     >
       <div className="space-y-pixel">
-        {/* Item Header with Always-Visible Action Buttons */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-pixel text-retro-accent text-sm truncate">
+        {/* Optimized Header with Better Space Allocation */}
+        <div className="flex items-start gap-2">
+          {/* Item Name - More Space Allocated */}
+          <div className="flex-1 min-w-0 pr-2">
+            <h3 className="font-pixel text-retro-accent text-sm leading-tight break-words">
               {item.name}
             </h3>
             {item.type && (
-              <p className="text-xs text-retro-accent-light font-pixel-sans truncate">
+              <p className="text-xs text-retro-accent-light font-pixel-sans truncate mt-0.5">
                 {item.type}
               </p>
             )}
           </div>
           
-          {/* Always Visible Action Buttons - Improved Size and Contrast */}
-          <div className="flex gap-1 flex-shrink-0">
-            <Button
-              variant="accent"
-              size="sm"
-              icon={Eye}
-              onClick={(e) => {
-                e.stopPropagation();
-                onView(item);
-              }}
-              className="min-w-[32px] min-h-[32px] p-1 bg-retro-accent-medium hover:bg-retro-accent-light border-2 border-retro-accent-light shadow-pixel"
-              title="View Details"
-            />
-            <Button
-              variant="primary"
-              size="sm"
-              icon={Edit}
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(item);
-              }}
-              className="min-w-[32px] min-h-[32px] p-1 bg-retro-primary hover:bg-retro-primary-light border-2 border-retro-primary-light shadow-pixel"
-              title="Edit Item"
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={Trash2}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(item);
-              }}
-              className="min-w-[32px] min-h-[32px] p-1 bg-retro-error bg-opacity-80 hover:bg-retro-error text-white border-2 border-retro-error shadow-pixel"
-              title="Delete Item"
-            />
+          {/* Compact Action Buttons - Vertical Stack on Mobile, Horizontal on Desktop */}
+          <div className="flex-shrink-0 relative">
+            {/* Desktop: Horizontal Layout */}
+            <div className="hidden sm:flex gap-1">
+              <Button
+                variant="accent"
+                size="sm"
+                icon={Eye}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onView(item);
+                }}
+                className="w-7 h-7 p-0 min-w-[28px] min-h-[28px]"
+                title="View Details"
+              />
+              <Button
+                variant="primary"
+                size="sm"
+                icon={Edit}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(item);
+                }}
+                className="w-7 h-7 p-0 min-w-[28px] min-h-[28px]"
+                title="Edit Item"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={Trash2}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(item);
+                }}
+                className="w-7 h-7 p-0 min-w-[28px] min-h-[28px] hover:bg-retro-error hover:text-white"
+                title="Delete Item"
+              />
+            </div>
+
+            {/* Mobile: Dropdown Menu */}
+            <div className="sm:hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={MoreVertical}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowActions(!showActions);
+                }}
+                className="w-7 h-7 p-0 min-w-[28px] min-h-[28px]"
+                title="Actions"
+              />
+              
+              {/* Dropdown Actions */}
+              {showActions && (
+                <div className="absolute right-0 top-8 z-10 bg-retro-bg-secondary border-2 border-retro-accent rounded-pixel shadow-pixel-lg min-w-[120px]">
+                  <div className="p-1 space-y-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onView(item);
+                        setShowActions(false);
+                      }}
+                      className="w-full text-left px-2 py-1 text-xs font-pixel-sans text-retro-accent hover:bg-retro-accent hover:text-retro-bg-primary rounded-pixel transition-colors flex items-center gap-2"
+                    >
+                      <Eye className="w-3 h-3" />
+                      View
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(item);
+                        setShowActions(false);
+                      }}
+                      className="w-full text-left px-2 py-1 text-xs font-pixel-sans text-retro-accent hover:bg-retro-accent hover:text-retro-bg-primary rounded-pixel transition-colors flex items-center gap-2"
+                    >
+                      <Edit className="w-3 h-3" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(item);
+                        setShowActions(false);
+                      }}
+                      className="w-full text-left px-2 py-1 text-xs font-pixel-sans text-retro-error hover:bg-retro-error hover:text-white rounded-pixel transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Responsive Image Container - Adjusts size based on content */}
+        {/* Responsive Image Container */}
         <div className={`
           bg-retro-bg-tertiary border-2 border-retro-accent rounded-pixel 
           flex items-center justify-center transition-all duration-300 ease-in-out
@@ -167,27 +229,23 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           )}
         </div>
 
-        {/* Item Details */}
-        <div className="space-y-1">
+        {/* Item Details - Improved Layout */}
+        <div className="space-y-1.5">
           {/* Series */}
           {item.series && (
             <p className="text-xs text-retro-accent-light font-pixel-sans truncate">
-              Series: {item.series}
+              <span className="text-retro-accent">Series:</span> {item.series}
             </p>
           )}
 
-          {/* Condition */}
+          {/* Condition - Fixed Contrast */}
           <div className="flex items-center justify-between">
             <span className="text-xs font-pixel-sans text-retro-accent-light">
               Condition:
             </span>
-            <Badge
-              variant="default"
-              size="sm"
-              className={getConditionColor(item.condition)}
-            >
+            <span className={`text-xs font-pixel-sans ${getConditionColor(item.condition)}`}>
               {getConditionLabel(item.condition)}
-            </Badge>
+            </span>
           </div>
 
           {/* Value */}
@@ -218,23 +276,21 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           )}
         </div>
 
-        {/* Tags */}
+        {/* Tags - Smaller and More Compact */}
         {item.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {item.tags.slice(0, 3).map((tag, index) => (
-              <Badge
+              <span
                 key={index}
-                variant="default"
-                size="sm"
-                className="text-xs"
+                className="inline-flex items-center px-1.5 py-0.5 text-xs font-pixel bg-retro-accent text-retro-bg-primary border border-retro-accent-teal shadow-pixel-glow rounded-pixel-sm"
               >
                 {tag}
-              </Badge>
+              </span>
             ))}
             {item.tags.length > 3 && (
-              <Badge variant="default" size="sm" className="text-xs">
+              <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-pixel bg-retro-accent text-retro-bg-primary border border-retro-accent-teal shadow-pixel-glow rounded-pixel-sm">
                 +{item.tags.length - 3}
-              </Badge>
+              </span>
             )}
           </div>
         )}
@@ -243,17 +299,25 @@ export const ItemCard: React.FC<ItemCardProps> = ({
         <div className="flex items-center justify-between text-xs text-retro-accent-light font-pixel-sans pt-1 border-t border-retro-accent border-opacity-30">
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            {formatDate(item.createdAt)}
+            <span className="truncate">{formatDate(item.createdAt)}</span>
           </div>
           
           {(item.primaryImage || item.additionalImages.length > 0) && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               <span>{(item.primaryImage ? 1 : 0) + item.additionalImages.length}</span>
               <span>📷</span>
             </div>
           )}
         </div>
       </div>
+
+      {/* Click Outside Handler for Mobile Dropdown */}
+      {showActions && (
+        <div 
+          className="fixed inset-0 z-5"
+          onClick={() => setShowActions(false)}
+        />
+      )}
     </Card>
   );
 };
