@@ -75,8 +75,6 @@
 @layer components {
   .pixel-button {
     @apply font-pixel-sans font-medium transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-    @apply bg-retro-accent text-retro-white border-retro-accent hover:bg-retro-accent-light;
-    @apply shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5;
     @apply cursor-pointer select-none;
     image-rendering: pixelated;
     /* Ensure buttons are always visible with high contrast */
@@ -84,16 +82,25 @@
     min-width: 32px;
   }
 
-  .pixel-button-accent {
-    @apply pixel-button bg-retro-primary text-retro-accent border-retro-primary hover:bg-retro-primary-light;
-    /* Enhanced contrast for accent buttons in light theme */
-    @apply shadow-pixel-button hover:shadow-pixel-button-hover;
+  /* Primary button - Navy background with white text */
+  .pixel-button.bg-retro-accent {
+    @apply bg-retro-accent text-retro-white border-retro-accent;
+    @apply hover:bg-retro-accent-light hover:border-retro-accent-light;
+    @apply shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5;
   }
 
-  .pixel-button-ghost {
-    @apply pixel-button bg-retro-bg-secondary text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-white;
-    /* Ensure ghost buttons are visible against light backgrounds */
-    @apply shadow-pixel-button hover:shadow-pixel-button-hover;
+  /* Accent button - Light blue background with navy text */
+  .pixel-button.bg-retro-primary {
+    @apply bg-retro-primary text-retro-accent border-retro-primary;
+    @apply hover:bg-retro-primary-light hover:border-retro-primary-light;
+    @apply shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5;
+  }
+
+  /* Ghost button - Transparent with navy border and text */
+  .pixel-button.bg-retro-bg-secondary {
+    @apply bg-retro-bg-secondary text-retro-accent border-retro-accent;
+    @apply hover:bg-retro-accent hover:text-retro-white hover:border-retro-accent-light;
+    @apply shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5;
   }
 
   .pixel-card {
@@ -134,6 +141,14 @@
   }
 
   /* Dark theme inputs (when explicitly set) */
+  [data-theme="dark"] body {
+    background-color: #000033;
+    background-image: 
+      linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
+    color: #ADD8E6;
+  }
+
   [data-theme="dark"] .pixel-input {
     background-color: var(--input-bg-dark);
     color: var(--input-text-dark);
@@ -149,6 +164,22 @@
   [data-theme="dark"] .pixel-input::placeholder {
     color: var(--input-placeholder-dark);
     opacity: 0.7;
+  }
+
+  /* Dark theme button overrides */
+  [data-theme="dark"] .pixel-button.bg-retro-accent {
+    @apply bg-retro-primary text-retro-accent border-retro-primary;
+    @apply hover:bg-retro-primary-light hover:border-retro-primary-light;
+  }
+
+  [data-theme="dark"] .pixel-button.bg-retro-primary {
+    @apply bg-retro-accent text-retro-white border-retro-accent;
+    @apply hover:bg-retro-accent-light hover:border-retro-accent-light;
+  }
+
+  [data-theme="dark"] .pixel-button.bg-retro-bg-secondary {
+    @apply bg-retro-bg-secondary text-retro-accent border-retro-accent;
+    @apply hover:bg-retro-accent hover:text-retro-bg-primary hover:border-retro-accent-light;
   }
 
   /* Auto theme inputs */
@@ -178,12 +209,35 @@
   }
 
   @media (prefers-color-scheme: dark) {
+    [data-theme="auto"] body {
+      background-color: #000033;
+      background-image: 
+        linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
+      color: #ADD8E6;
+    }
+
     [data-theme="auto"] .pixel-input {
       box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3);
     }
 
     [data-theme="auto"] .pixel-input:focus {
       box-shadow: 0 0 0 2px rgba(173, 216, 230, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    [data-theme="auto"] .pixel-button.bg-retro-accent {
+      @apply bg-retro-primary text-retro-accent border-retro-primary;
+      @apply hover:bg-retro-primary-light hover:border-retro-primary-light;
+    }
+
+    [data-theme="auto"] .pixel-button.bg-retro-primary {
+      @apply bg-retro-accent text-retro-white border-retro-accent;
+      @apply hover:bg-retro-accent-light hover:border-retro-accent-light;
+    }
+
+    [data-theme="auto"] .pixel-button.bg-retro-bg-secondary {
+      @apply bg-retro-bg-secondary text-retro-accent border-retro-accent;
+      @apply hover:bg-retro-accent hover:text-retro-bg-primary hover:border-retro-accent-light;
     }
   }
 
@@ -552,25 +606,5 @@
   100% { 
     transform: scale(1);
     opacity: 1;
-  }
-}
-
-/* Dark theme body styling (when explicitly set) */
-[data-theme="dark"] body {
-  background-color: #000033;
-  background-image: 
-    linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
-  color: #ADD8E6;
-}
-
-/* Auto theme body styling */
-@media (prefers-color-scheme: dark) {
-  [data-theme="auto"] body {
-    background-color: #000033;
-    background-image: 
-      linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
-    color: #ADD8E6;
   }
 }
