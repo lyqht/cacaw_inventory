@@ -40,41 +40,6 @@ export const SettingsPage: React.FC = () => {
           <div /> {/* Spacer */}
         </div>
 
-        {/* Theme Testing Card */}
-        <Card variant="outlined" padding="md" className="border-retro-success">
-          <h3 className="font-pixel text-retro-success mb-pixel-2">Theme Testing</h3>
-          <p className="text-retro-accent-light font-pixel-sans text-sm mb-pixel-2">
-            Test input visibility across different themes:
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-pixel-2">
-            <Input
-              label="Test Input"
-              placeholder="Type here to test visibility..."
-              fullWidth
-            />
-            <div>
-              <label className="block text-sm font-pixel text-retro-accent mb-1">
-                Test Select
-              </label>
-              <select className="pixel-input w-full">
-                <option value="">Choose an option...</option>
-                <option value="option1">Option 1</option>
-                <option value="option2">Option 2</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-pixel text-retro-accent mb-1">
-                Test Textarea
-              </label>
-              <textarea
-                className="pixel-input w-full resize-none"
-                rows={3}
-                placeholder="Type here to test textarea visibility..."
-              />
-            </div>
-          </div>
-        </Card>
-
         {/* Appearance Settings */}
         <Card variant="outlined" padding="md">
           <div className="space-y-pixel-2">
