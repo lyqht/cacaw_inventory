@@ -157,9 +157,76 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   };
 
   const handleImagesChange = (newImages: ImageFile[]) => {
-    console.log('Images changed:', newImages); // Debug log
+    console.log('Images changed in form:', newImages);
     setImages(newImages);
     setHasUnsavedImages(true);
+  };
+
+  // Convert image files to data URLs for storage
+  const processImagesForSave = async (imageFiles: ImageFile[]): Promise<{
+    primaryImage?: string;
+    additionalImages: string[];
+    thumbnailImage?: string;
+  }> => {
+    const processedImages = {
+      primaryImage: undefined as string | undefined,
+      additionalImages: [] as string[],
+      thumbnailImage: undefined as string | undefined
+    };
+
+    if (imageFiles.length === 0) {
+      return processedImages;
+    }
+
+    // Convert first image to primary
+    if (imageFiles[0]) {
+      try {
+        // If it's already a URL (existing image), keep it
+        if (imageFiles[0].url.startsWith('blob:') || imageFiles[0].url.startsWith('data:')) {
+          processedImages.primaryImage = imageFiles[0].url;
+          processedImages.thumbnailImage = imageFiles[0].url;
+        } else {
+          // For new files, convert to data URL
+          const dataUrl = await fileToDataUrl(imageFiles[0].file);
+          processedImages.primaryImage = dataUrl;
+          processedImages.thumbnailImage = dataUrl;
+        }
+      } catch (error) {
+        console.error('Error processing primary image:', error);
+      }
+    }
+
+    // Convert additional images
+    for (let i = 1; i < imageFiles.length; i++) {
+      try {
+        if (imageFiles[i].url.startsWith('blob:') || imageFiles[i].url.startsWith('data:')) {
+          processedImages.additionalImages.push(imageFiles[i].url);
+        } else {
+          const dataUrl = await fileToDataUrl(imageFiles[i].file);
+          processedImages.additionalImages.push(dataUrl);
+        }
+      } catch (error) {
+        console.error(`Error processing additional image ${i}:`, error);
+      }
+    }
+
+    console.log('Processed images for save:', processedImages);
+    return processedImages;
+  };
+
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (file.size === 0) {
+        // This is likely an existing image placeholder
+        reject(new Error('Empty file'));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -174,32 +241,36 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       }
     }
 
-    const itemData: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'> = {
-      folderId,
-      userId: 'default-user', // Will be replaced with actual auth
-      name: formData.name.trim(),
-      type: formData.type.trim() || undefined,
-      series: formData.series.trim() || undefined,
-      condition: formData.condition,
-      description: formData.description.trim() || undefined,
-      notes: formData.notes.trim() || undefined,
-      estimatedValue: formData.estimatedValue ? Number(formData.estimatedValue) : undefined,
-      purchasePrice: formData.purchasePrice ? Number(formData.purchasePrice) : undefined,
-      currency: formData.currency,
-      tags: formData.tags,
-      primaryImage: images.length > 0 ? images[0].url : undefined,
-      additionalImages: images.slice(1).map(img => img.url),
-      thumbnailImage: images.length > 0 ? images[0].url : undefined, // Use first image as thumbnail
-      aiDetected: false,
-      aiConfidence: undefined,
-      aiPromptUsed: undefined,
-      ocrText: undefined,
-      lastViewedAt: undefined,
-      syncStatus: 'local-only',
-      isArchived: false
-    };
-
     try {
+      // Process images for storage
+      const processedImages = await processImagesForSave(images);
+
+      const itemData: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'> = {
+        folderId,
+        userId: 'default-user', // Will be replaced with actual auth
+        name: formData.name.trim(),
+        type: formData.type.trim() || undefined,
+        series: formData.series.trim() || undefined,
+        condition: formData.condition,
+        description: formData.description.trim() || undefined,
+        notes: formData.notes.trim() || undefined,
+        estimatedValue: formData.estimatedValue ? Number(formData.estimatedValue) : undefined,
+        purchasePrice: formData.purchasePrice ? Number(formData.purchasePrice) : undefined,
+        currency: formData.currency,
+        tags: formData.tags,
+        primaryImage: processedImages.primaryImage,
+        additionalImages: processedImages.additionalImages,
+        thumbnailImage: processedImages.thumbnailImage,
+        aiDetected: false,
+        aiConfidence: undefined,
+        aiPromptUsed: undefined,
+        ocrText: undefined,
+        lastViewedAt: undefined,
+        syncStatus: 'local-only',
+        isArchived: false
+      };
+
+      console.log('Saving item with data:', itemData);
       await onSave(itemData);
       onClose();
     } catch (error) {

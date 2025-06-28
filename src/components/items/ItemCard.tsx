@@ -69,6 +69,15 @@ export const ItemCard: React.FC<ItemCardProps> = ({
 
   // Determine if item has image content
   const hasImage = item.primaryImage || item.additionalImages.length > 0;
+  const displayImage = item.primaryImage || item.additionalImages[0];
+
+  console.log('ItemCard rendering:', {
+    itemName: item.name,
+    hasImage,
+    primaryImage: item.primaryImage,
+    additionalImages: item.additionalImages,
+    displayImage
+  });
 
   return (
     <Card
@@ -137,17 +146,18 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             : 'aspect-[3/2] max-h-32' // Reduced height for text-only content
           }
         `}>
-          {item.primaryImage ? (
+          {displayImage ? (
             <img
-              src={item.primaryImage}
+              src={displayImage}
               alt={item.name}
               className="w-full h-full object-cover rounded-pixel transition-all duration-300"
-            />
-          ) : item.additionalImages.length > 0 ? (
-            <img
-              src={item.additionalImages[0]}
-              alt={item.name}
-              className="w-full h-full object-cover rounded-pixel transition-all duration-300"
+              onError={(e) => {
+                console.error('Image failed to load:', displayImage);
+                e.currentTarget.style.display = 'none';
+              }}
+              onLoad={() => {
+                console.log('Image loaded successfully:', displayImage);
+              }}
             />
           ) : (
             <div className="text-center text-retro-accent-light transition-all duration-300">
@@ -236,9 +246,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             {formatDate(item.createdAt)}
           </div>
           
-          {item.additionalImages.length > 0 && (
+          {(item.primaryImage || item.additionalImages.length > 0) && (
             <div className="flex items-center gap-1">
-              <span>{item.additionalImages.length + 1}</span>
+              <span>{(item.primaryImage ? 1 : 0) + item.additionalImages.length}</span>
               <span>📷</span>
             </div>
           )}
