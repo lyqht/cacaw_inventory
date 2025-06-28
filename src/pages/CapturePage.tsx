@@ -17,7 +17,7 @@ const storageService = StorageService.getInstance();
 const aiService = AIDetectionService.getInstance();
 
 export const CapturePage: React.FC = () => {
-  const { setCurrentView, setLoading, isLoading, folders } = useAppStore();
+  const { setCurrentView, setLoading, isLoading, folders, setFolders } = useAppStore();
   
   // Capture flow state
   const [captureStep, setCaptureStep] = useState<'capture' | 'processing' | 'results'>('capture');
@@ -223,6 +223,22 @@ export const CapturePage: React.FC = () => {
     }
   };
 
+  const handleFolderSelect = (folder: Folder) => {
+    setSelectedFolder(folder);
+    console.log('Selected folder for capture:', folder.name, folder.type);
+  };
+
+  const handleFolderCreated = async (newFolder: Folder) => {
+    // Refresh the folders list to include the new folder
+    try {
+      const updatedFolders = await storageService.getFolders();
+      setFolders(updatedFolders);
+      console.log('Folders list updated with new folder:', newFolder.name);
+    } catch (error) {
+      console.error('Error refreshing folders list:', error);
+    }
+  };
+
   const handleBackToFolders = () => {
     // Cleanup blob URLs
     if (capturedImageUrl) {
@@ -234,11 +250,6 @@ export const CapturePage: React.FC = () => {
     setCapturedImage(null);
     setCapturedImageUrl(null);
     setDetectionResult(null);
-  };
-
-  const handleFolderSelect = (folder: Folder) => {
-    setSelectedFolder(folder);
-    console.log('Selected folder for capture:', folder.name, folder.type);
   };
 
   // Processing step UI
@@ -397,6 +408,7 @@ export const CapturePage: React.FC = () => {
           selectedFolder={selectedFolder}
           folders={folders}
           onFolderSelect={handleFolderSelect}
+          onFolderCreated={handleFolderCreated}
         />
 
         {/* Camera Capture Component */}
