@@ -79,6 +79,7 @@ export default {
         'pixel-float': 'pixel-float 3s ease-in-out infinite',
         'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
         'button-press': 'button-press 0.1s ease-in-out',
+        'container-resize': 'container-resize 0.3s ease-in-out',
       },
       keyframes: {
         'bird-hop': {
@@ -129,6 +130,20 @@ export default {
           '0%': { transform: 'translate(0, 0)' },
           '100%': { transform: 'translate(2px, 2px)' },
         },
+        'container-resize': {
+          '0%': { 
+            transform: 'scale(1)',
+            opacity: '0.8'
+          },
+          '50%': { 
+            transform: 'scale(1.02)',
+            opacity: '0.9'
+          },
+          '100%': { 
+            transform: 'scale(1)',
+            opacity: '1'
+          },
+        },
       },
       backgroundImage: {
         'pixel-grid': `
@@ -147,6 +162,12 @@ export default {
       minWidth: {
         'touch': '44px',
         'button': '32px',
+      },
+      // Custom aspect ratios for responsive containers
+      aspectRatio: {
+        '3/2': '3 / 2',
+        '4/3': '4 / 3',
+        '16/9': '16 / 9',
       },
     },
   },

@@ -96,6 +96,20 @@
     @apply shadow-pixel-glow animate-glow-pulse;
   }
 
+  /* Responsive container classes for content-based sizing */
+  .responsive-container {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .responsive-container-with-image {
+    @apply aspect-square;
+  }
+
+  .responsive-container-text-only {
+    @apply aspect-[3/2];
+    max-height: 8rem; /* 128px */
+  }
+
   /* Enhanced button states for better user feedback */
   .pixel-button:hover {
     @apply transform scale-105;
@@ -134,8 +148,13 @@
     
     .animate-pixel-pulse,
     .animate-pixel-float,
-    .animate-glow-pulse {
+    .animate-glow-pulse,
+    .animate-container-resize {
       @apply animate-none;
+    }
+
+    .responsive-container {
+      @apply transition-none;
     }
   }
 }
@@ -171,6 +190,20 @@
     color: #ADD8E6;
     animation: cursor-blink 1s step-end infinite;
     font-weight: bold;
+  }
+
+  /* Container sizing utilities */
+  .container-adaptive {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .container-adaptive[data-has-content="true"] {
+    @apply aspect-square;
+  }
+
+  .container-adaptive[data-has-content="false"] {
+    @apply aspect-[3/2];
+    max-height: 8rem;
   }
 
   /* Accessibility utilities */
@@ -238,5 +271,21 @@
 @media print {
   .pixel-button {
     @apply border border-black text-black bg-white;
+  }
+}
+
+/* Container resize animation for smooth transitions */
+@keyframes container-resize {
+  0% { 
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+  100% { 
+    transform: scale(1);
+    opacity: 1;
   }
 }

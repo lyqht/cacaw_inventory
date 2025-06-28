@@ -67,6 +67,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     }).format(date);
   };
 
+  // Determine if item has image content
+  const hasImage = item.primaryImage || item.additionalImages.length > 0;
+
   return (
     <Card
       hoverable
@@ -125,17 +128,30 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           </div>
         </div>
 
-        {/* Item Image Placeholder */}
-        <div className="aspect-square bg-retro-bg-tertiary border-2 border-retro-accent rounded-pixel flex items-center justify-center">
+        {/* Responsive Image Container - Adjusts size based on content */}
+        <div className={`
+          bg-retro-bg-tertiary border-2 border-retro-accent rounded-pixel 
+          flex items-center justify-center transition-all duration-300 ease-in-out
+          ${hasImage 
+            ? 'aspect-square' // Full square for images
+            : 'aspect-[3/2] max-h-32' // Reduced height for text-only content
+          }
+        `}>
           {item.primaryImage ? (
             <img
               src={item.primaryImage}
               alt={item.name}
-              className="w-full h-full object-cover rounded-pixel"
+              className="w-full h-full object-cover rounded-pixel transition-all duration-300"
+            />
+          ) : item.additionalImages.length > 0 ? (
+            <img
+              src={item.additionalImages[0]}
+              alt={item.name}
+              className="w-full h-full object-cover rounded-pixel transition-all duration-300"
             />
           ) : (
-            <div className="text-center text-retro-accent-light">
-              <div className="text-2xl mb-1">📷</div>
+            <div className="text-center text-retro-accent-light transition-all duration-300">
+              <div className="text-xl mb-1 animate-pixel-pulse">📷</div>
               <p className="text-xs font-pixel-sans">No Image</p>
             </div>
           )}
