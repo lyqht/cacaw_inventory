@@ -18,15 +18,15 @@ export const Badge: React.FC<BadgeProps> = ({
   const baseClasses = 'pixel-badge inline-flex items-center font-pixel';
   
   const variantClasses = {
-    default: 'bg-retro-accent text-retro-bg-primary border-retro-accent-teal [data-theme="light"]_&:bg-retro-light-accent [data-theme="light"]_&:text-white [data-theme="light"]_&:border-retro-light-accent-medium',
-    success: 'bg-retro-success text-retro-bg-primary border-green-600 [data-theme="light"]_&:bg-retro-light-success [data-theme="light"]_&:text-white [data-theme="light"]_&:border-green-700',
-    warning: 'bg-retro-warning text-retro-bg-primary border-yellow-600 [data-theme="light"]_&:bg-retro-light-warning [data-theme="light"]_&:text-white [data-theme="light"]_&:border-orange-600',
-    error: 'bg-retro-error text-retro-white border-red-600 [data-theme="light"]_&:bg-retro-light-error [data-theme="light"]_&:text-white [data-theme="light"]_&:border-red-700'
+    default: 'bg-retro-accent text-retro-bg-primary border-retro-accent-teal',
+    success: 'bg-retro-success text-retro-bg-primary border-green-600',
+    warning: 'bg-retro-warning text-retro-bg-primary border-yellow-600',
+    error: 'bg-retro-error text-retro-white border-red-600'
   };
   
   const sizeClasses = {
-    sm: 'px-2 py-1 text-xs min-h-[24px]', // Increased minimum height for better readability
-    md: 'px-3 py-2 text-sm min-h-[32px]'
+    sm: 'px-1 py-0.5 text-xs',
+    md: 'px-2 py-1 text-sm'
   };
   
   const glowClasses = glow ? 'animate-glow-pulse' : '';

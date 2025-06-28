@@ -21,13 +21,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Base body styling with theme-aware pixel grid background */
-  body {
-    font-family: "Pixelify Sans", sans-serif;
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-
-  /* Default (Dark) theme */
+  /* Base body styling with pixel grid background */
   body {
     background-color: #000033;
     background-image: 
@@ -35,433 +29,181 @@
       linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
     background-size: 8px 8px;
     color: #FFFFFF;
-  }
-
-  /* High-contrast light theme */
-  [data-theme="light"] body {
-    background-color: #FFFFFF;
-    background-image: 
-      linear-gradient(rgba(26, 26, 26, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(26, 26, 26, 0.08) 1px, transparent 1px);
-    background-size: 8px 8px;
-    color: #1A1A1A;
-  }
-
-  /* Auto theme - follows system preference */
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] body {
-      background-color: #FFFFFF;
-      background-image: 
-        linear-gradient(rgba(26, 26, 26, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(26, 26, 26, 0.08) 1px, transparent 1px);
-      background-size: 8px 8px;
-      color: #1A1A1A;
-    }
+    font-family: "Pixelify Sans", sans-serif;
   }
 
   /* Theme-based color variables */
   :root {
-    /* Dark mode colors (default) */
-    --bg-primary: #000033;
-    --bg-secondary: #000044;
-    --bg-tertiary: #000055;
-    --text-primary: #FFFFFF;
-    --text-secondary: #ADD8E6;
-    --text-muted: #87CEEB;
-    --accent-primary: #87CEEB;
-    --accent-light: #ADD8E6;
-    --accent-medium: #4682B4;
-    --border-primary: #87CEEB;
-    --border-light: #ADD8E6;
+    /* Light mode input colors */
+    --input-bg-light: #FFFFFF;
+    --input-text-light: #333333;
+    --input-border-light: #CCCCCC;
+    --input-border-focus-light: #999999;
+    --input-placeholder-light: #666666;
     
-    /* Input colors */
-    --input-bg: #000055;
-    --input-text: #FFFFFF;
-    --input-border: #87CEEB;
-    --input-border-focus: #ADD8E6;
-    --input-placeholder: #A0A0A0;
+    /* Dark mode input colors (existing navy theme) */
+    --input-bg-dark: #000055;
+    --input-text-dark: #FFFFFF;
+    --input-border-dark: #87CEEB;
+    --input-border-focus-dark: #ADD8E6;
+    --input-placeholder-dark: #A0A0A0;
   }
 
-  /* High-contrast light mode colors - WCAG AA+ compliant */
-  [data-theme="light"] {
-    --bg-primary: #FFFFFF;
-    --bg-secondary: #FAFAFA;
-    --bg-tertiary: #F5F5F5;
-    --text-primary: #1A1A1A;        /* 15.3:1 contrast ratio */
-    --text-secondary: #2D2D2D;      /* 12.6:1 contrast ratio */
-    --text-muted: #4A4A4A;          /* 9.7:1 contrast ratio */
-    --accent-primary: #0056B3;      /* 7.1:1 contrast ratio */
-    --accent-light: #0066CC;        /* 6.3:1 contrast ratio */
-    --accent-medium: #004499;       /* 8.9:1 contrast ratio */
-    --border-primary: #333333;      /* 12.6:1 contrast ratio */
-    --border-light: #666666;        /* 6.3:1 contrast ratio */
-    
-    /* Input colors - High contrast */
-    --input-bg: #FFFFFF;
-    --input-text: #1A1A1A;
-    --input-border: #333333;
-    --input-border-focus: #0056B3;
-    --input-placeholder: #666666;
-  }
-
-  /* Auto theme - light mode */
+  /* Auto mode - follows system preference */
   @media (prefers-color-scheme: light) {
-    [data-theme="auto"] {
-      --bg-primary: #FFFFFF;
-      --bg-secondary: #FAFAFA;
-      --bg-tertiary: #F5F5F5;
-      --text-primary: #1A1A1A;
-      --text-secondary: #2D2D2D;
-      --text-muted: #4A4A4A;
-      --accent-primary: #0056B3;
-      --accent-light: #0066CC;
-      --accent-medium: #004499;
-      --border-primary: #333333;
-      --border-light: #666666;
-      
-      /* Input colors */
-      --input-bg: #FFFFFF;
-      --input-text: #1A1A1A;
-      --input-border: #333333;
-      --input-border-focus: #0056B3;
-      --input-placeholder: #666666;
+    :root {
+      --input-bg-auto: var(--input-bg-light);
+      --input-text-auto: var(--input-text-light);
+      --input-border-auto: var(--input-border-light);
+      --input-border-focus-auto: var(--input-border-focus-light);
+      --input-placeholder-auto: var(--input-placeholder-light);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --input-bg-auto: var(--input-bg-dark);
+      --input-text-auto: var(--input-text-dark);
+      --input-border-auto: var(--input-border-dark);
+      --input-border-focus-auto: var(--input-border-focus-dark);
+      --input-placeholder-auto: var(--input-placeholder-dark);
     }
   }
 }
 
-/* Enhanced pixel components with high-contrast theme support */
+/* Enhanced pixel components with improved button visibility */
 @layer components {
-  /* Button Components with High-Contrast Theme Support */
   .pixel-button {
     @apply font-pixel-sans font-medium transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-retro-primary text-retro-white border-retro-primary hover:bg-retro-primary-light;
+    @apply shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5;
     @apply cursor-pointer select-none;
     image-rendering: pixelated;
-    min-height: 44px; /* WCAG touch target minimum */
-    min-width: 44px;
+    /* Ensure buttons are always visible with high contrast */
+    min-height: 32px;
+    min-width: 32px;
   }
 
-  /* Primary Button - Dark Theme */
-  .pixel-button-primary {
-    @apply pixel-button;
-    background-color: #000080;
-    color: #FFFFFF;
-    border-color: #000080;
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.8);
-  }
-
-  .pixel-button-primary:hover {
-    background-color: #0000CC;
-    border-color: #0000CC;
-    box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 0.8);
-  }
-
-  .pixel-button-primary:active {
-    box-shadow: none;
-    transform: translate(2px, 2px);
-  }
-
-  /* Primary Button - High-Contrast Light Theme */
-  [data-theme="light"] .pixel-button-primary {
-    background-color: #0056B3; /* 7.1:1 contrast ratio */
-    color: #FFFFFF;
-    border-color: #003D82;
-    box-shadow: 3px 3px 0px 0px rgba(26, 26, 26, 0.6);
-  }
-
-  [data-theme="light"] .pixel-button-primary:hover {
-    background-color: #003D82; /* 9.8:1 contrast ratio */
-    border-color: #002952;
-    box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.7);
-  }
-
-  [data-theme="light"] .pixel-button-primary:focus {
-    outline: 3px solid #0056B3;
-    outline-offset: 2px;
-  }
-
-  /* Auto theme - light mode */
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] .pixel-button-primary {
-      background-color: #0056B3;
-      color: #FFFFFF;
-      border-color: #003D82;
-      box-shadow: 3px 3px 0px 0px rgba(26, 26, 26, 0.6);
-    }
-
-    [data-theme="auto"] .pixel-button-primary:hover {
-      background-color: #003D82;
-      border-color: #002952;
-      box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.7);
-    }
-  }
-
-  /* Accent Button - Dark Theme */
   .pixel-button-accent {
-    @apply pixel-button;
-    background-color: #87CEEB;
-    color: #000033;
-    border-color: #87CEEB;
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.8);
+    @apply pixel-button bg-retro-accent text-retro-bg-primary border-retro-accent hover:bg-retro-accent-medium;
+    /* Enhanced contrast for accent buttons */
+    @apply shadow-pixel-button hover:shadow-pixel-button-hover;
   }
 
-  .pixel-button-accent:hover {
-    background-color: #ADD8E6;
-    border-color: #ADD8E6;
-    box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 0.8);
-  }
-
-  /* Accent Button - High-Contrast Light Theme */
-  [data-theme="light"] .pixel-button-accent {
-    background-color: #CC0000; /* 5.9:1 contrast ratio */
-    color: #FFFFFF;
-    border-color: #990000;
-    box-shadow: 3px 3px 0px 0px rgba(26, 26, 26, 0.6);
-  }
-
-  [data-theme="light"] .pixel-button-accent:hover {
-    background-color: #990000; /* 8.2:1 contrast ratio */
-    border-color: #660000;
-    box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.7);
-  }
-
-  /* Auto theme - light mode */
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] .pixel-button-accent {
-      background-color: #CC0000;
-      color: #FFFFFF;
-      border-color: #990000;
-      box-shadow: 3px 3px 0px 0px rgba(26, 26, 26, 0.6);
-    }
-
-    [data-theme="auto"] .pixel-button-accent:hover {
-      background-color: #990000;
-      border-color: #660000;
-      box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.7);
-    }
-  }
-
-  /* Ghost Button - Dark Theme */
   .pixel-button-ghost {
-    @apply pixel-button;
-    background-color: #000044;
-    color: #87CEEB;
-    border-color: #87CEEB;
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.8);
+    @apply pixel-button bg-retro-bg-secondary text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-bg-primary;
+    /* Ensure ghost buttons are visible against dark backgrounds */
+    @apply shadow-pixel-button hover:shadow-pixel-button-hover;
   }
 
-  .pixel-button-ghost:hover {
-    background-color: #87CEEB;
-    color: #000033;
-    border-color: #ADD8E6;
-    box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 0.8);
-  }
-
-  /* Ghost Button - High-Contrast Light Theme */
-  [data-theme="light"] .pixel-button-ghost {
-    background-color: transparent;
-    color: #0056B3; /* 7.1:1 contrast ratio */
-    border-color: #0056B3;
-    box-shadow: 3px 3px 0px 0px rgba(26, 26, 26, 0.4);
-  }
-
-  [data-theme="light"] .pixel-button-ghost:hover {
-    background-color: #0056B3;
-    color: #FFFFFF;
-    border-color: #003D82;
-    box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.6);
-  }
-
-  /* Auto theme - light mode */
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] .pixel-button-ghost {
-      background-color: transparent;
-      color: #0056B3;
-      border-color: #0056B3;
-      box-shadow: 3px 3px 0px 0px rgba(26, 26, 26, 0.4);
-    }
-
-    [data-theme="auto"] .pixel-button-ghost:hover {
-      background-color: #0056B3;
-      color: #FFFFFF;
-      border-color: #003D82;
-      box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.6);
-    }
-  }
-
-  /* Warning Button - High-Contrast */
-  .pixel-button-warning {
-    @apply pixel-button;
-    background-color: #FFFF00;
-    color: #000000;
-    border-color: #CCCC00;
-  }
-
-  [data-theme="light"] .pixel-button-warning {
-    background-color: #B8860B; /* 4.8:1 contrast ratio */
-    color: #FFFFFF;
-    border-color: #996600;
-  }
-
-  /* Danger Button - High-Contrast */
-  .pixel-button-danger {
-    @apply pixel-button;
-    background-color: #FF0000;
-    color: #FFFFFF;
-    border-color: #CC0000;
-  }
-
-  [data-theme="light"] .pixel-button-danger {
-    background-color: #CC0000; /* 5.9:1 contrast ratio */
-    color: #FFFFFF;
-    border-color: #990000;
-  }
-
-  /* Card Components with High-Contrast Theme Support */
   .pixel-card {
-    background-color: var(--bg-secondary);
-    border: 2px solid var(--border-primary);
-    border-radius: 0px;
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.3);
-    transition: all 0.2s ease;
-  }
-
-  .pixel-card:hover {
-    box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 0.4);
-    border-color: var(--border-light);
-  }
-
-  /* High-contrast light theme card shadows */
-  [data-theme="light"] .pixel-card {
-    box-shadow: 3px 3px 0px 0px rgba(26, 26, 26, 0.4);
-    border-color: #333333; /* High contrast border */
-  }
-
-  [data-theme="light"] .pixel-card:hover {
-    box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.5);
-    border-color: #1A1A1A; /* Even higher contrast on hover */
-  }
-
-  /* Auto theme - light mode */
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] .pixel-card {
-      box-shadow: 3px 3px 0px 0px rgba(26, 26, 26, 0.4);
-      border-color: #333333;
-    }
-
-    [data-theme="auto"] .pixel-card:hover {
-      box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.5);
-      border-color: #1A1A1A;
-    }
+    @apply bg-retro-bg-secondary border-2 border-retro-accent rounded-pixel shadow-pixel;
+    @apply hover:shadow-pixel-lg transition-all duration-200;
   }
 
   .pixel-card-elevated {
-    @apply pixel-card;
-    box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 0.4);
-    border-color: var(--border-light);
+    @apply pixel-card shadow-pixel-lg border-retro-accent-light;
+    @apply hover:shadow-pixel-glow;
   }
 
-  .pixel-card-elevated:hover {
-    box-shadow: 8px 8px 0px 0px rgba(0, 0, 0, 0.5);
-  }
-
-  /* High-contrast light theme elevated card */
-  [data-theme="light"] .pixel-card-elevated {
-    box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.5);
-    border-color: #1A1A1A;
-  }
-
-  [data-theme="light"] .pixel-card-elevated:hover {
-    box-shadow: 8px 8px 0px 0px rgba(26, 26, 26, 0.6);
-  }
-
-  /* Auto theme - light mode */
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] .pixel-card-elevated {
-      box-shadow: 5px 5px 0px 0px rgba(26, 26, 26, 0.5);
-      border-color: #1A1A1A;
-    }
-
-    [data-theme="auto"] .pixel-card-elevated:hover {
-      box-shadow: 8px 8px 0px 0px rgba(26, 26, 26, 0.6);
-    }
-  }
-
-  /* Input Components with High-Contrast Theme Support */
+  /* Enhanced input styling with theme support */
   .pixel-input {
-    @apply font-pixel-sans border-2 rounded-pixel transition-all duration-200;
-    background-color: var(--input-bg);
-    color: var(--input-text);
-    border-color: var(--input-border);
-    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.2);
-    min-height: 44px; /* WCAG touch target minimum */
-    padding: 12px 16px; /* Increased padding for better touch targets */
+    @apply font-pixel-sans border-2 rounded-pixel shadow-pixel-inner transition-all duration-200;
+    /* Ensure minimum touch target size */
+    min-height: 32px;
+    padding: 8px 12px;
+  }
+
+  /* Default (Dark) theme inputs */
+  .pixel-input {
+    background-color: var(--input-bg-dark);
+    color: var(--input-text-dark);
+    border-color: var(--input-border-dark);
   }
 
   .pixel-input:focus {
     outline: none;
-    border-color: var(--input-border-focus);
-    box-shadow: 0 0 0 3px rgba(135, 206, 235, 0.3), inset 2px 2px 4px rgba(0, 0, 0, 0.2);
+    border-color: var(--input-border-focus-dark);
+    box-shadow: 0 0 0 2px rgba(173, 216, 230, 0.3);
   }
 
   .pixel-input::placeholder {
-    color: var(--input-placeholder);
-    opacity: 1; /* Ensure full opacity for better contrast */
+    color: var(--input-placeholder-dark);
+    opacity: 0.7;
   }
 
-  /* High-contrast light theme input focus */
+  /* Light theme inputs */
   [data-theme="light"] .pixel-input {
-    box-shadow: inset 1px 1px 2px rgba(26, 26, 26, 0.2);
-    border-color: #333333; /* High contrast border */
+    background-color: var(--input-bg-light);
+    color: var(--input-text-light);
+    border-color: var(--input-border-light);
+    box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   [data-theme="light"] .pixel-input:focus {
-    box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.3), inset 1px 1px 2px rgba(26, 26, 26, 0.2);
-    border-color: #0056B3; /* High contrast focus */
+    border-color: var(--input-border-focus-light);
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   [data-theme="light"] .pixel-input::placeholder {
-    color: #666666; /* 6.3:1 contrast ratio */
+    color: var(--input-placeholder-light);
+    opacity: 0.7;
   }
 
-  /* Auto theme - light mode */
+  /* Auto theme inputs */
+  [data-theme="auto"] .pixel-input {
+    background-color: var(--input-bg-auto);
+    color: var(--input-text-auto);
+    border-color: var(--input-border-auto);
+  }
+
+  [data-theme="auto"] .pixel-input:focus {
+    border-color: var(--input-border-focus-auto);
+  }
+
+  [data-theme="auto"] .pixel-input::placeholder {
+    color: var(--input-placeholder-auto);
+    opacity: 0.7;
+  }
+
   @media (prefers-color-scheme: light) {
     [data-theme="auto"] .pixel-input {
-      box-shadow: inset 1px 1px 2px rgba(26, 26, 26, 0.2);
-      border-color: #333333;
+      box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
     }
 
     [data-theme="auto"] .pixel-input:focus {
-      box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.3), inset 1px 1px 2px rgba(26, 26, 26, 0.2);
-      border-color: #0056B3;
-    }
-
-    [data-theme="auto"] .pixel-input::placeholder {
-      color: #666666;
+      box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.1);
     }
   }
 
-  /* Select elements with high contrast */
+  @media (prefers-color-scheme: dark) {
+    [data-theme="auto"] .pixel-input:focus {
+      box-shadow: 0 0 0 2px rgba(173, 216, 230, 0.3);
+    }
+  }
+
+  /* Select elements */
   .pixel-input select,
   select.pixel-input {
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2387CEEB' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-    background-position: right 12px center;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 8px center;
     background-repeat: no-repeat;
     background-size: 16px;
-    padding-right: 40px;
+    padding-right: 32px;
     appearance: none;
   }
 
-  /* High-contrast light theme select arrow */
+  /* Light theme select arrow */
   [data-theme="light"] .pixel-input select,
   [data-theme="light"] select.pixel-input {
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%230056B3' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
   }
 
   /* Auto theme select arrow */
   @media (prefers-color-scheme: light) {
     [data-theme="auto"] .pixel-input select,
     [data-theme="auto"] select.pixel-input {
-      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%230056B3' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
     }
   }
 
@@ -469,80 +211,66 @@
   .pixel-input textarea,
   textarea.pixel-input {
     resize: vertical;
-    min-height: 88px; /* Increased minimum height */
-    line-height: 1.5; /* Better readability */
+    min-height: 64px;
   }
 
-  /* Badge Components with High-Contrast Theme Support */
+  /* Input error states */
+  .pixel-input.error {
+    border-color: #FF0000;
+  }
+
+  .pixel-input.error:focus {
+    box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.3);
+  }
+
+  [data-theme="light"] .pixel-input.error:focus {
+    box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Input success states */
+  .pixel-input.success {
+    border-color: #00FF00;
+  }
+
+  .pixel-input.success:focus {
+    box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.3);
+  }
+
+  [data-theme="light"] .pixel-input.success:focus {
+    box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
   .pixel-badge {
-    @apply inline-flex items-center px-3 py-1 text-sm font-pixel; /* Increased padding and font size */
-    background-color: var(--accent-primary);
-    color: var(--bg-primary);
-    border: 2px solid var(--accent-medium); /* Thicker border for better visibility */
-    border-radius: 2px;
-    box-shadow: 1px 1px 0px 0px rgba(0, 0, 0, 0.3);
-    min-height: 32px; /* Ensure minimum touch target */
+    @apply inline-flex items-center px-2 py-1 text-xs font-pixel;
+    @apply bg-retro-accent text-retro-bg-primary border border-retro-accent-teal;
+    @apply shadow-pixel-glow rounded-pixel-sm;
   }
 
-  /* High-contrast light theme badge */
-  [data-theme="light"] .pixel-badge {
-    background-color: #0056B3; /* 7.1:1 contrast ratio */
-    color: #FFFFFF;
-    border-color: #003D82;
-    box-shadow: 1px 1px 0px 0px rgba(26, 26, 26, 0.4);
-  }
-
-  /* Auto theme - light mode */
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] .pixel-badge {
-      background-color: #0056B3;
-      color: #FFFFFF;
-      border-color: #003D82;
-      box-shadow: 1px 1px 0px 0px rgba(26, 26, 26, 0.4);
-    }
-  }
-
-  /* Navigation Components */
   .pixel-nav {
-    background-color: var(--bg-primary);
-    border-bottom: 3px solid var(--border-primary); /* Thicker border for better definition */
-    box-shadow: 0 3px 0px 0px rgba(0, 0, 0, 0.3);
+    @apply bg-retro-bg-primary border-b-2 border-retro-accent;
+    @apply shadow-pixel-lg;
   }
 
-  /* High-contrast light theme navigation */
-  [data-theme="light"] .pixel-nav {
-    box-shadow: 0 3px 0px 0px rgba(26, 26, 26, 0.4);
-    border-bottom-color: #333333;
-  }
-
-  /* Auto theme - light mode */
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] .pixel-nav {
-      box-shadow: 0 3px 0px 0px rgba(26, 26, 26, 0.4);
-      border-bottom-color: #333333;
-    }
-  }
-
-  /* Loading and Animation Components */
   .pixel-loading {
     @apply animate-pixel-pulse;
   }
 
   .pixel-glow {
-    box-shadow: 0 0 12px rgba(135, 206, 235, 0.8);
-    animation: glow-pulse 2s ease-in-out infinite;
+    @apply shadow-pixel-glow animate-glow-pulse;
   }
 
-  /* High-contrast light theme glow */
-  [data-theme="light"] .pixel-glow {
-    box-shadow: 0 0 12px rgba(0, 86, 179, 0.8);
+  /* Responsive container classes for content-based sizing */
+  .responsive-container {
+    @apply transition-all duration-300 ease-in-out;
   }
 
-  /* Auto theme - light mode */
-  @media (prefers-color-scheme: light) {
-    [data-theme="auto"] .pixel-glow {
-      box-shadow: 0 0 12px rgba(0, 86, 179, 0.8);
-    }
+  .responsive-container-with-image {
+    @apply aspect-square;
+  }
+
+  .responsive-container-text-only {
+    @apply aspect-[3/2];
+    max-height: 8rem; /* 128px */
   }
 
   /* Enhanced button states for better user feedback */
@@ -555,14 +283,7 @@
   }
 
   .pixel-button:focus-visible {
-    outline: 3px solid var(--accent-primary);
-    outline-offset: 2px;
-  }
-
-  /* High-contrast focus styles */
-  [data-theme="light"] .pixel-button:focus-visible {
-    outline: 3px solid #0056B3;
-    outline-offset: 2px;
+    @apply ring-4 ring-retro-accent ring-opacity-50;
   }
 
   /* Ensure all interactive elements meet accessibility standards */
@@ -571,36 +292,18 @@
     min-width: 44px;
   }
 
-  /* High contrast mode support - Enhanced for better visibility */
+  /* High contrast mode support */
   @media (prefers-contrast: high) {
     .pixel-button {
       @apply border-4;
-      box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1) !important;
     }
     
     .pixel-card {
       @apply border-4;
-      box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1) !important;
     }
 
     .pixel-input {
       border-width: 3px;
-    }
-
-    /* Force maximum contrast in high contrast mode */
-    [data-theme="light"] .pixel-button {
-      background-color: #000000 !important;
-      color: #FFFFFF !important;
-      border-color: #000000 !important;
-    }
-
-    [data-theme="light"] .pixel-input {
-      border-color: #000000 !important;
-      color: #000000 !important;
-    }
-
-    [data-theme="light"] .pixel-card {
-      border-color: #000000 !important;
     }
   }
 
@@ -617,59 +320,13 @@
       @apply animate-none;
     }
 
+    .responsive-container {
+      @apply transition-none;
+    }
+
     .pixel-input {
       @apply transition-none;
     }
-  }
-
-  /* Link styles with high contrast */
-  .pixel-link {
-    color: var(--accent-primary);
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 2px;
-  }
-
-  .pixel-link:hover {
-    color: var(--accent-medium);
-    text-decoration-thickness: 3px;
-  }
-
-  [data-theme="light"] .pixel-link {
-    color: #0056B3; /* 7.1:1 contrast ratio */
-  }
-
-  [data-theme="light"] .pixel-link:hover {
-    color: #003D82; /* 9.8:1 contrast ratio */
-  }
-
-  [data-theme="light"] .pixel-link:visited {
-    color: #663399; /* 6.8:1 contrast ratio */
-  }
-
-  /* Status colors with high contrast */
-  .text-success {
-    color: #00FF00;
-  }
-
-  .text-warning {
-    color: #FFFF00;
-  }
-
-  .text-error {
-    color: #FF0000;
-  }
-
-  [data-theme="light"] .text-success {
-    color: #006600; /* 7.4:1 contrast ratio */
-  }
-
-  [data-theme="light"] .text-warning {
-    color: #B8860B; /* 4.8:1 contrast ratio */
-  }
-
-  [data-theme="light"] .text-error {
-    color: #CC0000; /* 5.9:1 contrast ratio */
   }
 }
 
@@ -701,9 +358,21 @@
 
   .cursor-pixel::after {
     content: '|';
-    color: var(--accent-primary);
+    color: #ADD8E6;
     animation: cursor-blink 1s step-end infinite;
     font-weight: bold;
+  }
+
+  /* Light theme cursor */
+  [data-theme="light"] .cursor-pixel::after {
+    color: #333333;
+  }
+
+  /* Auto theme cursor */
+  @media (prefers-color-scheme: light) {
+    [data-theme="auto"] .cursor-pixel::after {
+      color: #333333;
+    }
   }
 
   /* Container sizing utilities */
@@ -734,56 +403,27 @@
   }
 
   .focus-visible {
-    outline: 3px solid var(--accent-primary);
-    outline-offset: 2px;
+    @apply ring-2 ring-retro-accent ring-offset-2;
   }
 
-  /* High-contrast text utilities */
-  .text-high-contrast {
-    color: var(--text-primary);
-    font-weight: 600; /* Slightly bolder for better readability */
+  /* Theme-specific focus styles */
+  [data-theme="light"] .focus-visible {
+    @apply ring-2 ring-gray-500 ring-offset-2;
   }
 
-  .text-high-contrast-secondary {
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-
-  .text-high-contrast-muted {
-    color: var(--text-muted);
-    font-weight: 500;
-  }
-
-  /* High-contrast background utilities */
-  .bg-high-contrast {
-    background-color: var(--bg-primary);
-  }
-
-  .bg-high-contrast-secondary {
-    background-color: var(--bg-secondary);
-  }
-
-  .bg-high-contrast-tertiary {
-    background-color: var(--bg-tertiary);
-  }
-
-  /* High-contrast border utilities */
-  .border-high-contrast {
-    border-color: var(--border-primary);
-  }
-
-  .border-high-contrast-light {
-    border-color: var(--border-light);
+  @media (prefers-color-scheme: light) {
+    [data-theme="auto"] .focus-visible {
+      @apply ring-2 ring-gray-500 ring-offset-2;
+    }
   }
 }
 
-/* Custom scrollbar with high-contrast theme support */
+/* Custom scrollbar with pixel aesthetic */
 ::-webkit-scrollbar {
-  width: 16px; /* Wider for better accessibility */
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 
-/* Dark theme scrollbar */
 ::-webkit-scrollbar-track {
   background: #000044;
   border: 2px solid #000080;
@@ -792,42 +432,42 @@
 ::-webkit-scrollbar-thumb {
   background: #ADD8E6;
   border: 2px solid #008080;
-  min-height: 44px; /* Ensure minimum touch target */
+  min-height: 32px; /* Ensure scrollbar thumb is large enough to grab */
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #87CEEB;
 }
 
-/* High-contrast light theme scrollbar */
+/* Light theme scrollbar */
 [data-theme="light"] ::-webkit-scrollbar-track {
   background: #F5F5F5;
-  border: 2px solid #333333;
+  border: 2px solid #CCCCCC;
 }
 
 [data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: #0056B3; /* 7.1:1 contrast ratio */
-  border: 2px solid #003D82;
+  background: #999999;
+  border: 2px solid #666666;
 }
 
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-  background: #003D82; /* 9.8:1 contrast ratio */
+  background: #777777;
 }
 
 /* Auto theme scrollbar */
 @media (prefers-color-scheme: light) {
   [data-theme="auto"] ::-webkit-scrollbar-track {
     background: #F5F5F5;
-    border: 2px solid #333333;
+    border: 2px solid #CCCCCC;
   }
 
   [data-theme="auto"] ::-webkit-scrollbar-thumb {
-    background: #0056B3;
-    border: 2px solid #003D82;
+    background: #999999;
+    border: 2px solid #666666;
   }
 
   [data-theme="auto"] ::-webkit-scrollbar-thumb:hover {
-    background: #003D82;
+    background: #777777;
   }
 }
 
@@ -837,20 +477,43 @@
 }
 
 *:focus-visible {
-  outline: 3px solid var(--accent-primary);
+  outline: 3px solid #ADD8E6;
   outline-offset: 2px;
 }
 
-/* High-contrast focus styles */
+/* Light theme focus */
 [data-theme="light"] *:focus-visible {
-  outline: 3px solid #0056B3;
+  outline: 3px solid #666666;
   outline-offset: 2px;
+}
+
+/* Auto theme focus */
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] *:focus-visible {
+    outline: 3px solid #666666;
+    outline-offset: 2px;
+  }
 }
 
 /* Ensure sufficient contrast for all text */
 .text-contrast-check {
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  /* Use this class to test contrast ratios */
+  background: #000033;
+  color: #ADD8E6;
+}
+
+/* Light theme contrast check */
+[data-theme="light"] .text-contrast-check {
+  background: #FFFFFF;
+  color: #333333;
+}
+
+/* Auto theme contrast check */
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] .text-contrast-check {
+    background: #FFFFFF;
+    color: #333333;
+  }
 }
 
 /* Smooth transitions for theme changes */
@@ -858,29 +521,16 @@
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* Print styles with high contrast */
+/* Print styles */
 @media print {
   .pixel-button {
-    @apply border-2 border-black text-black bg-white;
-    box-shadow: none !important;
+    @apply border border-black text-black bg-white;
   }
 
   .pixel-input {
     background-color: white !important;
     color: black !important;
     border-color: black !important;
-    box-shadow: none !important;
-  }
-
-  .pixel-card {
-    border-color: black !important;
-    box-shadow: none !important;
-  }
-
-  /* Ensure all text is black for printing */
-  * {
-    color: black !important;
-    background-color: white !important;
   }
 }
 
@@ -897,23 +547,5 @@
   100% { 
     transform: scale(1);
     opacity: 1;
-  }
-}
-
-/* Cursor blink animation */
-@keyframes cursor-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
-
-/* High-contrast mode specific animations */
-@media (prefers-contrast: high) {
-  @keyframes glow-pulse {
-    0%, 100% { 
-      box-shadow: 0 0 8px rgba(0, 0, 0, 1);
-    }
-    50% { 
-      box-shadow: 0 0 16px rgba(0, 0, 0, 1);
-    }
   }
 }

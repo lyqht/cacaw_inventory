@@ -60,7 +60,7 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-retro-bg-primary bg-opacity-90 [data-theme='light']_&:bg-black [data-theme='light']_&:bg-opacity-60 transition-opacity backdrop-blur-sm"
+        className="fixed inset-0 bg-retro-bg-primary bg-opacity-90 transition-opacity backdrop-blur-sm"
         onClick={onClose}
       />
       
@@ -69,9 +69,9 @@ export const Modal: React.FC<ModalProps> = ({
         <div className={`relative w-full ${sizeClasses[size]} pixel-card-elevated animate-pixel-float`}>
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between p-pixel-2 border-b-3 border-retro-accent [data-theme='light']_&:border-retro-light-border">
+            <div className="flex items-center justify-between p-pixel-2 border-b-2 border-retro-accent">
               {title && (
-                <h2 className="text-lg font-pixel text-retro-accent [data-theme='light']_&:text-retro-light-text font-medium">
+                <h2 className="text-lg font-pixel text-retro-accent">
                   {title}
                 </h2>
               )}
@@ -82,8 +82,7 @@ export const Modal: React.FC<ModalProps> = ({
                   size="sm"
                   icon={X}
                   onClick={onClose}
-                  className="ml-auto min-w-[44px] min-h-[44px]"
-                  aria-label="Close modal"
+                  className="ml-auto"
                 />
               )}
             </div>

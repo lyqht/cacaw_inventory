@@ -322,10 +322,6 @@ export const CapturePage: React.FC = () => {
               <div className="w-2 h-2 bg-retro-accent animate-pixel-pulse pixel-perfect" style={{ animationDelay: '0.2s' }} />
               <div className="w-2 h-2 bg-retro-accent animate-pixel-pulse pixel-perfect" style={{ animationDelay: '0.4s' }} />
             </div>
-            
-            <div className="text-sm text-retro-accent-light font-pixel-sans">
-              This usually takes 2-5 seconds
-            </div>
           </div>
         </Card>
       </div>
