@@ -29,10 +29,10 @@ export const Button: React.FC<ButtonProps> = ({
   const variantClasses = {
     // Primary: Uses theme primary color with accent text
     primary: 'bg-retro-primary text-retro-accent border-retro-primary hover:bg-retro-primary-light hover:border-retro-primary-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    // Accent: Uses theme accent color with white text (for emphasis)
-    accent: 'bg-retro-accent text-retro-white border-retro-accent hover:bg-retro-accent-light hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    // Accent: Uses theme accent color with contrasting text (dark text in light theme, light text in dark theme)
+    accent: 'bg-retro-accent text-retro-bg-primary border-retro-accent hover:bg-retro-accent-light hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
     // Ghost: Transparent with theme accent border and text
-    ghost: 'bg-transparent text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-white hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    ghost: 'bg-transparent text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-bg-primary hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
     // Danger: Uses theme error color with white text
     danger: 'bg-retro-error text-retro-white border-retro-error hover:opacity-90 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
     // Warning: Uses theme warning color with accent text
