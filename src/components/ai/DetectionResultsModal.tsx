@@ -30,6 +30,7 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
   const [editingItems, setEditingItems] = useState<Partial<CollectibleData>[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [showRawResponse, setShowRawResponse] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   // Initialize editing items when detection result changes
   React.useEffect(() => {
@@ -121,360 +122,406 @@ export const DetectionResultsModal: React.FC<DetectionResultsModalProps> = ({
   const hasLowConfidence = detectionResult.confidence < 50;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="xl"
-      title="AI Detection Results"
-      showCloseButton={false}
-    >
-      <div className="space-y-pixel-2">
-        {/* Header with Overall Stats */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-retro-accent rounded-pixel flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-retro-bg-primary animate-pixel-pulse" />
-            </div>
-            <div>
-              <h2 className="font-pixel text-retro-accent">
-                {detectionResult.items.length} Item{detectionResult.items.length !== 1 ? 's' : ''} Detected
-              </h2>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-pixel-sans text-retro-accent-light">
-                  Confidence: 
-                </span>
-                <span className={`font-pixel-sans ${getConfidenceColor(detectionResult.confidence)}`}>
-                  {Math.round(detectionResult.confidence)}%
-                </span>
-                <span className="font-pixel-sans text-retro-accent-light">
-                  • {detectionResult.processingTime}ms
-                </span>
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        size="xl"
+        title="AI Detection Results"
+        showCloseButton={false}
+      >
+        <div className="space-y-pixel-2">
+          {/* Header with Overall Stats */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-retro-accent rounded-pixel flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-retro-bg-primary animate-pixel-pulse" />
               </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              icon={RefreshCw}
-              size="sm"
-              onClick={onRetryDetection}
-              disabled={isLoading}
-            >
-              Retry
-            </Button>
-            <Button
-              variant="ghost"
-              icon={X}
-              size="sm"
-              onClick={onClose}
-              disabled={isLoading}
-            />
-          </div>
-        </div>
-
-        {/* Error State */}
-        {hasError && (
-          <Card variant="outlined" className="border-retro-error">
-            <div className="flex items-center gap-2 text-retro-error">
-              <AlertTriangle className="w-5 h-5" />
               <div>
-                <h3 className="font-pixel">Detection Failed</h3>
-                <p className="font-pixel-sans text-sm mt-1">
-                  {detectionResult.error || 'No items could be detected in this image.'}
-                </p>
+                <h2 className="font-pixel text-retro-accent">
+                  {detectionResult.items.length} Item{detectionResult.items.length !== 1 ? 's' : ''} Detected
+                </h2>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-pixel-sans text-retro-accent-light">
+                    Confidence: 
+                  </span>
+                  <span className={`font-pixel-sans ${getConfidenceColor(detectionResult.confidence)}`}>
+                    {Math.round(detectionResult.confidence)}%
+                  </span>
+                  <span className="font-pixel-sans text-retro-accent-light">
+                    • {detectionResult.processingTime}ms
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="mt-pixel flex gap-2">
+
+            <div className="flex gap-2">
               <Button
-                variant="accent"
+                variant="ghost"
                 icon={RefreshCw}
                 size="sm"
                 onClick={onRetryDetection}
                 disabled={isLoading}
               >
-                Try Again
+                Retry
               </Button>
               <Button
                 variant="ghost"
+                icon={X}
                 size="sm"
                 onClick={onClose}
-              >
-                Cancel
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Low Confidence Warning */}
-        {!hasError && hasLowConfidence && (
-          <Card variant="outlined" className="border-retro-warning">
-            <div className="flex items-center gap-2 text-retro-warning">
-              <AlertTriangle className="w-4 h-4" />
-              <p className="font-pixel-sans text-sm">
-                Low confidence detection. Please review the results carefully before saving.
-              </p>
-            </div>
-          </Card>
-        )}
-
-        {/* Image Preview */}
-        {originalImage && (
-          <Card variant="outlined" padding="sm">
-            <div className="flex items-center gap-2 mb-2">
-              <Eye className="w-4 h-4 text-retro-accent" />
-              <span className="font-pixel text-retro-accent text-sm">Original Image</span>
-            </div>
-            <div className="max-h-48 overflow-hidden rounded-pixel border border-retro-accent">
-              <img
-                src={originalImage}
-                alt="Analyzed image"
-                className="w-full h-full object-contain bg-retro-bg-tertiary"
+                disabled={isLoading}
               />
             </div>
-          </Card>
-        )}
+          </div>
 
-        {/* Items List */}
-        {!hasError && detectionResult.items.length > 0 && (
-          <>
-            {/* Selection Controls */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-pixel-sans text-retro-accent-light text-sm">
-                  {selectedItems.size} of {editingItems.length} selected
-                </span>
+          {/* Error State */}
+          {hasError && (
+            <Card variant="outlined" className="border-retro-error">
+              <div className="flex items-center gap-2 text-retro-error">
+                <AlertTriangle className="w-5 h-5" />
+                <div>
+                  <h3 className="font-pixel">Detection Failed</h3>
+                  <p className="font-pixel-sans text-sm mt-1">
+                    {detectionResult.error || 'No items could be detected in this image.'}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-pixel flex gap-2">
                 <Button
-                  variant="ghost"
+                  variant="accent"
+                  icon={RefreshCw}
                   size="sm"
-                  onClick={selectAllItems}
-                  disabled={selectedItems.size === editingItems.length}
+                  onClick={onRetryDetection}
+                  disabled={isLoading}
                 >
-                  Select All
+                  Try Again
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={deselectAllItems}
-                  disabled={selectedItems.size === 0}
+                  onClick={onClose}
                 >
-                  Deselect All
+                  Cancel
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Low Confidence Warning */}
+          {!hasError && hasLowConfidence && (
+            <Card variant="outlined" className="border-retro-warning">
+              <div className="flex items-center gap-2 text-retro-warning">
+                <AlertTriangle className="w-4 h-4" />
+                <p className="font-pixel-sans text-sm">
+                  Low confidence detection. Please review the results carefully before saving.
+                </p>
+              </div>
+            </Card>
+          )}
+
+          {/* Image Preview - Updated for full display */}
+          {originalImage && (
+            <Card variant="outlined" padding="sm">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-retro-accent" />
+                  <span className="font-pixel text-retro-accent text-sm">Original Image</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Eye}
+                  onClick={() => setShowImageModal(true)}
+                >
+                  View Full Size
+                </Button>
+              </div>
+              <div 
+                className="w-full bg-retro-bg-tertiary border border-retro-accent rounded-pixel overflow-hidden cursor-pointer hover:border-retro-accent-light transition-colors"
+                onClick={() => setShowImageModal(true)}
+                style={{ maxHeight: '300px' }}
+              >
+                <img
+                  src={originalImage}
+                  alt="Analyzed image"
+                  className="w-full h-full object-contain"
+                  style={{ 
+                    maxHeight: '300px',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+              <p className="text-retro-accent-light font-pixel-sans text-xs mt-1 text-center">
+                Click to view full size
+              </p>
+            </Card>
+          )}
+
+          {/* Items List */}
+          {!hasError && detectionResult.items.length > 0 && (
+            <>
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-pixel-sans text-retro-accent-light text-sm">
+                    {selectedItems.size} of {editingItems.length} selected
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={selectAllItems}
+                    disabled={selectedItems.size === editingItems.length}
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={deselectAllItems}
+                    disabled={selectedItems.size === 0}
+                  >
+                    Deselect All
+                  </Button>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Eye}
+                  onClick={() => setShowRawResponse(!showRawResponse)}
+                >
+                  {showRawResponse ? 'Hide' : 'Show'} Raw Response
                 </Button>
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={Eye}
-                onClick={() => setShowRawResponse(!showRawResponse)}
-              >
-                {showRawResponse ? 'Hide' : 'Show'} Raw Response
-              </Button>
-            </div>
-
-            {/* Raw Response */}
-            {showRawResponse && (
-              <Card variant="outlined" padding="md">
-                <h4 className="font-pixel text-retro-accent mb-2">Raw AI Response</h4>
-                <pre className="text-xs font-pixel-sans text-retro-accent-light bg-retro-bg-tertiary p-2 rounded-pixel overflow-auto max-h-32">
-                  {detectionResult.rawResponse}
-                </pre>
-              </Card>
-            )}
-
-            {/* Items Grid */}
-            <div className="space-y-pixel">
-              {editingItems.map((item, index) => (
-                <Card
-                  key={index}
-                  variant="outlined"
-                  padding="md"
-                  className={`transition-all duration-200 ${
-                    selectedItems.has(index)
-                      ? 'border-retro-accent-light bg-retro-accent bg-opacity-10'
-                      : 'border-retro-accent hover:border-retro-accent-light'
-                  }`}
-                >
-                  <div className="space-y-pixel">
-                    {/* Item Header */}
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.has(index)}
-                          onChange={() => toggleItemSelection(index)}
-                          className="w-4 h-4 text-retro-accent bg-retro-bg-tertiary border-retro-accent rounded focus:ring-retro-accent"
-                        />
-                        <div>
-                          <h3 className="font-pixel text-retro-accent">
-                            Item {index + 1}
-                          </h3>
-                          {item.aiConfidence && (
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs font-pixel-sans text-retro-accent-light">
-                                Confidence:
-                              </span>
-                              <Badge
-                                variant={item.aiConfidence >= 80 ? 'success' : item.aiConfidence >= 60 ? 'default' : 'warning'}
-                                size="sm"
-                              >
-                                {Math.round(item.aiConfidence)}%
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Editable Fields */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-pixel">
-                      <Input
-                        label="Name"
-                        value={item.name || ''}
-                        onChange={(e) => updateItem(index, { name: e.target.value })}
-                        placeholder="Item name..."
-                        fullWidth
-                      />
-
-                      <Input
-                        label="Type"
-                        value={item.type || ''}
-                        onChange={(e) => updateItem(index, { type: e.target.value })}
-                        placeholder="Item type..."
-                        fullWidth
-                      />
-
-                      <Input
-                        label="Series"
-                        value={item.series || ''}
-                        onChange={(e) => updateItem(index, { series: e.target.value })}
-                        placeholder="Series or set..."
-                        fullWidth
-                      />
-
-                      <div>
-                        <label className="block text-sm font-pixel text-retro-accent mb-1">
-                          Condition
-                        </label>
-                        <select
-                          value={item.condition || 'good'}
-                          onChange={(e) => updateItem(index, { condition: e.target.value as ItemCondition })}
-                          className="pixel-input w-full"
-                        >
-                          {conditions.map(condition => (
-                            <option key={condition} value={condition}>
-                              {condition.split('-').map(word => 
-                                word.charAt(0).toUpperCase() + word.slice(1)
-                              ).join(' ')}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <Input
-                        label="Estimated Value"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={item.estimatedValue?.toString() || ''}
-                        onChange={(e) => updateItem(index, { 
-                          estimatedValue: e.target.value ? Number(e.target.value) : undefined 
-                        })}
-                        placeholder="0.00"
-                        fullWidth
-                      />
-
-                      <div>
-                        <label className="block text-sm font-pixel text-retro-accent mb-1">
-                          Currency
-                        </label>
-                        <select
-                          value={item.currency || 'USD'}
-                          onChange={(e) => updateItem(index, { currency: e.target.value })}
-                          className="pixel-input w-full"
-                        >
-                          <option value="USD">USD ($)</option>
-                          <option value="EUR">EUR (€)</option>
-                          <option value="GBP">GBP (£)</option>
-                          <option value="CAD">CAD ($)</option>
-                          <option value="JPY">JPY (¥)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                      <label className="block text-sm font-pixel text-retro-accent mb-1">
-                        Description
-                      </label>
-                      <textarea
-                        value={item.description || ''}
-                        onChange={(e) => updateItem(index, { description: e.target.value })}
-                        rows={2}
-                        className="pixel-input w-full resize-none"
-                        placeholder="Item description..."
-                      />
-                    </div>
-
-                    {/* Tags */}
-                    {item.tags && item.tags.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-pixel text-retro-accent mb-1">
-                          Tags
-                        </label>
-                        <div className="flex flex-wrap gap-1">
-                          {item.tags.map((tag, tagIndex) => (
-                            <Badge key={tagIndex} variant="default" size="sm">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* OCR Text */}
-                    {item.ocrText && (
-                      <div>
-                        <label className="block text-sm font-pixel text-retro-accent mb-1">
-                          Detected Text
-                        </label>
-                        <p className="text-xs font-pixel-sans text-retro-accent-light bg-retro-bg-tertiary p-2 rounded-pixel">
-                          {item.ocrText}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+              {/* Raw Response */}
+              {showRawResponse && (
+                <Card variant="outlined" padding="md">
+                  <h4 className="font-pixel text-retro-accent mb-2">Raw AI Response</h4>
+                  <pre className="text-xs font-pixel-sans text-retro-accent-light bg-retro-bg-tertiary p-2 rounded-pixel overflow-auto max-h-32">
+                    {detectionResult.rawResponse}
+                  </pre>
                 </Card>
-              ))}
-            </div>
-          </>
-        )}
+              )}
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-2 pt-pixel-2 border-t border-retro-accent border-opacity-30">
-          <Button
-            variant="ghost"
-            icon={X}
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
+              {/* Items Grid */}
+              <div className="space-y-pixel">
+                {editingItems.map((item, index) => (
+                  <Card
+                    key={index}
+                    variant="outlined"
+                    padding="md"
+                    className={`transition-all duration-200 ${
+                      selectedItems.has(index)
+                        ? 'border-retro-accent-light bg-retro-accent bg-opacity-10'
+                        : 'border-retro-accent hover:border-retro-accent-light'
+                    }`}
+                  >
+                    <div className="space-y-pixel">
+                      {/* Item Header */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.has(index)}
+                            onChange={() => toggleItemSelection(index)}
+                            className="w-4 h-4 text-retro-accent bg-retro-bg-tertiary border-retro-accent rounded focus:ring-retro-accent"
+                          />
+                          <div>
+                            <h3 className="font-pixel text-retro-accent">
+                              Item {index + 1}
+                            </h3>
+                            {item.aiConfidence && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs font-pixel-sans text-retro-accent-light">
+                                  Confidence:
+                                </span>
+                                <Badge
+                                  variant={item.aiConfidence >= 80 ? 'success' : item.aiConfidence >= 60 ? 'default' : 'warning'}
+                                  size="sm"
+                                >
+                                  {Math.round(item.aiConfidence)}%
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-          {!hasError && (
-            <Button
-              variant="accent"
-              icon={Save}
-              onClick={handleSaveSelected}
-              disabled={selectedItems.size === 0 || isLoading}
-              isLoading={isLoading}
-              glow
-            >
-              Save {selectedItems.size} Item{selectedItems.size !== 1 ? 's' : ''}
-            </Button>
+                      {/* Editable Fields */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-pixel">
+                        <Input
+                          label="Name"
+                          value={item.name || ''}
+                          onChange={(e) => updateItem(index, { name: e.target.value })}
+                          placeholder="Item name..."
+                          fullWidth
+                        />
+
+                        <Input
+                          label="Type"
+                          value={item.type || ''}
+                          onChange={(e) => updateItem(index, { type: e.target.value })}
+                          placeholder="Item type..."
+                          fullWidth
+                        />
+
+                        <Input
+                          label="Series"
+                          value={item.series || ''}
+                          onChange={(e) => updateItem(index, { series: e.target.value })}
+                          placeholder="Series or set..."
+                          fullWidth
+                        />
+
+                        <div>
+                          <label className="block text-sm font-pixel text-retro-accent mb-1">
+                            Condition
+                          </label>
+                          <select
+                            value={item.condition || 'good'}
+                            onChange={(e) => updateItem(index, { condition: e.target.value as ItemCondition })}
+                            className="pixel-input w-full"
+                          >
+                            {conditions.map(condition => (
+                              <option key={condition} value={condition}>
+                                {condition.split('-').map(word => 
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                                ).join(' ')}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <Input
+                          label="Estimated Value"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={item.estimatedValue?.toString() || ''}
+                          onChange={(e) => updateItem(index, { 
+                            estimatedValue: e.target.value ? Number(e.target.value) : undefined 
+                          })}
+                          placeholder="0.00"
+                          fullWidth
+                        />
+
+                        <div>
+                          <label className="block text-sm font-pixel text-retro-accent mb-1">
+                            Currency
+                          </label>
+                          <select
+                            value={item.currency || 'USD'}
+                            onChange={(e) => updateItem(index, { currency: e.target.value })}
+                            className="pixel-input w-full"
+                          >
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="CAD">CAD ($)</option>
+                            <option value="JPY">JPY (¥)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div>
+                        <label className="block text-sm font-pixel text-retro-accent mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          value={item.description || ''}
+                          onChange={(e) => updateItem(index, { description: e.target.value })}
+                          rows={2}
+                          className="pixel-input w-full resize-none"
+                          placeholder="Item description..."
+                        />
+                      </div>
+
+                      {/* Tags */}
+                      {item.tags && item.tags.length > 0 && (
+                        <div>
+                          <label className="block text-sm font-pixel text-retro-accent mb-1">
+                            Tags
+                          </label>
+                          <div className="flex flex-wrap gap-1">
+                            {item.tags.map((tag, tagIndex) => (
+                              <Badge key={tagIndex} variant="default" size="sm">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* OCR Text */}
+                      {item.ocrText && (
+                        <div>
+                          <label className="block text-sm font-pixel text-retro-accent mb-1">
+                            Detected Text
+                          </label>
+                          <p className="text-xs font-pixel-sans text-retro-accent-light bg-retro-bg-tertiary p-2 rounded-pixel">
+                            {item.ocrText}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
           )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-2 pt-pixel-2 border-t border-retro-accent border-opacity-30">
+            <Button
+              variant="ghost"
+              icon={X}
+              onClick={onClose}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+
+            {!hasError && (
+              <Button
+                variant="accent"
+                icon={Save}
+                onClick={handleSaveSelected}
+                disabled={selectedItems.size === 0 || isLoading}
+                isLoading={isLoading}
+                glow
+              >
+                Save {selectedItems.size} Item{selectedItems.size !== 1 ? 's' : ''}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+
+      {/* Full Size Image Modal */}
+      {originalImage && (
+        <Modal
+          isOpen={showImageModal}
+          onClose={() => setShowImageModal(false)}
+          size="xl"
+          title="Original Image - Full Size"
+        >
+          <div className="text-center">
+            <div className="bg-retro-bg-tertiary border border-retro-accent rounded-pixel overflow-hidden">
+              <img
+                src={originalImage}
+                alt="Full size analyzed image"
+                className="w-full h-auto max-h-[80vh] object-contain"
+              />
+            </div>
+            <p className="text-retro-accent-light font-pixel-sans text-sm mt-2">
+              This is the image that was analyzed by the AI detection system
+            </p>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 };
