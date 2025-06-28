@@ -31,6 +31,44 @@
     color: #FFFFFF;
     font-family: "Pixelify Sans", sans-serif;
   }
+
+  /* Theme-based color variables */
+  :root {
+    /* Light mode input colors */
+    --input-bg-light: #FFFFFF;
+    --input-text-light: #333333;
+    --input-border-light: #CCCCCC;
+    --input-border-focus-light: #999999;
+    --input-placeholder-light: #666666;
+    
+    /* Dark mode input colors (existing navy theme) */
+    --input-bg-dark: #000055;
+    --input-text-dark: #FFFFFF;
+    --input-border-dark: #87CEEB;
+    --input-border-focus-dark: #ADD8E6;
+    --input-placeholder-dark: #A0A0A0;
+  }
+
+  /* Auto mode - follows system preference */
+  @media (prefers-color-scheme: light) {
+    :root {
+      --input-bg-auto: var(--input-bg-light);
+      --input-text-auto: var(--input-text-light);
+      --input-border-auto: var(--input-border-light);
+      --input-border-focus-auto: var(--input-border-focus-light);
+      --input-placeholder-auto: var(--input-placeholder-light);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --input-bg-auto: var(--input-bg-dark);
+      --input-text-auto: var(--input-text-dark);
+      --input-border-auto: var(--input-border-dark);
+      --input-border-focus-auto: var(--input-border-focus-dark);
+      --input-placeholder-auto: var(--input-placeholder-dark);
+    }
+  }
 }
 
 /* Enhanced pixel components with improved button visibility */
@@ -68,13 +106,138 @@
     @apply hover:shadow-pixel-glow;
   }
 
+  /* Enhanced input styling with theme support */
   .pixel-input {
-    @apply font-pixel-sans border-2 border-retro-accent bg-retro-bg-tertiary text-retro-white;
-    @apply focus:outline-none focus:ring-2 focus:ring-retro-accent-light focus:border-retro-accent-light;
-    @apply shadow-pixel-inner placeholder-retro-gray-400;
-    @apply transition-all duration-200;
+    @apply font-pixel-sans border-2 rounded-pixel shadow-pixel-inner transition-all duration-200;
     /* Ensure minimum touch target size */
     min-height: 32px;
+    padding: 8px 12px;
+  }
+
+  /* Default (Dark) theme inputs */
+  .pixel-input {
+    background-color: var(--input-bg-dark);
+    color: var(--input-text-dark);
+    border-color: var(--input-border-dark);
+  }
+
+  .pixel-input:focus {
+    outline: none;
+    border-color: var(--input-border-focus-dark);
+    box-shadow: 0 0 0 2px rgba(173, 216, 230, 0.3);
+  }
+
+  .pixel-input::placeholder {
+    color: var(--input-placeholder-dark);
+    opacity: 0.7;
+  }
+
+  /* Light theme inputs */
+  [data-theme="light"] .pixel-input {
+    background-color: var(--input-bg-light);
+    color: var(--input-text-light);
+    border-color: var(--input-border-light);
+    box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  [data-theme="light"] .pixel-input:focus {
+    border-color: var(--input-border-focus-light);
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  [data-theme="light"] .pixel-input::placeholder {
+    color: var(--input-placeholder-light);
+    opacity: 0.7;
+  }
+
+  /* Auto theme inputs */
+  [data-theme="auto"] .pixel-input {
+    background-color: var(--input-bg-auto);
+    color: var(--input-text-auto);
+    border-color: var(--input-border-auto);
+  }
+
+  [data-theme="auto"] .pixel-input:focus {
+    border-color: var(--input-border-focus-auto);
+  }
+
+  [data-theme="auto"] .pixel-input::placeholder {
+    color: var(--input-placeholder-auto);
+    opacity: 0.7;
+  }
+
+  @media (prefers-color-scheme: light) {
+    [data-theme="auto"] .pixel-input {
+      box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="auto"] .pixel-input:focus {
+      box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    [data-theme="auto"] .pixel-input:focus {
+      box-shadow: 0 0 0 2px rgba(173, 216, 230, 0.3);
+    }
+  }
+
+  /* Select elements */
+  .pixel-input select,
+  select.pixel-input {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 32px;
+    appearance: none;
+  }
+
+  /* Light theme select arrow */
+  [data-theme="light"] .pixel-input select,
+  [data-theme="light"] select.pixel-input {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  }
+
+  /* Auto theme select arrow */
+  @media (prefers-color-scheme: light) {
+    [data-theme="auto"] .pixel-input select,
+    [data-theme="auto"] select.pixel-input {
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    }
+  }
+
+  /* Textarea elements */
+  .pixel-input textarea,
+  textarea.pixel-input {
+    resize: vertical;
+    min-height: 64px;
+  }
+
+  /* Input error states */
+  .pixel-input.error {
+    border-color: #FF0000;
+  }
+
+  .pixel-input.error:focus {
+    box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.3);
+  }
+
+  [data-theme="light"] .pixel-input.error:focus {
+    box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Input success states */
+  .pixel-input.success {
+    border-color: #00FF00;
+  }
+
+  .pixel-input.success:focus {
+    box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.3);
+  }
+
+  [data-theme="light"] .pixel-input.success:focus {
+    box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.3), inset 1px 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .pixel-badge {
@@ -138,6 +301,10 @@
     .pixel-card {
       @apply border-4;
     }
+
+    .pixel-input {
+      border-width: 3px;
+    }
   }
 
   /* Reduced motion support */
@@ -154,6 +321,10 @@
     }
 
     .responsive-container {
+      @apply transition-none;
+    }
+
+    .pixel-input {
       @apply transition-none;
     }
   }
@@ -192,6 +363,18 @@
     font-weight: bold;
   }
 
+  /* Light theme cursor */
+  [data-theme="light"] .cursor-pixel::after {
+    color: #333333;
+  }
+
+  /* Auto theme cursor */
+  @media (prefers-color-scheme: light) {
+    [data-theme="auto"] .cursor-pixel::after {
+      color: #333333;
+    }
+  }
+
   /* Container sizing utilities */
   .container-adaptive {
     @apply transition-all duration-300 ease-in-out;
@@ -222,6 +405,17 @@
   .focus-visible {
     @apply ring-2 ring-retro-accent ring-offset-2;
   }
+
+  /* Theme-specific focus styles */
+  [data-theme="light"] .focus-visible {
+    @apply ring-2 ring-gray-500 ring-offset-2;
+  }
+
+  @media (prefers-color-scheme: light) {
+    [data-theme="auto"] .focus-visible {
+      @apply ring-2 ring-gray-500 ring-offset-2;
+    }
+  }
 }
 
 /* Custom scrollbar with pixel aesthetic */
@@ -245,6 +439,38 @@
   background: #87CEEB;
 }
 
+/* Light theme scrollbar */
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #F5F5F5;
+  border: 2px solid #CCCCCC;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #999999;
+  border: 2px solid #666666;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #777777;
+}
+
+/* Auto theme scrollbar */
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] ::-webkit-scrollbar-track {
+    background: #F5F5F5;
+    border: 2px solid #CCCCCC;
+  }
+
+  [data-theme="auto"] ::-webkit-scrollbar-thumb {
+    background: #999999;
+    border: 2px solid #666666;
+  }
+
+  [data-theme="auto"] ::-webkit-scrollbar-thumb:hover {
+    background: #777777;
+  }
+}
+
 /* Enhanced focus styles for accessibility */
 *:focus {
   outline: none;
@@ -255,11 +481,39 @@
   outline-offset: 2px;
 }
 
+/* Light theme focus */
+[data-theme="light"] *:focus-visible {
+  outline: 3px solid #666666;
+  outline-offset: 2px;
+}
+
+/* Auto theme focus */
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] *:focus-visible {
+    outline: 3px solid #666666;
+    outline-offset: 2px;
+  }
+}
+
 /* Ensure sufficient contrast for all text */
 .text-contrast-check {
   /* Use this class to test contrast ratios */
   background: #000033;
   color: #ADD8E6;
+}
+
+/* Light theme contrast check */
+[data-theme="light"] .text-contrast-check {
+  background: #FFFFFF;
+  color: #333333;
+}
+
+/* Auto theme contrast check */
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] .text-contrast-check {
+    background: #FFFFFF;
+    color: #333333;
+  }
 }
 
 /* Smooth transitions for theme changes */
@@ -271,6 +525,12 @@
 @media print {
   .pixel-button {
     @apply border border-black text-black bg-white;
+  }
+
+  .pixel-input {
+    background-color: white !important;
+    color: black !important;
+    border-color: black !important;
   }
 }
 

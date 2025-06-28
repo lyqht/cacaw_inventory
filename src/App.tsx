@@ -19,9 +19,29 @@ function App() {
     isLoading, 
     setLoading, 
     setError,
-    navigateBack
+    navigateBack,
+    preferences
   } = useAppStore();
   const [isInitialized, setIsInitialized] = React.useState(false);
+
+  // Apply theme to document
+  useEffect(() => {
+    const applyTheme = () => {
+      const root = document.documentElement;
+      
+      // Remove existing theme classes
+      root.removeAttribute('data-theme');
+      
+      // Apply new theme
+      if (preferences.theme === 'auto') {
+        root.setAttribute('data-theme', 'auto');
+      } else {
+        root.setAttribute('data-theme', preferences.theme);
+      }
+    };
+
+    applyTheme();
+  }, [preferences.theme]);
 
   useEffect(() => {
     const initializeApp = async () => {
