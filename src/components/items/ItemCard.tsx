@@ -21,6 +21,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
   className = ''
 }) => {
   const [showActions, setShowActions] = React.useState(false);
+  const [imageLoadError, setImageLoadError] = React.useState(false);
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
@@ -69,6 +70,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     }).format(date);
   };
 
+  // Reset image error state when item changes
+  React.useEffect(() => {
+    setImageLoadError(false);
+  }, [item.id, item.primaryImage, item.additionalImages]);
+
   // Determine if item has image content
   const hasImage = item.primaryImage || item.additionalImages.length > 0;
   const displayImage = item.primaryImage || item.additionalImages[0];
@@ -78,7 +84,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     hasImage,
     primaryImage: item.primaryImage,
     additionalImages: item.additionalImages,
-    displayImage
+    displayImage,
+    imageLoadError
   });
 
   return (
@@ -208,19 +215,24 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             : 'aspect-[3/2] max-h-32' // Reduced height for text-only content
           }
         `}>
-          {displayImage ? (
+          {displayImage && !imageLoadError ? (
             <img
               src={displayImage}
               alt={item.name}
               className="w-full h-full object-cover rounded-pixel transition-all duration-300"
               onError={(e) => {
                 console.error('Image failed to load:', displayImage);
-                e.currentTarget.style.display = 'none';
+                setImageLoadError(true);
               }}
               onLoad={() => {
                 console.log('Image loaded successfully:', displayImage);
               }}
             />
+          ) : displayImage && imageLoadError ? (
+            <div className="text-center text-retro-error transition-all duration-300">
+              <div className="text-xl mb-1 animate-pixel-pulse">⚠️</div>
+              <p className="text-xs font-pixel-sans">Corrupted Image</p>
+            </div>
           ) : (
             <div className="text-center text-retro-accent-light transition-all duration-300">
               <div className="text-xl mb-1 animate-pixel-pulse">📷</div>
