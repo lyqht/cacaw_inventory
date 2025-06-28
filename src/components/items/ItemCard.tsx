@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2, Eye, DollarSign, Calendar, Tag, MoreVertical } from 'lucide-react';
+import { Edit, Trash2, Eye, DollarSign, Calendar, Tag, MoreVertical, Sparkles } from 'lucide-react';
 import { CollectibleData } from '../../types';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -10,6 +10,7 @@ interface ItemCardProps {
   onEdit: (item: CollectibleData) => void;
   onDelete: (item: CollectibleData) => void;
   onView: (item: CollectibleData) => void;
+  onAIDetection?: (item: CollectibleData) => void;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
   onEdit,
   onDelete,
   onView,
+  onAIDetection,
   className = ''
 }) => {
   const [showActions, setShowActions] = React.useState(false);
@@ -117,6 +119,19 @@ export const ItemCard: React.FC<ItemCardProps> = ({
                 className="w-7 h-7 p-0 min-w-[28px] min-h-[28px]"
                 title="View Details"
               />
+              {onAIDetection && hasImage && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={Sparkles}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAIDetection(item);
+                  }}
+                  className="w-7 h-7 p-0 min-w-[28px] min-h-[28px] bg-retro-primary hover:bg-retro-primary-light"
+                  title="AI Detection"
+                />
+              )}
               <Button
                 variant="primary"
                 size="sm"
@@ -170,6 +185,19 @@ export const ItemCard: React.FC<ItemCardProps> = ({
                       <Eye className="w-3 h-3" />
                       View
                     </button>
+                    {onAIDetection && hasImage && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAIDetection(item);
+                          setShowActions(false);
+                        }}
+                        className="w-full text-left px-2 py-1 text-xs font-pixel-sans text-retro-primary hover:bg-retro-primary hover:text-retro-bg-primary rounded-pixel transition-colors flex items-center gap-2"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        AI Detect
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -302,12 +330,17 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             <span className="truncate">{formatDate(item.createdAt)}</span>
           </div>
           
-          {(item.primaryImage || item.additionalImages.length > 0) && (
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <span>{(item.primaryImage ? 1 : 0) + item.additionalImages.length}</span>
-              <span>📷</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            {(item.primaryImage || item.additionalImages.length > 0) && (
+              <>
+                <span>{(item.primaryImage ? 1 : 0) + item.additionalImages.length}</span>
+                <span>📷</span>
+              </>
+            )}
+            {onAIDetection && hasImage && (
+              <Sparkles className="w-3 h-3 text-retro-primary animate-pixel-pulse" title="AI Detection Available" />
+            )}
+          </div>
         </div>
       </div>
 
