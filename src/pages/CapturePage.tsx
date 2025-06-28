@@ -8,7 +8,8 @@ import { ApiKeySetup } from '../components/ai/ApiKeySetup';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { ArrowLeft, Sparkles, Settings, Key } from 'lucide-react';
+import { Badge } from '../components/ui/Badge';
+import { ArrowLeft, Sparkles, Settings, Key, Zap, AlertTriangle, CreditCard } from 'lucide-react';
 import { DetectionResult, CollectibleData } from '../types';
 
 const storageService = StorageService.getInstance();
@@ -27,21 +28,30 @@ export const CapturePage: React.FC = () => {
   const [showApiSetup, setShowApiSetup] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
   const [processingStatus, setProcessingStatus] = useState<string>('');
+  
+  // Usage tracking
+  const [remainingDetections, setRemainingDetections] = useState<number>(5);
+  const [isUsingCustomKey, setIsUsingCustomKey] = useState(false);
 
-  // Load API key on component mount
+  // Load API key and usage info on component mount
   React.useEffect(() => {
-    const loadApiKey = async () => {
+    const loadApiInfo = async () => {
       try {
         const savedApiKey = await storageService.getSetting('gemini_api_key');
         if (savedApiKey) {
           setApiKey(savedApiKey);
           aiService.setApiKey(savedApiKey);
         }
+        
+        // Load usage information
+        const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+        setRemainingDetections(remaining);
+        setIsUsingCustomKey(usingCustom);
       } catch (error) {
-        console.error('Error loading API key:', error);
+        console.error('Error loading API info:', error);
       }
     };
-    loadApiKey();
+    loadApiInfo();
   }, []);
 
   const handleImageCapture = async (imageBlob: Blob) => {
@@ -49,8 +59,11 @@ export const CapturePage: React.FC = () => {
     const imageUrl = URL.createObjectURL(imageBlob);
     setCapturedImageUrl(imageUrl);
 
-    // Check if API key is configured
-    if (!apiKey) {
+    // Check if AI detection is available
+    const { canUse, remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+    
+    if (!canUse) {
+      // Show API setup modal if no detections remaining
       setShowApiSetup(true);
       return;
     }
@@ -81,9 +94,13 @@ export const CapturePage: React.FC = () => {
       setDetectionResult(result);
       setCaptureStep('results');
 
+      // Update usage info after successful detection
+      const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+      setRemainingDetections(remaining);
+      setIsUsingCustomKey(usingCustom);
+
       // Log the detection for future reference
       if (result.items.length > 0) {
-        // TODO: Save detection log to storage
         console.log('Detection successful:', result.items.length, 'items found');
       }
 
@@ -168,6 +185,11 @@ export const CapturePage: React.FC = () => {
     try {
       await storageService.setSetting('gemini_api_key', newApiKey);
       console.log('API key saved successfully');
+      
+      // Update usage info
+      const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+      setRemainingDetections(remaining);
+      setIsUsingCustomKey(usingCustom);
       
       // If we have a captured image, process it now
       if (capturedImage) {
@@ -258,26 +280,80 @@ export const CapturePage: React.FC = () => {
           </div>
         </div>
 
-        {/* API Key Warning */}
-        {!apiKey && (
-          <Card variant="outlined" className="border-retro-warning">
+        {/* AI Usage Status */}
+        <Card variant="outlined" padding="md" className={
+          isUsingCustomKey ? 'border-retro-success' : 
+          remainingDetections > 0 ? 'border-retro-accent' : 'border-retro-warning'
+        }>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-pixel flex items-center justify-center ${
+                isUsingCustomKey ? 'bg-retro-success' : 
+                remainingDetections > 0 ? 'bg-retro-accent' : 'bg-retro-warning'
+              }`}>
+                {isUsingCustomKey ? (
+                  <Key className="w-4 h-4 text-retro-bg-primary" />
+                ) : (
+                  <Zap className="w-4 h-4 text-retro-bg-primary" />
+                )}
+              </div>
+              <div>
+                <h3 className="font-pixel text-retro-accent">
+                  {isUsingCustomKey ? 'Custom API Key Active' : 'Free AI Detections'}
+                </h3>
+                <p className="text-retro-accent-light font-pixel-sans text-sm">
+                  {isUsingCustomKey 
+                    ? 'Unlimited AI detections with your own API key'
+                    : `${remainingDetections} of 5 free detections remaining`
+                  }
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {!isUsingCustomKey && (
+                <Badge 
+                  variant={remainingDetections > 0 ? 'default' : 'warning'}
+                  glow={remainingDetections === 0}
+                >
+                  {remainingDetections}/5
+                </Badge>
+              )}
+              
+              <Button
+                variant={remainingDetections === 0 && !isUsingCustomKey ? 'accent' : 'ghost'}
+                size="sm"
+                icon={remainingDetections === 0 && !isUsingCustomKey ? CreditCard : Settings}
+                onClick={() => setShowApiSetup(true)}
+                glow={remainingDetections === 0 && !isUsingCustomKey}
+              >
+                {remainingDetections === 0 && !isUsingCustomKey ? 'Add API Key' : 'Setup'}
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Free Limit Warning */}
+        {!isUsingCustomKey && remainingDetections === 0 && (
+          <Card variant="outlined" className="border-retro-error">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Key className="w-5 h-5 text-retro-warning" />
+                <AlertTriangle className="w-5 h-5 text-retro-error" />
                 <div>
-                  <h3 className="font-pixel text-retro-warning">AI Detection Not Configured</h3>
-                  <p className="text-retro-warning font-pixel-sans text-sm">
-                    Set up your Gemini API key to enable automatic item detection.
+                  <h3 className="font-pixel text-retro-error">Free Limit Reached</h3>
+                  <p className="text-retro-error font-pixel-sans text-sm">
+                    You've used all 5 free AI detections. Add your own Gemini API key to continue.
                   </p>
                 </div>
               </div>
               <Button
                 variant="accent"
                 size="sm"
-                icon={Settings}
+                icon={Key}
                 onClick={() => setShowApiSetup(true)}
+                glow
               >
-                Setup Now
+                Add API Key
               </Button>
             </div>
           </Card>
@@ -339,6 +415,46 @@ export const CapturePage: React.FC = () => {
             </div>
           </div>
         </Card>
+
+        {/* Pricing Info for Free Users */}
+        {!isUsingCustomKey && (
+          <Card variant="outlined" padding="md" className="border-retro-success">
+            <h3 className="font-pixel text-retro-success mb-2 flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              Want Unlimited AI Detections?
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-pixel text-sm font-pixel-sans text-retro-accent-light">
+              <div>
+                <h4 className="font-pixel text-retro-accent text-xs mb-1">Get Your Own API Key:</h4>
+                <ul className="space-y-0.5">
+                  <li>• Unlimited AI detections</li>
+                  <li>• Only ~$0.002 per image</li>
+                  <li>• Free tier covers most users</li>
+                  <li>• Direct Google billing</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-pixel text-retro-accent text-xs mb-1">Quick Setup:</h4>
+                <ul className="space-y-0.5">
+                  <li>• Visit Google AI Studio</li>
+                  <li>• Create free API key</li>
+                  <li>• Add to CacawInventory</li>
+                  <li>• Start detecting!</li>
+                </ul>
+              </div>
+            </div>
+            <div className="mt-2">
+              <Button
+                variant="success"
+                size="sm"
+                icon={Key}
+                onClick={() => setShowApiSetup(true)}
+              >
+                Setup API Key
+              </Button>
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* Modals */}

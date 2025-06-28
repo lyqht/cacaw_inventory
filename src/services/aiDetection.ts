@@ -1,4 +1,5 @@
 import { DetectionResult, CollectibleData, FolderType } from '../types';
+import { StorageService } from './storage';
 
 interface GeminiResponse {
   candidates: Array<{
@@ -14,6 +15,10 @@ export class AIDetectionService {
   private static instance: AIDetectionService;
   private apiKey: string | null = null;
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+  
+  // Default API key from environment variable
+  private defaultApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  private maxFreeDetections = parseInt(import.meta.env.VITE_FREE_DETECTION_LIMIT) || 5;
 
   static getInstance(): AIDetectionService {
     if (!AIDetectionService.instance) {
@@ -22,8 +27,43 @@ export class AIDetectionService {
     return AIDetectionService.instance;
   }
 
+  constructor() {
+    // Initialize with default API key from environment
+    this.apiKey = this.defaultApiKey;
+    
+    if (!this.defaultApiKey) {
+      console.warn('VITE_GEMINI_API_KEY not found in environment variables');
+    }
+  }
+
   setApiKey(apiKey: string) {
     this.apiKey = apiKey;
+  }
+
+  async getRemainingFreeDetections(): Promise<number> {
+    const storageService = StorageService.getInstance();
+    const usedDetections = await storageService.getSetting('used_free_detections') || 0;
+    return Math.max(0, this.maxFreeDetections - usedDetections);
+  }
+
+  async incrementUsedDetections(): Promise<void> {
+    const storageService = StorageService.getInstance();
+    const usedDetections = await storageService.getSetting('used_free_detections') || 0;
+    await storageService.setSetting('used_free_detections', usedDetections + 1);
+  }
+
+  async canUseDetection(): Promise<{ canUse: boolean; remaining: number; isUsingCustomKey: boolean }> {
+    const storageService = StorageService.getInstance();
+    const customApiKey = await storageService.getSetting('gemini_api_key');
+    
+    // If user has their own API key, they can use unlimited detections
+    if (customApiKey && customApiKey !== this.defaultApiKey) {
+      return { canUse: true, remaining: -1, isUsingCustomKey: true };
+    }
+
+    // Check free usage limit
+    const remaining = await this.getRemainingFreeDetections();
+    return { canUse: remaining > 0, remaining, isUsingCustomKey: false };
   }
 
   private getDetectionPrompt(folderType?: FolderType): string {
@@ -199,11 +239,19 @@ Focus on video games and board games. Look for:
     const startTime = Date.now();
 
     try {
+      // Check if detection is allowed
+      const { canUse, remaining, isUsingCustomKey } = await this.canUseDetection();
+      
+      if (!canUse) {
+        throw new Error(`You have used all ${this.maxFreeDetections} free AI detections. Please add your own Gemini API key to continue using AI detection.`);
+      }
+
       if (!this.apiKey) {
-        throw new Error('Gemini API key not configured');
+        throw new Error('Gemini API key not configured. Please check your environment variables or add a custom API key.');
       }
 
       console.log('Starting AI detection for image:', imageBlob.size, 'bytes');
+      console.log('Using custom API key:', isUsingCustomKey, 'Remaining free detections:', remaining);
 
       // Convert image to base64
       const base64Image = await this.convertImageToBase64(imageBlob);
@@ -277,6 +325,12 @@ Focus on video games and board games. Look for:
 
       const responseText = geminiResponse.candidates[0].content.parts[0].text;
       console.log('Gemini response text:', responseText);
+
+      // Increment usage counter only if using default API key
+      if (!isUsingCustomKey) {
+        await this.incrementUsedDetections();
+        console.log('Incremented free detection usage. Remaining:', remaining - 1);
+      }
 
       // Parse the response
       const parsedResponse = this.parseGeminiResponse(responseText);
