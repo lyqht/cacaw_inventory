@@ -39,7 +39,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [showEditor, setShowEditor] = useState(false);
   const [previewImage, setPreviewImage] = useState<ImageFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
   
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -50,37 +49,34 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   const acceptedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
-  // Load existing images when component mounts or existingImages changes
+  // Initialize images when component mounts or existingImages changes
   useEffect(() => {
-    console.log('ImageUploader: existingImages changed:', existingImages);
+    console.log('ImageUploader: Initializing with existingImages:', existingImages);
     
-    if (existingImages.length > 0 && !isInitialized) {
+    if (existingImages.length > 0) {
       const loadedImages: ImageFile[] = existingImages
         .filter(url => url && url.trim() !== '') // Filter out empty URLs
         .map((url, index) => ({
-          id: `existing-${index}`,
+          id: `existing-${index}-${Date.now()}`, // Add timestamp to ensure uniqueness
           file: new File([], `existing-image-${index}.jpg`, { type: 'image/jpeg' }),
           url: url,
           altText: `Image ${index + 1}`,
           isEdited: false
         }));
       
-      console.log('ImageUploader: Loading existing images:', loadedImages);
+      console.log('ImageUploader: Setting loaded images:', loadedImages);
       setImages(loadedImages);
-      onImagesChange(loadedImages);
-      setIsInitialized(true);
-    } else if (existingImages.length === 0 && !isInitialized) {
+      
+      // Notify parent immediately
+      setTimeout(() => {
+        onImagesChange(loadedImages);
+      }, 0);
+    } else {
       // No existing images, start fresh
+      console.log('ImageUploader: No existing images, starting fresh');
       setImages([]);
-      setIsInitialized(true);
     }
-  }, [existingImages, isInitialized, onImagesChange]);
-
-  // Reset when existingImages prop changes (e.g., switching between items)
-  useEffect(() => {
-    setIsInitialized(false);
-    setImages([]);
-  }, [existingImages]);
+  }, [existingImages.join(',')]); // Use join to create a stable dependency
 
   const validateFile = (file: File): string | null => {
     if (!acceptedFormats.includes(file.type)) {
@@ -403,16 +399,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     setImages(newImages);
     onImagesChange(newImages);
   };
-
-  // Show loading state while initializing
-  if (!isInitialized) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <LoadingSpinner size="md" variant="accent" />
-        <span className="ml-2 text-retro-accent-light font-pixel-sans">Loading images...</span>
-      </div>
-    );
-  }
 
   return (
     <div className={`space-y-pixel-2 ${className}`}>
