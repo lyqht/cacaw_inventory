@@ -815,7 +815,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                     : 'AI detection disabled - images will be uploaded without analysis'
                   }
                 </p>
-              </div>
+              </Card>
 
               {/* AI Detection Status */}
               {isDetecting && (
