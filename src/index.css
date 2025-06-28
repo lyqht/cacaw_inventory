@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Pixel-perfect font rendering */
+@layer base {
+  .font-pixel {
+    font-feature-settings: normal;
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  .font-pixel-sans {
+    font-feature-settings: normal;
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Base body styling with pixel grid background */
+  body {
+    background-color: #000033;
+    background-image: 
+      linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
+    background-size: 8px 8px;
+    color: #FFFFFF;
+    font-family: "Pixelify Sans", sans-serif;
+  }
+}
+
+/* Custom pixel components */
+@layer components {
+  .pixel-button {
+    @apply font-pixel-sans font-medium transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-retro-primary text-retro-white border-retro-primary hover:bg-retro-primary-light;
+    @apply shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5;
+    image-rendering: pixelated;
+  }
+
+  .pixel-button-accent {
+    @apply pixel-button bg-retro-accent text-retro-bg-primary border-retro-accent hover:bg-retro-accent-medium;
+  }
+
+  .pixel-button-ghost {
+    @apply pixel-button bg-transparent text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-bg-primary;
+  }
+
+  .pixel-card {
+    @apply bg-retro-bg-secondary border-2 border-retro-accent rounded-pixel shadow-pixel;
+    @apply hover:shadow-pixel-lg transition-all duration-200;
+  }
+
+  .pixel-card-elevated {
+    @apply pixel-card shadow-pixel-lg border-retro-accent-light;
+    @apply hover:shadow-pixel-glow;
+  }
+
+  .pixel-input {
+    @apply font-pixel-sans border-2 border-retro-accent bg-retro-bg-tertiary text-retro-white;
+    @apply focus:outline-none focus:ring-2 focus:ring-retro-accent-light focus:border-retro-accent-light;
+    @apply shadow-pixel-inner placeholder-retro-gray-400;
+    @apply transition-all duration-200;
+  }
+
+  .pixel-badge {
+    @apply inline-flex items-center px-2 py-1 text-xs font-pixel;
+    @apply bg-retro-accent text-retro-bg-primary border border-retro-accent-teal;
+    @apply shadow-pixel-glow rounded-pixel-sm;
+  }
+
+  .pixel-nav {
+    @apply bg-retro-bg-primary border-b-2 border-retro-accent;
+    @apply shadow-pixel-lg;
+  }
+
+  .pixel-loading {
+    @apply animate-pixel-pulse;
+  }
+
+  .pixel-glow {
+    @apply shadow-pixel-glow animate-glow-pulse;
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .pixel-perfect {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  .cursor-pixel {
+    position: relative;
+  }
+
+  .cursor-pixel::after {
+    content: '|';
+    color: #ADD8E6;
+    animation: cursor-blink 1s step-end infinite;
+    font-weight: bold;
+  }
+}
+
+/* Custom scrollbar with pixel aesthetic */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000044;
+  border: 1px solid #000080;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ADD8E6;
+  border: 1px solid #008080;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #87CEEB;
+}
+
+/* Focus styles for accessibility */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #ADD8E6;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
