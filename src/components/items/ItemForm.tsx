@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Save, X, Camera, Tag, DollarSign, FileText } from 'lucide-react';
+import { Save, X, Camera, Tag, DollarSign, FileText, Image } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
+import { ImageUploader } from '../images/ImageUploader';
 import { CollectibleData, ItemCondition, FolderType } from '../../types';
+
+interface ImageFile {
+  id: string;
+  file: File;
+  url: string;
+  altText: string;
+  isEdited: boolean;
+  originalFile?: File;
+}
 
 interface ItemFormProps {
   item?: CollectibleData;
@@ -39,8 +49,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     tags: [] as string[]
   });
 
+  const [images, setImages] = useState<ImageFile[]>([]);
   const [newTag, setNewTag] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [hasUnsavedImages, setHasUnsavedImages] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -56,6 +68,28 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         currency: item.currency,
         tags: [...item.tags]
       });
+
+      // Load existing images
+      const existingImages: ImageFile[] = [];
+      if (item.primaryImage) {
+        existingImages.push({
+          id: 'primary',
+          file: new File([], 'primary.jpg'),
+          url: item.primaryImage,
+          altText: `${item.name} - Primary Image`,
+          isEdited: false
+        });
+      }
+      item.additionalImages.forEach((url, index) => {
+        existingImages.push({
+          id: `additional-${index}`,
+          file: new File([], `additional-${index}.jpg`),
+          url,
+          altText: `${item.name} - Image ${index + 2}`,
+          isEdited: false
+        });
+      });
+      setImages(existingImages);
     } else {
       // Reset form for new item
       setFormData({
@@ -70,8 +104,10 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         currency: 'USD',
         tags: []
       });
+      setImages([]);
     }
     setErrors({});
+    setHasUnsavedImages(false);
   }, [item, folderType, isOpen]);
 
   const getDefaultType = (folderType: FolderType): string => {
@@ -120,10 +156,22 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleImagesChange = (newImages: ImageFile[]) => {
+    setImages(newImages);
+    setHasUnsavedImages(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
+
+    // Show confirmation if there are unsaved image changes
+    if (hasUnsavedImages && images.some(img => img.isEdited)) {
+      if (!window.confirm('You have edited images. Do you want to save these changes?')) {
+        return;
+      }
+    }
 
     const itemData: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'> = {
       folderId,
@@ -138,9 +186,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       purchasePrice: formData.purchasePrice ? Number(formData.purchasePrice) : undefined,
       currency: formData.currency,
       tags: formData.tags,
-      primaryImage: undefined,
-      additionalImages: [],
-      thumbnailImage: undefined,
+      primaryImage: images.length > 0 ? images[0].url : undefined,
+      additionalImages: images.slice(1).map(img => img.url),
+      thumbnailImage: images.length > 0 ? images[0].url : undefined, // Use first image as thumbnail
       aiDetected: false,
       aiConfidence: undefined,
       aiPromptUsed: undefined,
@@ -184,14 +232,47 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     }
   };
 
+  const handleClose = () => {
+    if (hasUnsavedImages) {
+      if (window.confirm('You have unsaved image changes. Are you sure you want to close?')) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={item ? 'Edit Item' : 'Add New Item'}
-      size="lg"
+      size="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-pixel-2">
+        {/* Images Section */}
+        <Card variant="outlined" padding="md">
+          <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
+            <Image className="w-4 h-4" />
+            Images
+          </h3>
+          
+          <ImageUploader
+            existingImages={item ? [item.primaryImage, ...item.additionalImages].filter(Boolean) : []}
+            onImagesChange={handleImagesChange}
+            maxFiles={10}
+            maxFileSize={5}
+          />
+          
+          {hasUnsavedImages && (
+            <div className="mt-2 p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
+              <p className="text-retro-warning font-pixel-sans text-sm">
+                ⚠️ You have unsaved image changes. Save the item to apply these changes.
+              </p>
+            </div>
+          )}
+        </Card>
+
         {/* Basic Information */}
         <Card variant="outlined" padding="md">
           <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
@@ -388,7 +469,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             type="button"
             variant="ghost"
             icon={X}
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isLoading}
           >
             Cancel
