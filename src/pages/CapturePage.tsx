@@ -3,6 +3,7 @@ import { useAppStore } from '../stores/appStore';
 import { StorageService } from '../services/storage';
 import { AIDetectionService } from '../services/aiDetection';
 import { CameraCapture } from '../components/capture/CameraCapture';
+import { FolderSelector } from '../components/capture/FolderSelector';
 import { DetectionResultsModal } from '../components/ai/DetectionResultsModal';
 import { ApiKeySetup } from '../components/ai/ApiKeySetup';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
@@ -10,19 +11,22 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { ArrowLeft, Sparkles, Settings, Key, Zap, AlertTriangle, CreditCard } from 'lucide-react';
-import { DetectionResult, CollectibleData } from '../types';
+import { DetectionResult, CollectibleData, Folder } from '../types';
 
 const storageService = StorageService.getInstance();
 const aiService = AIDetectionService.getInstance();
 
 export const CapturePage: React.FC = () => {
-  const { setCurrentView, setLoading, isLoading, selectedFolder } = useAppStore();
+  const { setCurrentView, setLoading, isLoading, folders } = useAppStore();
   
   // Capture flow state
   const [captureStep, setCaptureStep] = useState<'capture' | 'processing' | 'results'>('capture');
   const [capturedImage, setCapturedImage] = useState<Blob | null>(null);
   const [capturedImageUrl, setCapturedImageUrl] = useState<string | null>(null);
   const [detectionResult, setDetectionResult] = useState<DetectionResult | null>(null);
+  
+  // Folder selection state
+  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   
   // API setup state
   const [showApiSetup, setShowApiSetup] = useState(false);
@@ -33,7 +37,7 @@ export const CapturePage: React.FC = () => {
   const [remainingDetections, setRemainingDetections] = useState<number>(5);
   const [isUsingCustomKey, setIsUsingCustomKey] = useState(false);
 
-  // Load API key and usage info on component mount
+  // Load API key, usage info, and set default folder on component mount
   React.useEffect(() => {
     const loadApiInfo = async () => {
       try {
@@ -54,7 +58,21 @@ export const CapturePage: React.FC = () => {
     loadApiInfo();
   }, []);
 
+  // Set default folder when folders are loaded
+  React.useEffect(() => {
+    if (folders.length > 0 && !selectedFolder) {
+      // Set the first folder as default, or find Trading Cards folder if it exists
+      const tradingCardsFolder = folders.find(f => f.type === 'trading-cards');
+      setSelectedFolder(tradingCardsFolder || folders[0]);
+    }
+  }, [folders, selectedFolder]);
+
   const handleImageCapture = async (imageBlob: Blob) => {
+    if (!selectedFolder) {
+      alert('Please select a folder first before capturing an image.');
+      return;
+    }
+
     setCapturedImage(imageBlob);
     const imageUrl = URL.createObjectURL(imageBlob);
     setCapturedImageUrl(imageUrl);
@@ -73,6 +91,11 @@ export const CapturePage: React.FC = () => {
   };
 
   const processImageWithAI = async (imageBlob: Blob) => {
+    if (!selectedFolder) {
+      console.error('No folder selected for AI processing');
+      return;
+    }
+
     setCaptureStep('processing');
     setLoading(true);
     setProcessingStatus('Preparing image for AI analysis...');
@@ -83,10 +106,10 @@ export const CapturePage: React.FC = () => {
       
       setProcessingStatus('Sending to Gemini AI...');
       
-      // Perform AI detection
+      // Perform AI detection with selected folder type
       const result = await aiService.detectItems(
         imageBlob,
-        selectedFolder?.type,
+        selectedFolder.type,
         undefined // Use default prompt for now
       );
 
@@ -164,9 +187,9 @@ export const CapturePage: React.FC = () => {
         await storageService.createItem(completeItemData);
       }
 
-      console.log('Successfully saved', items.length, 'items');
+      console.log('Successfully saved', items.length, 'items to folder:', selectedFolder.name);
       
-      // Navigate back to the folder to see the new items
+      // Navigate to the selected folder to see the new items
       setCurrentView('items');
       
     } catch (error) {
@@ -213,6 +236,11 @@ export const CapturePage: React.FC = () => {
     setDetectionResult(null);
   };
 
+  const handleFolderSelect = (folder: Folder) => {
+    setSelectedFolder(folder);
+    console.log('Selected folder for capture:', folder.name, folder.type);
+  };
+
   // Processing step UI
   if (captureStep === 'processing') {
     return (
@@ -230,6 +258,11 @@ export const CapturePage: React.FC = () => {
               <p className="text-retro-accent-light font-pixel-sans">
                 {processingStatus || 'Analyzing your collectible with advanced AI detection...'}
               </p>
+              {selectedFolder && (
+                <p className="text-retro-accent-light font-pixel-sans text-sm mt-1">
+                  Optimizing for {selectedFolder.type.replace('-', ' ')} detection
+                </p>
+              )}
             </div>
             
             <LoadingSpinner size="lg" variant="accent" className="mx-auto" />
@@ -359,28 +392,12 @@ export const CapturePage: React.FC = () => {
           </Card>
         )}
 
-        {/* Selected Folder Info */}
-        {selectedFolder && (
-          <Card variant="outlined" padding="md">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">
-                {selectedFolder.type === 'trading-cards' ? '🃏' : 
-                 selectedFolder.type === 'action-figures' ? '🤖' : 
-                 selectedFolder.type === 'plushies' ? '🧸' : 
-                 selectedFolder.type === 'comics' ? '📚' : 
-                 selectedFolder.type === 'games' ? '🎮' : '📦'}
-              </span>
-              <div>
-                <h3 className="font-pixel text-retro-accent">
-                  Adding to: {selectedFolder.name}
-                </h3>
-                <p className="text-retro-accent-light font-pixel-sans text-sm">
-                  AI will be optimized for {selectedFolder.type.replace('-', ' ')} detection
-                </p>
-              </div>
-            </div>
-          </Card>
-        )}
+        {/* Folder Selection */}
+        <FolderSelector
+          selectedFolder={selectedFolder}
+          folders={folders}
+          onFolderSelect={handleFolderSelect}
+        />
 
         {/* Camera Capture Component */}
         <CameraCapture
