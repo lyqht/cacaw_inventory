@@ -9,7 +9,8 @@ import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { FolderCard } from '../components/folders/FolderCard';
 import { FolderDeleteModal } from '../components/folders/FolderDeleteModal';
-import { Folder } from '../types';
+import { FolderCreateModal } from '../components/folders/FolderCreateModal';
+import { Folder, FolderType } from '../types';
 
 const storageService = StorageService.getInstance();
 
@@ -29,6 +30,7 @@ export const FoldersPage: React.FC = () => {
   // Local state for folder management
   const [deletingFolder, setDeletingFolder] = useState<Folder | null>(null);
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadFolders();
@@ -44,6 +46,53 @@ export const FoldersPage: React.FC = () => {
     } catch (err) {
       console.error('Error loading folders:', err);
       setError('Failed to load folders. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateFolder = async (folderData: {
+    name: string;
+    description: string;
+    type: FolderType;
+  }) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Check for duplicate names
+      const existingFolder = folders.find(f => 
+        f.name.toLowerCase() === folderData.name.toLowerCase()
+      );
+      if (existingFolder) {
+        throw new Error('A folder with this name already exists');
+      }
+
+      await storageService.createFolder({
+        userId: 'default-user',
+        name: folderData.name,
+        description: folderData.description || undefined,
+        type: folderData.type,
+        source: 'local',
+        tags: [],
+        itemCount: 0,
+        isArchived: false,
+        syncStatus: 'local-only',
+        metadata: {
+          sortOrder: 'name',
+          sortDirection: 'asc',
+          viewMode: 'grid'
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Reload folders to update the UI
+      await loadFolders();
+      
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -141,10 +190,7 @@ export const FoldersPage: React.FC = () => {
               variant="accent"
               icon={Plus}
               glow
-              onClick={() => {
-                // TODO: Implement create folder modal
-                console.log('Create folder clicked');
-              }}
+              onClick={() => setShowCreateModal(true)}
             >
               New Folder
             </Button>
@@ -212,10 +258,7 @@ export const FoldersPage: React.FC = () => {
                   variant="accent"
                   icon={Plus}
                   glow
-                  onClick={() => {
-                    // TODO: Implement create folder modal
-                    console.log('Create first folder clicked');
-                  }}
+                  onClick={() => setShowCreateModal(true)}
                 >
                   Create Your First Folder
                 </Button>
@@ -236,7 +279,14 @@ export const FoldersPage: React.FC = () => {
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Modals */}
+        <FolderCreateModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onCreateFolder={handleCreateFolder}
+          isLoading={isLoading}
+        />
+
         <FolderDeleteModal
           folder={deletingFolder}
           isOpen={!!deletingFolder}
