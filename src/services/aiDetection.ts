@@ -53,12 +53,25 @@ export class AIDetectionService {
 
   setApiKey(apiKey: string) {
     this.apiKey = apiKey;
+    console.log('🔑 API key updated. Is custom key:', this.isUsingCustomApiKey());
+  }
+
+  private isUsingCustomApiKey(): boolean {
+    // Check if current API key is different from default
+    return this.apiKey !== null && 
+           this.apiKey !== this.defaultApiKey && 
+           this.apiKey.trim().length > 0;
   }
 
   async getRemainingFreeDetections(): Promise<number> {
     // In development with unlimited detections enabled, always return max
     if (this.isDevelopment && this.devUnlimitedDetections) {
       return this.maxFreeDetections;
+    }
+
+    // If using custom API key, return unlimited (represented as -1)
+    if (this.isUsingCustomApiKey()) {
+      return -1;
     }
 
     const storageService = StorageService.getInstance();
@@ -73,17 +86,30 @@ export class AIDetectionService {
       return;
     }
 
+    // If using custom API key, don't increment usage
+    if (this.isUsingCustomApiKey()) {
+      console.log('🔑 Custom API key: Skipping detection usage increment');
+      return;
+    }
+
     const storageService = StorageService.getInstance();
     const usedDetections = await storageService.getSetting('used_free_detections') || 0;
     await storageService.setSetting('used_free_detections', usedDetections + 1);
   }
 
   async canUseDetection(): Promise<{ canUse: boolean; remaining: number; isUsingCustomKey: boolean }> {
+    // Check if user has their own API key (from storage)
     const storageService = StorageService.getInstance();
     const customApiKey = await storageService.getSetting('gemini_api_key');
     
+    // Update our current API key if there's a saved one
+    if (customApiKey && customApiKey !== this.apiKey) {
+      this.setApiKey(customApiKey);
+    }
+    
     // If user has their own API key, they can use unlimited detections
-    if (customApiKey && customApiKey !== this.defaultApiKey) {
+    if (this.isUsingCustomApiKey()) {
+      console.log('🔑 Using custom API key - unlimited detections available');
       return { canUse: true, remaining: -1, isUsingCustomKey: true };
     }
 
@@ -375,6 +401,8 @@ Focus on video games and board games. Look for:
         } else {
           console.log('Incremented free detection usage. Remaining:', remaining - 1);
         }
+      } else {
+        console.log('🔑 Custom API key: Detection completed (usage not tracked)');
       }
 
       // Parse the response

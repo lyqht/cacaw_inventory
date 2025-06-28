@@ -10,7 +10,7 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { ArrowLeft, Sparkles, Zap, AlertTriangle, CreditCard, Code } from 'lucide-react';
+import { ArrowLeft, Sparkles, Zap, AlertTriangle, CreditCard, Code, Key } from 'lucide-react';
 import { DetectionResult, CollectibleData, Folder } from '../types';
 
 const storageService = StorageService.getInstance();
@@ -52,6 +52,12 @@ export const CapturePage: React.FC = () => {
         setRemainingDetections(remaining);
         setIsUsingCustomKey(usingCustom);
 
+        console.log('🔄 Loaded API info:', {
+          hasCustomKey: !!savedApiKey,
+          remaining,
+          isUsingCustomKey: usingCustom
+        });
+
         // Log development mode info
         if (aiService.isDevelopmentMode()) {
           const limits = aiService.getDetectionLimits();
@@ -67,6 +73,28 @@ export const CapturePage: React.FC = () => {
     };
     loadApiInfo();
   }, []);
+
+  // Refresh usage info when API key changes
+  React.useEffect(() => {
+    const refreshUsageInfo = async () => {
+      try {
+        const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
+        setRemainingDetections(remaining);
+        setIsUsingCustomKey(usingCustom);
+        
+        console.log('🔄 Refreshed usage info:', {
+          remaining,
+          isUsingCustomKey: usingCustom
+        });
+      } catch (error) {
+        console.error('Error refreshing usage info:', error);
+      }
+    };
+
+    if (apiKey) {
+      refreshUsageInfo();
+    }
+  }, [apiKey]);
 
   // Set default folder when folders are loaded
   React.useEffect(() => {
@@ -217,12 +245,17 @@ export const CapturePage: React.FC = () => {
     // Save API key to local storage
     try {
       await storageService.setSetting('gemini_api_key', newApiKey);
-      console.log('API key saved successfully');
+      console.log('🔑 API key saved successfully');
       
-      // Update usage info
+      // Force refresh usage info
       const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
       setRemainingDetections(remaining);
       setIsUsingCustomKey(usingCustom);
+      
+      console.log('🔄 Updated usage after API key save:', {
+        remaining,
+        isUsingCustomKey: usingCustom
+      });
       
       // If we have a captured image, process it now
       if (capturedImage) {
@@ -310,7 +343,7 @@ export const CapturePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid p-pixel-2">
       <div className="max-w-4xl mx-auto space-y-pixel-2">
-        {/* Header - Removed API Setup button */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
@@ -324,7 +357,7 @@ export const CapturePage: React.FC = () => {
             Capture Item
           </h1>
           
-          {/* Empty div for spacing - removed API setup button */}
+          {/* Empty div for spacing */}
           <div />
         </div>
 
@@ -341,7 +374,9 @@ export const CapturePage: React.FC = () => {
                 isDevUnlimited ? 'bg-retro-primary' :
                 remainingDetections > 0 ? 'bg-retro-accent' : 'bg-retro-warning'
               }`}>
-                {isDevUnlimited ? (
+                {isUsingCustomKey ? (
+                  <Key className="w-4 h-4 text-retro-bg-primary" />
+                ) : isDevUnlimited ? (
                   <Code className="w-4 h-4 text-retro-white" />
                 ) : (
                   <Zap className="w-4 h-4 text-retro-bg-primary" />
@@ -374,6 +409,12 @@ export const CapturePage: React.FC = () => {
                 </Badge>
               )}
               
+              {isUsingCustomKey && (
+                <Badge variant="success" glow>
+                  UNLIMITED
+                </Badge>
+              )}
+              
               {isDevUnlimited && (
                 <Badge variant="default" glow>
                   DEV
@@ -392,7 +433,7 @@ export const CapturePage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Free Limit Warning (only show if not in dev unlimited mode) */}
+        {/* Free Limit Warning (only show if not using custom key and not in dev unlimited mode) */}
         {!isUsingCustomKey && !isDevUnlimited && remainingDetections === 0 && (
           <Card variant="outlined" className="border-retro-error">
             <div className="flex items-center justify-between">
@@ -426,6 +467,21 @@ export const CapturePage: React.FC = () => {
                 <h3 className="font-pixel text-retro-primary">Development Mode Active</h3>
                 <p className="text-retro-accent-light font-pixel-sans text-sm">
                   Unlimited AI detections enabled for development. Usage tracking is disabled.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Custom API Key Success Info */}
+        {isUsingCustomKey && (
+          <Card variant="outlined" padding="md" className="border-retro-success bg-retro-success bg-opacity-10">
+            <div className="flex items-center gap-2">
+              <Key className="w-5 h-5 text-retro-success" />
+              <div>
+                <h3 className="font-pixel text-retro-success">Custom API Key Active</h3>
+                <p className="text-retro-accent-light font-pixel-sans text-sm">
+                  You now have unlimited AI detections! Your usage is billed directly by Google.
                 </p>
               </div>
             </div>
@@ -474,7 +530,7 @@ export const CapturePage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Pricing Info for Free Users (only show if not in dev unlimited mode) */}
+        {/* Pricing Info for Free Users (only show if not using custom key and not in dev unlimited mode) */}
         {!isUsingCustomKey && !isDevUnlimited && (
           <Card variant="outlined" padding="md" className="border-retro-success">
             <h3 className="font-pixel text-retro-success mb-2 flex items-center gap-2">
