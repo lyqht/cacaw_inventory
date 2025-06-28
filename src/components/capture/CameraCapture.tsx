@@ -202,7 +202,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
             <>
               {!isStreaming ? (
                 <Button
-                  variant="primary"
+                  variant="secondary"
                   icon={Camera}
                   onClick={startCamera}
                   disabled={isLoading}
@@ -211,7 +211,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 </Button>
               ) : (
                 <Button
-                  variant="primary"
+                  variant="secondary"
                   icon={Camera}
                   onClick={capturePhoto}
                   disabled={isLoading}
@@ -228,17 +228,6 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               >
                 Upload File
               </Button>
-
-              {onCancel && (
-                <Button
-                  variant="ghost"
-                  icon={X}
-                  onClick={onCancel}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </Button>
-              )}
             </>
           ) : (
             <>
