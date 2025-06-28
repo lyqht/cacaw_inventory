@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, Camera, X, RotateCw, Crop, Sliders, Save, Trash2, Eye } from 'lucide-react';
+import { Upload, Camera, X, RotateCw, Crop, Sliders, Save, Trash2, Eye, GripVertical, Star } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Input } from '../ui/Input';
@@ -39,6 +39,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [showEditor, setShowEditor] = useState(false);
   const [previewImage, setPreviewImage] = useState<ImageFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Drag and drop state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -300,6 +304,67 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   }, []);
 
+  // Drag and drop reordering functions
+  const handleImageDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', '');
+  };
+
+  const handleImageDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleImageDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleImageDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newImages = [...images];
+    const draggedImage = newImages[draggedIndex];
+    
+    // Remove the dragged image from its original position
+    newImages.splice(draggedIndex, 1);
+    
+    // Insert it at the new position
+    newImages.splice(dropIndex, 0, draggedImage);
+    
+    setImages(newImages);
+    onImagesChange(newImages);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleImageDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const moveImageToFirst = (index: number) => {
+    if (index === 0) return;
+    
+    const newImages = [...images];
+    const imageToMove = newImages[index];
+    
+    // Remove from current position
+    newImages.splice(index, 1);
+    // Add to beginning
+    newImages.unshift(imageToMove);
+    
+    setImages(newImages);
+    onImagesChange(newImages);
+  };
+
   return (
     <div className={`space-y-pixel-2 ${className}`}>
       {/* Upload Area */}
@@ -416,18 +481,34 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         </Card>
       )}
 
-      {/* Image Grid */}
+      {/* Image Grid with Drag & Drop */}
       {images.length > 0 && (
         <Card variant="outlined" padding="md">
           <div className="flex justify-between items-center mb-pixel-2">
             <h4 className="font-pixel text-retro-accent">
               Uploaded Images ({images.length}/{maxFiles})
             </h4>
+            <div className="text-xs text-retro-accent-light font-pixel-sans">
+              Drag to reorder • First image is primary
+            </div>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-pixel-2">
             {images.map((image, index) => (
-              <div key={image.id} className="relative group">
+              <div 
+                key={image.id} 
+                className={`relative group cursor-move transition-all duration-200 ${
+                  draggedIndex === index ? 'opacity-50 scale-95' : ''
+                } ${
+                  dragOverIndex === index ? 'scale-105 ring-2 ring-retro-accent' : ''
+                }`}
+                draggable
+                onDragStart={(e) => handleImageDragStart(e, index)}
+                onDragOver={(e) => handleImageDragOver(e, index)}
+                onDragLeave={handleImageDragLeave}
+                onDrop={(e) => handleImageDrop(e, index)}
+                onDragEnd={handleImageDragEnd}
+              >
                 <Card variant="outlined" padding="none" className="overflow-hidden">
                   <div className="aspect-square relative">
                     <img
@@ -435,6 +516,19 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                       alt={image.altText || `Image ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
+                    
+                    {/* Drag Handle */}
+                    <div className="absolute top-1 left-1 bg-black bg-opacity-50 rounded-pixel p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <GripVertical className="w-3 h-3 text-white" />
+                    </div>
+                    
+                    {/* Primary Image Indicator */}
+                    {index === 0 && (
+                      <div className="absolute top-1 right-1 bg-retro-success text-retro-bg-primary px-1 py-0.5 text-xs font-pixel rounded-pixel flex items-center gap-1">
+                        <Star className="w-3 h-3" />
+                        PRIMARY
+                      </div>
+                    )}
                     
                     {/* Image Overlay */}
                     <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
@@ -461,6 +555,19 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                           className="min-w-[32px] min-h-[32px] p-1"
                           title="Edit"
                         />
+                        {index !== 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={Star}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveImageToFirst(index);
+                            }}
+                            className="min-w-[32px] min-h-[32px] p-1 bg-retro-warning bg-opacity-80 hover:bg-retro-warning text-white"
+                            title="Make Primary"
+                          />
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -477,17 +584,15 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                     
                     {/* Edit Indicator */}
                     {image.isEdited && (
-                      <div className="absolute top-1 right-1 bg-retro-accent text-retro-bg-primary px-1 py-0.5 text-xs font-pixel rounded-pixel">
+                      <div className="absolute bottom-1 right-1 bg-retro-accent text-retro-bg-primary px-1 py-0.5 text-xs font-pixel rounded-pixel">
                         EDITED
                       </div>
                     )}
                     
-                    {/* Primary Image Indicator */}
-                    {index === 0 && (
-                      <div className="absolute top-1 left-1 bg-retro-success text-retro-bg-primary px-1 py-0.5 text-xs font-pixel rounded-pixel">
-                        PRIMARY
-                      </div>
-                    )}
+                    {/* Image Position Indicator */}
+                    <div className="absolute bottom-1 left-1 bg-black bg-opacity-70 text-white px-1 py-0.5 text-xs font-pixel rounded-pixel">
+                      {index + 1}
+                    </div>
                   </div>
                   
                   {/* Alt Text Input */}
@@ -504,6 +609,14 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 </Card>
               </div>
             ))}
+          </div>
+          
+          {/* Reordering Instructions */}
+          <div className="mt-pixel-2 p-2 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
+            <p className="text-retro-accent-light font-pixel-sans text-xs">
+              💡 <strong>Tips:</strong> Drag images to reorder them. The first image will be used as the primary image. 
+              Click the star button to quickly make any image primary.
+            </p>
           </div>
         </Card>
       )}
