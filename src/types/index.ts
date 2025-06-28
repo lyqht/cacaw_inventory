@@ -25,6 +25,13 @@ export type SyncStatus =
   | 'conflict'
   | 'error';
 
+export interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface CollectibleData {
   id: string;
   folderId: string;
@@ -56,6 +63,7 @@ export interface CollectibleData {
   aiConfidence?: number;
   aiPromptUsed?: string;
   ocrText?: string;
+  boundingBox?: BoundingBox; // For AI-detected items with location data
   
   // Timestamps
   createdAt: Date;
