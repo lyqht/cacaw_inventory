@@ -9,12 +9,12 @@ export default {
       },
       colors: {
         retro: {
-          // Primary navy theme
+          // Primary navy theme with improved contrast
           primary: '#000080',
           'primary-light': '#0000CC',
           'primary-dark': '#000066',
           
-          // Accent gradient colors
+          // Accent gradient colors with better visibility
           accent: {
             light: '#ADD8E6',
             DEFAULT: '#87CEEB',
@@ -30,7 +30,7 @@ export default {
             tertiary: '#000055',
           },
           
-          // UI colors
+          // UI colors with improved contrast
           success: '#00FF00',
           warning: '#FFFF00',
           error: '#FF0000',
@@ -64,10 +64,13 @@ export default {
         'pixel-md': '4px',
       },
       boxShadow: {
-        'pixel': '2px 2px 0px 0px rgba(0, 0, 0, 0.8)',
-        'pixel-lg': '4px 4px 0px 0px rgba(0, 0, 0, 0.8)',
-        'pixel-glow': '0 0 8px rgba(173, 216, 230, 0.6)',
+        'pixel': '3px 3px 0px 0px rgba(0, 0, 0, 0.8)',
+        'pixel-lg': '5px 5px 0px 0px rgba(0, 0, 0, 0.8)',
+        'pixel-glow': '0 0 12px rgba(173, 216, 230, 0.8)',
         'pixel-inner': 'inset 2px 2px 4px rgba(0, 0, 0, 0.5)',
+        // Enhanced button shadows for better visibility
+        'pixel-button': '2px 2px 0px 0px rgba(0, 0, 0, 0.9)',
+        'pixel-button-hover': '4px 4px 0px 0px rgba(0, 0, 0, 0.9)',
       },
       animation: {
         'bird-hop': 'bird-hop 2s ease-in-out infinite',
@@ -75,6 +78,7 @@ export default {
         'cursor-blink': 'cursor-blink 1s step-end infinite',
         'pixel-float': 'pixel-float 3s ease-in-out infinite',
         'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+        'button-press': 'button-press 0.1s ease-in-out',
       },
       keyframes: {
         'bird-hop': {
@@ -121,6 +125,10 @@ export default {
             boxShadow: '0 0 16px rgba(173, 216, 230, 0.8)',
           },
         },
+        'button-press': {
+          '0%': { transform: 'translate(0, 0)' },
+          '100%': { transform: 'translate(2px, 2px)' },
+        },
       },
       backgroundImage: {
         'pixel-grid': `
@@ -130,6 +138,15 @@ export default {
       },
       backgroundSize: {
         'pixel-grid': '8px 8px',
+      },
+      // Minimum touch target sizes for accessibility
+      minHeight: {
+        'touch': '44px',
+        'button': '32px',
+      },
+      minWidth: {
+        'touch': '44px',
+        'button': '32px',
       },
     },
   },

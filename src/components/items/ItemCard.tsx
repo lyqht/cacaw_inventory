@@ -74,8 +74,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       className={`group transition-all duration-200 hover:scale-105 ${className}`}
     >
       <div className="space-y-pixel">
-        {/* Item Header */}
-        <div className="flex items-start justify-between">
+        {/* Item Header with Always-Visible Action Buttons */}
+        <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h3 className="font-pixel text-retro-accent text-sm truncate">
               {item.name}
@@ -87,26 +87,29 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             )}
           </div>
           
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Always Visible Action Buttons - Improved Size and Contrast */}
+          <div className="flex gap-1 flex-shrink-0">
             <Button
-              variant="ghost"
+              variant="accent"
               size="sm"
               icon={Eye}
               onClick={(e) => {
                 e.stopPropagation();
                 onView(item);
               }}
-              className="w-6 h-6 p-0"
+              className="min-w-[32px] min-h-[32px] p-1 bg-retro-accent-medium hover:bg-retro-accent-light border-2 border-retro-accent-light shadow-pixel"
+              title="View Details"
             />
             <Button
-              variant="ghost"
+              variant="primary"
               size="sm"
               icon={Edit}
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(item);
               }}
-              className="w-6 h-6 p-0"
+              className="min-w-[32px] min-h-[32px] p-1 bg-retro-primary hover:bg-retro-primary-light border-2 border-retro-primary-light shadow-pixel"
+              title="Edit Item"
             />
             <Button
               variant="ghost"
@@ -116,7 +119,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({
                 e.stopPropagation();
                 onDelete(item);
               }}
-              className="w-6 h-6 p-0 hover:text-retro-error"
+              className="min-w-[32px] min-h-[32px] p-1 bg-retro-error bg-opacity-80 hover:bg-retro-error text-white border-2 border-retro-error shadow-pixel"
+              title="Delete Item"
             />
           </div>
         </div>

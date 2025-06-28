@@ -24,25 +24,25 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseClasses = 'pixel-button inline-flex items-center justify-center gap-2';
+  const baseClasses = 'pixel-button inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
   
   const variantClasses = {
-    primary: 'pixel-button',
-    accent: 'pixel-button-accent',
-    ghost: 'pixel-button-ghost',
-    danger: 'bg-retro-error text-retro-white border-retro-error hover:bg-red-600 shadow-pixel'
+    primary: 'bg-retro-primary text-retro-white border-retro-primary hover:bg-retro-primary-light hover:border-retro-primary-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    accent: 'bg-retro-accent text-retro-bg-primary border-retro-accent hover:bg-retro-accent-light hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    ghost: 'bg-retro-bg-secondary text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-bg-primary hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    danger: 'bg-retro-error text-retro-white border-retro-error hover:bg-red-600 hover:border-red-500 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5'
   };
   
   const sizeClasses = {
-    sm: 'px-pixel py-1 text-xs',
-    md: 'px-pixel-2 py-2 text-sm',
-    lg: 'px-pixel-3 py-pixel text-base'
+    sm: 'px-3 py-2 text-sm min-h-[32px]', // Ensure minimum 32px height
+    md: 'px-4 py-3 text-base min-h-[40px]', // Ensure minimum 40px height
+    lg: 'px-6 py-4 text-lg min-h-[48px]'   // Ensure minimum 48px height
   };
   
   const iconSizeClasses = {
-    sm: 'w-3 h-3',
-    md: 'w-4 h-4',
-    lg: 'w-5 h-5'
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6'
   };
   
   const classes = [
@@ -61,17 +61,17 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {Icon && iconPosition === 'left' && (
-        <Icon className={`${iconSizeClasses[size]} pixel-perfect`} />
+        <Icon className={`${iconSizeClasses[size]} pixel-perfect flex-shrink-0`} />
       )}
       
       {isLoading ? (
-        <div className={`${iconSizeClasses[size]} bg-current rounded-pixel animate-pixel-pulse`} />
+        <div className={`${iconSizeClasses[size]} bg-current rounded-pixel animate-pixel-pulse flex-shrink-0`} />
       ) : (
-        children
+        children && <span className="truncate">{children}</span>
       )}
       
       {Icon && iconPosition === 'right' && (
-        <Icon className={`${iconSizeClasses[size]} pixel-perfect`} />
+        <Icon className={`${iconSizeClasses[size]} pixel-perfect flex-shrink-0`} />
       )}
     </button>
   );
