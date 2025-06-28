@@ -4,7 +4,7 @@ import { StorageService } from '../services/storage';
 import { AIDetectionService } from '../services/aiDetection';
 import { CameraCapture } from '../components/capture/CameraCapture';
 import { FolderSelector } from '../components/capture/FolderSelector';
-import { DetectionResultsModal } from '../components/ai/DetectionResultsModal';
+import { CaptureResultsPage } from './CaptureResultsPage';
 import { ApiKeySetup } from '../components/ai/ApiKeySetup';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { Card } from '../components/ui/Card';
@@ -200,29 +200,9 @@ export const CapturePage: React.FC = () => {
     setLoading(true);
     
     try {
-      // Convert captured image to data URL for storage
-      let imageDataUrl: string | undefined;
-      if (capturedImage) {
-        imageDataUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(capturedImage);
-        });
-      }
-
       // Save each detected item
       for (const itemData of items) {
-        const completeItemData = {
-          ...itemData,
-          folderId: selectedFolder.id,
-          primaryImage: imageDataUrl,
-          thumbnailImage: imageDataUrl,
-          aiDetected: true,
-          aiPromptUsed: detectionResult?.rawResponse ? 'Gemini 2.0 Flash detection' : undefined,
-        };
-
-        await storageService.createItem(completeItemData);
+        await storageService.createItem(itemData);
       }
 
       console.log('Successfully saved', items.length, 'items to folder:', selectedFolder.name);
@@ -295,6 +275,16 @@ export const CapturePage: React.FC = () => {
     setDetectionResult(null);
   };
 
+  const handleCancelResults = () => {
+    setCaptureStep('capture');
+    setDetectionResult(null);
+    if (capturedImageUrl) {
+      URL.revokeObjectURL(capturedImageUrl);
+      setCapturedImageUrl(null);
+    }
+    setCapturedImage(null);
+  };
+
   // Check if we're in development mode with unlimited detections
   const isDevUnlimited = aiService.isUnlimitedDetectionsEnabled();
 
@@ -339,6 +329,21 @@ export const CapturePage: React.FC = () => {
           </div>
         </Card>
       </div>
+    );
+  }
+
+  // Results step - show the new integrated results page
+  if (captureStep === 'results' && detectionResult && capturedImageUrl && selectedFolder) {
+    return (
+      <CaptureResultsPage
+        detectionResult={detectionResult}
+        originalImage={capturedImageUrl}
+        selectedFolder={selectedFolder}
+        onSave={handleSaveItems}
+        onCancel={handleCancelResults}
+        onRetryDetection={handleRetryDetection}
+        isLoading={isLoading}
+      />
     );
   }
 
@@ -579,24 +584,6 @@ export const CapturePage: React.FC = () => {
         onClose={() => setShowApiSetup(false)}
         onApiKeySet={handleApiKeySet}
         currentApiKey={apiKey}
-      />
-
-      <DetectionResultsModal
-        isOpen={captureStep === 'results'}
-        onClose={() => {
-          setCaptureStep('capture');
-          setDetectionResult(null);
-          if (capturedImageUrl) {
-            URL.revokeObjectURL(capturedImageUrl);
-            setCapturedImageUrl(null);
-          }
-          setCapturedImage(null);
-        }}
-        detectionResult={detectionResult}
-        originalImage={capturedImageUrl}
-        onSaveItems={handleSaveItems}
-        onRetryDetection={handleRetryDetection}
-        isLoading={isLoading}
       />
     </div>
   );
