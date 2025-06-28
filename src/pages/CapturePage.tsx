@@ -247,7 +247,7 @@ export const CapturePage: React.FC = () => {
       await storageService.setSetting('gemini_api_key', newApiKey);
       console.log('🔑 API key saved successfully');
       
-      // Force refresh usage info
+      // Force refresh usage info immediately
       const { remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
       setRemainingDetections(remaining);
       setIsUsingCustomKey(usingCustom);
@@ -297,6 +297,9 @@ export const CapturePage: React.FC = () => {
 
   // Check if we're in development mode with unlimited detections
   const isDevUnlimited = aiService.isUnlimitedDetectionsEnabled();
+
+  // Determine if we should show the free limit warning
+  const shouldShowFreeLimitWarning = !isUsingCustomKey && !isDevUnlimited && remainingDetections === 0;
 
   // Processing step UI
   if (captureStep === 'processing') {
@@ -422,10 +425,10 @@ export const CapturePage: React.FC = () => {
               )}
               
               <Button
-                variant={remainingDetections === 0 && !isUsingCustomKey && !isDevUnlimited ? 'accent' : 'ghost'}
+                variant={shouldShowFreeLimitWarning ? 'accent' : 'ghost'}
                 size="sm"
                 onClick={() => setShowApiSetup(true)}
-                glow={remainingDetections === 0 && !isUsingCustomKey && !isDevUnlimited}
+                glow={shouldShowFreeLimitWarning}
               >
                 Setup
               </Button>
@@ -433,8 +436,8 @@ export const CapturePage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Free Limit Warning (only show if not using custom key and not in dev unlimited mode) */}
-        {!isUsingCustomKey && !isDevUnlimited && remainingDetections === 0 && (
+        {/* Free Limit Warning - Only show when actually needed */}
+        {shouldShowFreeLimitWarning && (
           <Card variant="outlined" className="border-retro-error">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -530,7 +533,7 @@ export const CapturePage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Pricing Info for Free Users (only show if not using custom key and not in dev unlimited mode) */}
+        {/* Pricing Info for Free Users - Only show if not using custom key and not in dev unlimited mode */}
         {!isUsingCustomKey && !isDevUnlimited && (
           <Card variant="outlined" padding="md" className="border-retro-success">
             <h3 className="font-pixel text-retro-success mb-2 flex items-center gap-2">
