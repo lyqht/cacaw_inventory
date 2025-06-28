@@ -20,7 +20,7 @@ export const FoldersPage: React.FC = () => {
     setError,
     searchQuery,
     setSearchQuery,
-    setCurrentView
+    navigateToFolder
   } = useAppStore();
 
   useEffect(() => {
@@ -115,13 +115,6 @@ export const FoldersPage: React.FC = () => {
             >
               New Folder
             </Button>
-            
-            <Button
-              variant="primary"
-              onClick={() => setCurrentView('capture')}
-            >
-              Add Items
-            </Button>
           </div>
         </div>
 
@@ -203,10 +196,7 @@ export const FoldersPage: React.FC = () => {
                 key={folder.id}
                 hoverable
                 glow
-                onClick={() => {
-                  // TODO: Navigate to folder items view
-                  console.log('Folder clicked:', folder.name);
-                }}
+                onClick={() => navigateToFolder(folder)}
                 className="transition-transform hover:scale-105"
               >
                 <div className="space-y-pixel">

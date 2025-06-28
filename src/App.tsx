@@ -5,6 +5,7 @@ import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { Navigation } from './components/layout/Navigation';
 import { CapturePage } from './pages/CapturePage';
 import { FoldersPage } from './pages/FoldersPage';
+import { ItemsPage } from './pages/ItemsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { AnimatedLogo } from './components/ui/AnimatedLogo';
@@ -12,7 +13,14 @@ import { AnimatedLogo } from './components/ui/AnimatedLogo';
 const storageService = StorageService.getInstance();
 
 function App() {
-  const { currentView, isLoading, setLoading, setError } = useAppStore();
+  const { 
+    currentView, 
+    selectedFolder,
+    isLoading, 
+    setLoading, 
+    setError,
+    navigateBack
+  } = useAppStore();
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   useEffect(() => {
@@ -65,6 +73,15 @@ function App() {
         return <CapturePage />;
       case 'folders':
         return <FoldersPage />;
+      case 'items':
+        return selectedFolder ? (
+          <ItemsPage 
+            folder={selectedFolder} 
+            onBack={navigateBack}
+          />
+        ) : (
+          <FoldersPage />
+        );
       case 'settings':
         return <SettingsPage />;
       default:

@@ -28,6 +28,10 @@ interface AppState {
   setSearchQuery: (query: string) => void;
   updatePreferences: (preferences: Partial<UserPreferences>) => void;
   
+  // Navigation helpers
+  navigateToFolder: (folder: Folder) => void;
+  navigateBack: () => void;
+  
   // Computed
   filteredItems: () => CollectibleData[];
 }
@@ -66,6 +70,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({ 
       preferences: { ...state.preferences, ...newPreferences } 
     })),
+  
+  // Navigation helpers
+  navigateToFolder: (folder) => set({ 
+    currentView: 'items', 
+    selectedFolder: folder 
+  }),
+  navigateBack: () => set({ 
+    currentView: 'folders', 
+    selectedFolder: null 
+  }),
   
   // Computed
   filteredItems: () => {
