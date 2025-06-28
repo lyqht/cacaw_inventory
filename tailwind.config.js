@@ -9,44 +9,44 @@ export default {
       },
       colors: {
         retro: {
-          // Primary navy theme with improved contrast
-          primary: '#000080',
-          'primary-light': '#0000CC',
-          'primary-dark': '#000066',
+          // Primary colors - reversed for light theme
+          primary: '#ADD8E6',
+          'primary-light': '#B8E0F0',
+          'primary-dark': '#87CEEB',
           
-          // Accent gradient colors with better visibility
+          // Accent colors - navy for text and interactive elements
           accent: {
-            light: '#ADD8E6',
-            DEFAULT: '#87CEEB',
-            medium: '#4682B4',
-            teal: '#008080',
-            'teal-dark': '#006666',
+            light: '#4169E1',    // Royal blue for better contrast
+            DEFAULT: '#000080',   // Navy for primary text/icons
+            medium: '#191970',    // Midnight blue for emphasis
+            teal: '#006666',      // Dark teal for borders
+            'teal-dark': '#004444', // Darker teal for active states
           },
           
-          // Background colors
+          // Background colors - light theme
           bg: {
-            primary: '#000033',
-            secondary: '#000044',
-            tertiary: '#000055',
+            primary: '#F0F8FF',    // Alice blue - very light
+            secondary: '#E6F3FF',  // Lighter blue
+            tertiary: '#D6EBFF',   // Medium light blue
           },
           
-          // UI colors with improved contrast
-          success: '#00FF00',
-          warning: '#FFFF00',
-          error: '#FF0000',
+          // UI colors with proper contrast for light theme
+          success: '#006400',     // Dark green for visibility
+          warning: '#B8860B',     // Dark goldenrod for contrast
+          error: '#DC143C',       // Crimson for errors
           white: '#FFFFFF',
           
-          // Gray scale for UI elements
+          // Gray scale for UI elements - adjusted for light theme
           gray: {
-            100: '#F0F0F0',
-            200: '#E0E0E0',
-            300: '#C0C0C0',
-            400: '#A0A0A0',
-            500: '#808080',
-            600: '#606060',
-            700: '#404040',
-            800: '#202020',
-            900: '#101010',
+            100: '#F8F9FA',
+            200: '#E9ECEF',
+            300: '#DEE2E6',
+            400: '#CED4DA',
+            500: '#ADB5BD',
+            600: '#6C757D',
+            700: '#495057',
+            800: '#343A40',
+            900: '#212529',
           }
         }
       },
@@ -64,13 +64,13 @@ export default {
         'pixel-md': '4px',
       },
       boxShadow: {
-        'pixel': '3px 3px 0px 0px rgba(0, 0, 0, 0.8)',
-        'pixel-lg': '5px 5px 0px 0px rgba(0, 0, 0, 0.8)',
-        'pixel-glow': '0 0 12px rgba(173, 216, 230, 0.8)',
-        'pixel-inner': 'inset 2px 2px 4px rgba(0, 0, 0, 0.5)',
-        // Enhanced button shadows for better visibility
-        'pixel-button': '2px 2px 0px 0px rgba(0, 0, 0, 0.9)',
-        'pixel-button-hover': '4px 4px 0px 0px rgba(0, 0, 0, 0.9)',
+        'pixel': '3px 3px 0px 0px rgba(0, 0, 128, 0.3)',
+        'pixel-lg': '5px 5px 0px 0px rgba(0, 0, 128, 0.3)',
+        'pixel-glow': '0 0 12px rgba(0, 0, 128, 0.4)',
+        'pixel-inner': 'inset 2px 2px 4px rgba(0, 0, 128, 0.1)',
+        // Enhanced button shadows for light theme
+        'pixel-button': '2px 2px 0px 0px rgba(0, 0, 128, 0.4)',
+        'pixel-button-hover': '4px 4px 0px 0px rgba(0, 0, 128, 0.4)',
       },
       animation: {
         'bird-hop': 'bird-hop 2s ease-in-out infinite',
@@ -120,10 +120,10 @@ export default {
         },
         'glow-pulse': {
           '0%, 100%': { 
-            boxShadow: '0 0 8px rgba(173, 216, 230, 0.4)',
+            boxShadow: '0 0 8px rgba(0, 0, 128, 0.3)',
           },
           '50%': { 
-            boxShadow: '0 0 16px rgba(173, 216, 230, 0.8)',
+            boxShadow: '0 0 16px rgba(0, 0, 128, 0.5)',
           },
         },
         'button-press': {
@@ -147,8 +147,8 @@ export default {
       },
       backgroundImage: {
         'pixel-grid': `
-          linear-gradient(rgba(173, 216, 230, 0.1) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(173, 216, 230, 0.1) 1px, transparent 1px)
+          linear-gradient(rgba(0, 0, 128, 0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 0, 128, 0.1) 1px, transparent 1px)
         `,
       },
       backgroundSize: {
