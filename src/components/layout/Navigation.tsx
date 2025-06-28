@@ -21,10 +21,10 @@ export const Navigation: React.FC = () => {
           <div className="flex items-center space-x-pixel">
             <AnimatedLogo size="md" />
             <div>
-              <h1 className="text-retro-accent font-pixel text-lg">
+              <h1 className="text-retro-accent [data-theme='light']_&:text-retro-light-text font-pixel text-lg">
                 CacawInventory
               </h1>
-              <p className="text-retro-accent-light font-pixel-sans text-xs">
+              <p className="text-retro-accent-light [data-theme='light']_&:text-retro-light-text-muted font-pixel-sans text-xs">
                 Hoard it like a crow, store it like a pro!
               </p>
             </div>

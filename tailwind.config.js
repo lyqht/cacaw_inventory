@@ -9,12 +9,12 @@ export default {
       },
       colors: {
         retro: {
-          // Primary navy theme with improved contrast
+          // Primary colors - theme adaptive
           primary: '#000080',
           'primary-light': '#0000CC',
           'primary-dark': '#000066',
           
-          // Accent gradient colors with better visibility
+          // Accent colors - theme adaptive
           accent: {
             light: '#ADD8E6',
             DEFAULT: '#87CEEB',
@@ -23,18 +23,36 @@ export default {
             'teal-dark': '#006666',
           },
           
-          // Background colors
+          // Background colors - theme adaptive
           bg: {
             primary: '#000033',
             secondary: '#000044',
             tertiary: '#000055',
           },
           
-          // UI colors with improved contrast
+          // UI colors
           success: '#00FF00',
           warning: '#FFFF00',
           error: '#FF0000',
           white: '#FFFFFF',
+          
+          // Light theme specific colors
+          light: {
+            primary: '#F8F9FA',
+            secondary: '#FFFFFF',
+            tertiary: '#F1F3F4',
+            text: '#2C3E50',
+            'text-secondary': '#34495E',
+            'text-muted': '#7F8C8D',
+            accent: '#3498DB',
+            'accent-light': '#5DADE2',
+            'accent-medium': '#2980B9',
+            border: '#BDC3C7',
+            'border-light': '#D5DBDB',
+            success: '#27AE60',
+            warning: '#F39C12',
+            error: '#E74C3C',
+          },
           
           // Gray scale for UI elements
           gray: {
@@ -68,9 +86,15 @@ export default {
         'pixel-lg': '5px 5px 0px 0px rgba(0, 0, 0, 0.8)',
         'pixel-glow': '0 0 12px rgba(173, 216, 230, 0.8)',
         'pixel-inner': 'inset 2px 2px 4px rgba(0, 0, 0, 0.5)',
-        // Enhanced button shadows for better visibility
         'pixel-button': '2px 2px 0px 0px rgba(0, 0, 0, 0.9)',
         'pixel-button-hover': '4px 4px 0px 0px rgba(0, 0, 0, 0.9)',
+        // Light theme shadows
+        'pixel-light': '3px 3px 0px 0px rgba(52, 73, 94, 0.15)',
+        'pixel-light-lg': '5px 5px 0px 0px rgba(52, 73, 94, 0.25)',
+        'pixel-light-glow': '0 0 12px rgba(52, 152, 219, 0.6)',
+        'pixel-light-inner': 'inset 1px 1px 2px rgba(52, 73, 94, 0.1)',
+        'pixel-light-button': '2px 2px 0px 0px rgba(52, 73, 94, 0.3)',
+        'pixel-light-button-hover': '4px 4px 0px 0px rgba(52, 73, 94, 0.4)',
       },
       animation: {
         'bird-hop': 'bird-hop 2s ease-in-out infinite',
@@ -149,6 +173,10 @@ export default {
         'pixel-grid': `
           linear-gradient(rgba(173, 216, 230, 0.1) 1px, transparent 1px),
           linear-gradient(90deg, rgba(173, 216, 230, 0.1) 1px, transparent 1px)
+        `,
+        'pixel-grid-light': `
+          linear-gradient(rgba(52, 73, 94, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(52, 73, 94, 0.08) 1px, transparent 1px)
         `,
       },
       backgroundSize: {

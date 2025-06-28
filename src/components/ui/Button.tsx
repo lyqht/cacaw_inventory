@@ -27,17 +27,17 @@ export const Button: React.FC<ButtonProps> = ({
   const baseClasses = 'pixel-button inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
   
   const variantClasses = {
-    primary: 'bg-retro-primary text-retro-white border-retro-primary hover:bg-retro-primary-light hover:border-retro-primary-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    accent: 'bg-retro-accent text-retro-bg-primary border-retro-accent hover:bg-retro-accent-light hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
-    ghost: 'bg-retro-bg-secondary text-retro-accent border-retro-accent hover:bg-retro-accent hover:text-retro-bg-primary hover:border-retro-accent-light shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
+    primary: 'pixel-button-primary',
+    accent: 'pixel-button-accent',
+    ghost: 'pixel-button-ghost',
     danger: 'bg-retro-error text-retro-white border-retro-error hover:bg-red-600 hover:border-red-500 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5',
     warning: 'bg-retro-warning text-retro-bg-primary border-retro-warning hover:bg-yellow-400 hover:border-yellow-400 shadow-pixel hover:shadow-pixel-lg active:shadow-none active:translate-x-0.5 active:translate-y-0.5'
   };
   
   const sizeClasses = {
-    sm: 'px-3 py-2 text-sm min-h-[32px]', // Ensure minimum 32px height
-    md: 'px-4 py-3 text-base min-h-[40px]', // Ensure minimum 40px height
-    lg: 'px-6 py-4 text-lg min-h-[48px]'   // Ensure minimum 48px height
+    sm: 'px-3 py-2 text-sm min-h-[32px]',
+    md: 'px-4 py-3 text-base min-h-[40px]',
+    lg: 'px-6 py-4 text-lg min-h-[48px]'
   };
   
   const iconSizeClasses = {

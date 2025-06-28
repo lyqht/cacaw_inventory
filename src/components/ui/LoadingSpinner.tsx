@@ -18,8 +18,8 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   };
 
   const colorClasses = {
-    default: 'border-retro-accent border-t-retro-accent-light',
-    accent: 'border-retro-primary border-t-retro-primary-light'
+    default: 'border-retro-accent border-t-retro-accent-light [data-theme="light"]_&:border-retro-light-accent [data-theme="light"]_&:border-t-retro-light-accent-light',
+    accent: 'border-retro-primary border-t-retro-primary-light [data-theme="light"]_&:border-retro-light-accent [data-theme="light"]_&:border-t-retro-light-accent-medium'
   };
   
   return (
@@ -39,7 +39,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         
         {/* Center pixel dot */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-1 h-1 bg-retro-accent animate-pixel-pulse pixel-perfect" />
+          <div className="w-1 h-1 bg-retro-accent [data-theme='light']_&:bg-retro-light-accent animate-pixel-pulse pixel-perfect" />
         </div>
       </div>
     </div>

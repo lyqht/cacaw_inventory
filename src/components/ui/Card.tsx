@@ -24,7 +24,7 @@ export const Card: React.FC<CardProps> = ({
   const variantClasses = {
     default: 'pixel-card',
     elevated: 'pixel-card-elevated',
-    outlined: 'bg-transparent border-2 border-retro-accent text-retro-white'
+    outlined: 'bg-transparent border-2 border-retro-accent text-retro-white [data-theme="light"]_&:bg-transparent [data-theme="light"]_&:border-retro-light-accent [data-theme="light"]_&:text-retro-light-text'
   };
   
   const paddingClasses = {
