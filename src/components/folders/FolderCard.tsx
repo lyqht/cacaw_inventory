@@ -90,7 +90,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
                 e.stopPropagation();
                 onView(folder);
               }}
-              className="min-w-[32px] min-h-[32px] p-1 bg-retro-accent-medium hover:bg-retro-accent-light border-2 border-retro-accent-light shadow-pixel"
+              className="min-w-[32px] min-h-[32px] p-1"
               title="Open Folder"
             />
             <Button
@@ -101,18 +101,18 @@ export const FolderCard: React.FC<FolderCardProps> = ({
                 e.stopPropagation();
                 onEdit(folder);
               }}
-              className="min-w-[32px] min-h-[32px] p-1 bg-retro-primary hover:bg-retro-primary-light border-2 border-retro-primary-light shadow-pixel"
+              className="min-w-[32px] min-h-[32px] p-1"
               title="Edit Folder"
             />
             <Button
-              variant="ghost"
+              variant="danger"
               size="sm"
               icon={Trash2}
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(folder);
               }}
-              className="min-w-[32px] min-h-[32px] p-1 bg-retro-error bg-opacity-80 hover:bg-retro-error text-white border-2 border-retro-error shadow-pixel"
+              className="min-w-[32px] min-h-[32px] p-1"
               title="Delete Folder"
             />
           </div>
