@@ -16,7 +16,7 @@ export const Navigation: React.FC = () => {
   return (
     <nav className="pixel-nav p-pixel-2">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-pixel">
           {/* Logo */}
           <div className="flex items-center space-x-pixel">
             <AnimatedLogo size="md" />
@@ -30,8 +30,8 @@ export const Navigation: React.FC = () => {
             </div>
           </div>
           
-          {/* Navigation Items */}
-          <div className="flex space-x-2">
+          {/* Navigation Items - Responsive Layout */}
+          <div className="flex flex-wrap justify-center md:justify-end gap-2 mt-pixel md:mt-0">
             {navItems.map((item) => (
               <Button
                 key={item.id}
@@ -40,6 +40,7 @@ export const Navigation: React.FC = () => {
                 icon={item.icon}
                 onClick={() => setCurrentView(item.id)}
                 glow={currentView === item.id}
+                className="flex-shrink-0"
               >
                 <span className="hidden sm:inline">{item.label}</span>
               </Button>
