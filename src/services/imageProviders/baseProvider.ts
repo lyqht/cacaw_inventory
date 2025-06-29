@@ -116,3 +116,5 @@ export abstract class BaseImageProvider {
     }
   }
 }
+
+export { BaseImageProvider }
