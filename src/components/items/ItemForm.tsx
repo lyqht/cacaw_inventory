@@ -927,14 +927,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   </Card>
                 </div>
               )}
-              
-              {isInitialized && hasImagesChanged() && (
-                <div className="p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
-                  <p className="text-retro-warning font-pixel-sans text-sm">
-                    ⚠️ You have unsaved image changes. Save the item to apply these changes.
-                  </p>
-                </div>
-              )}
             </div>
           </Card>
 
