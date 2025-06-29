@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Grid, List, Edit, Trash2, Upload, Download } from 'lucide-react';
+import { Plus, Search, Grid, List, Edit, Trash2, Download, Upload } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
 import { StorageService } from '../services/storage';
 import { Button } from '../components/ui/Button';
@@ -254,7 +254,7 @@ export const FoldersPage: React.FC = () => {
           <div className="flex gap-2">
             <Button
               variant="ghost"
-              icon={Upload}
+              icon={Download}
               size="sm"
               onClick={openExportModal}
             >
@@ -262,7 +262,7 @@ export const FoldersPage: React.FC = () => {
             </Button>
             <Button
               variant="ghost"
-              icon={Download}
+              icon={Upload}
               size="sm"
               onClick={openImportModal}
             >

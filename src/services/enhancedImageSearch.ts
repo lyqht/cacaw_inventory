@@ -1,7 +1,19 @@
-import { BaseImageProvider, ImageSearchParams, SearchResponse, ImageResult, SearchOptions } from './imageProviders/baseProvider';
+import { BaseImageProvider, ImageSearchParams, SearchResponse, ImageResult } from './imageProviders/baseProvider';
 import { OpenverseProvider } from './imageProviders/openverseProvider';
+import { PexelsProvider } from './imageProviders/pexelsProvider';
+import { PixabayProvider } from './imageProviders/pixabayProvider';
+import { GoogleImagesProvider } from './imageProviders/googleImagesProvider';
 import { ImageSearchCache } from './imageProviders/cache';
 import { StorageService } from './storage';
+
+interface ProviderCredentials {
+  pexels?: string;
+  pixabay?: string;
+  google?: {
+    apiKey: string;
+    searchEngineId: string;
+  };
+}
 
 interface SearchOptions extends ImageSearchParams {
   providers?: string[];
@@ -44,12 +56,54 @@ export class EnhancedImageSearchService {
 
   private async initializeProviders(): Promise<void> {
     try {
+      // Load API keys from storage
+      const credentials = await this.loadCredentials();
+      
       // Initialize Openverse provider (no API key required)
       this.providers.set('openverse', new OpenverseProvider());
       
+      // Initialize other providers with available credentials
+      if (credentials.pexels) {
+        this.providers.set('pexels', new PexelsProvider(credentials.pexels));
+      }
+
+      if (credentials.pixabay) {
+        this.providers.set('pixabay', new PixabayProvider(credentials.pixabay));
+      }
+
+      if (credentials.google?.apiKey && credentials.google?.searchEngineId) {
+        this.providers.set('google', new GoogleImagesProvider(
+          credentials.google.apiKey,
+          credentials.google.searchEngineId
+        ));
+      }
+
       console.log('Initialized image providers:', Array.from(this.providers.keys()));
     } catch (error) {
       console.error('Error initializing image providers:', error);
+    }
+  }
+
+  private async loadCredentials(): Promise<ProviderCredentials> {
+    try {
+      const [pexels, pixabay, googleApiKey, googleSearchEngineId] = await Promise.all([
+        this.storageService.getSetting('pexels_api_key'),
+        this.storageService.getSetting('pixabay_api_key'),
+        this.storageService.getSetting('google_images_api_key'),
+        this.storageService.getSetting('google_search_engine_id')
+      ]);
+
+      return {
+        pexels,
+        pixabay,
+        google: googleApiKey && googleSearchEngineId ? {
+          apiKey: googleApiKey,
+          searchEngineId: googleSearchEngineId
+        } : undefined
+      };
+    } catch (error) {
+      console.error('Error loading API credentials:', error);
+      return {};
     }
   }
 
@@ -100,17 +154,8 @@ export class EnhancedImageSearchService {
       }
 
       try {
-        const searchOptions: SearchOptions = {
-          maxResults: options.maxResultsPerProvider || 10,
-          timeout: options.timeout || 10000,
-          imageType: options.imageType,
-          colorType: options.colorType,
-          usageRights: options.usageRights,
-          dimensions: options.dimensions
-        };
-
         const response = await Promise.race([
-          provider.search(searchParams, searchOptions),
+          provider.search(searchParams),
           new Promise<never>((_, reject) => 
             setTimeout(() => reject(new Error('Timeout')), options.timeout || 10000)
           )
@@ -335,6 +380,42 @@ export class EnhancedImageSearchService {
       console.error('Error downloading image:', error);
       throw new Error('Failed to download image. This may be due to CORS restrictions or network issues.');
     }
+  }
+
+  async validateProviderCredentials(): Promise<Record<string, boolean>> {
+    const results: Record<string, boolean> = {};
+    
+    for (const [name, provider] of this.providers.entries()) {
+      try {
+        results[name] = await provider.validateApiKey();
+      } catch (error) {
+        results[name] = false;
+      }
+    }
+    
+    return results;
+  }
+
+  async updateProviderCredentials(credentials: Partial<ProviderCredentials>): Promise<void> {
+    // Save credentials to storage
+    if (credentials.pexels) {
+      await this.storageService.setSetting('pexels_api_key', credentials.pexels);
+    }
+    if (credentials.pixabay) {
+      await this.storageService.setSetting('pixabay_api_key', credentials.pixabay);
+    }
+    if (credentials.google?.apiKey) {
+      await this.storageService.setSetting('google_images_api_key', credentials.google.apiKey);
+    }
+    if (credentials.google?.searchEngineId) {
+      await this.storageService.setSetting('google_search_engine_id', credentials.google.searchEngineId);
+    }
+
+    // Reinitialize providers
+    await this.initializeProviders();
+    
+    // Clear cache to force fresh searches
+    this.cache.clear();
   }
 
   getAvailableProviders(): string[] {

@@ -1,6 +1,5 @@
 import { StorageService } from './storage';
 import { Folder, CollectibleData } from '../types';
-import { processItemImages, cleanupItemBlobUrls } from '../utils/imageUtils';
 
 export interface ExportData {
   version: string;
@@ -72,14 +71,6 @@ export class ExportImportService {
 
       const items = await this.storageService.getItemsByFolder(folderId);
       
-      // Process all items to convert blob URLs to base64
-      const processedItems = await Promise.all(
-        items.map(async (item) => {
-          const processedItem = await processItemImages(item);
-          return processedItem as CollectibleData;
-        })
-      );
-      
       const exportData: ExportData = {
         version: this.CURRENT_VERSION,
         exportedAt: new Date().toISOString(),
@@ -88,11 +79,11 @@ export class ExportImportService {
         metadata: {
           appVersion: this.APP_VERSION,
           totalFolders: 1,
-          totalItems: processedItems.length,
+          totalItems: items.length,
           exportedBy: 'CacawInventory'
         },
         folders: [folder],
-        items: processedItems
+        items: items
       };
 
       // Generate checksum
@@ -102,10 +93,6 @@ export class ExportImportService {
       const filename = this.generateFilename([folder.name]);
       
       this.downloadFile(jsonData, filename);
-      
-      // Cleanup blob URLs to prevent memory leaks
-      processedItems.forEach(item => cleanupItemBlobUrls(item));
-      
       return filename;
 
     } catch (error) {
@@ -132,16 +119,7 @@ export class ExportImportService {
           folderNames.push(folder.name);
           
           const items = await this.storageService.getItemsByFolder(folderId);
-          
-          // Process all items to convert blob URLs to base64
-          const processedItems = await Promise.all(
-            items.map(async (item) => {
-              const processedItem = await processItemImages(item);
-              return processedItem as CollectibleData;
-            })
-          );
-          
-          allItems.push(...processedItems);
+          allItems.push(...items);
         }
       }
 
@@ -170,10 +148,6 @@ export class ExportImportService {
       const filename = this.generateFilename(folderNames);
       
       this.downloadFile(jsonData, filename);
-      
-      // Cleanup blob URLs to prevent memory leaks
-      allItems.forEach(item => cleanupItemBlobUrls(item));
-      
       return filename;
 
     } catch (error) {
@@ -190,16 +164,7 @@ export class ExportImportService {
 
       for (const folder of folders) {
         const items = await this.storageService.getItemsByFolder(folder.id);
-        
-        // Process all items to convert blob URLs to base64
-        const processedItems = await Promise.all(
-          items.map(async (item) => {
-            const processedItem = await processItemImages(item);
-            return processedItem as CollectibleData;
-          })
-        );
-        
-        allItems.push(...processedItems);
+        allItems.push(...items);
       }
 
       const exportData: ExportData = {
@@ -223,10 +188,6 @@ export class ExportImportService {
       const filename = this.generateFilename(['All_Collections']);
       
       this.downloadFile(jsonData, filename);
-      
-      // Cleanup blob URLs to prevent memory leaks
-      allItems.forEach(item => cleanupItemBlobUrls(item));
-      
       return filename;
 
     } catch (error) {

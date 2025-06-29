@@ -188,7 +188,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
           <Button
             variant={mode === 'export' ? 'accent' : 'ghost'}
             size="sm"
-            icon={Upload}
+            icon={Download}
             onClick={() => handleModeSwitch('export')}
             disabled={isLoading}
           >
@@ -197,7 +197,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
           <Button
             variant={mode === 'import' ? 'accent' : 'ghost'}
             size="sm"
-            icon={Download}
+            icon={Upload}
             onClick={() => handleModeSwitch('import')}
             disabled={isLoading}
           >
@@ -210,7 +210,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
           <div className="space-y-pixel-2">
             <Card variant="outlined" padding="md">
               <h3 className="font-pixel text-retro-accent mb-2 flex items-center gap-2">
-                <Upload className="w-4 h-4" />
+                <Download className="w-4 h-4" />
                 Export Collections
               </h3>
               <p className="text-retro-accent-light font-pixel-sans text-sm mb-pixel-2">
@@ -295,7 +295,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
                 <div className="flex justify-end">
                   <Button
                     variant="accent"
-                    icon={Upload}
+                    icon={Download}
                     onClick={handleExport}
                     disabled={isLoading || (exportType === 'selected' && selectedForExport.length === 0)}
                     isLoading={isLoading}
@@ -317,7 +317,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
           <div className="space-y-pixel-2">
             <Card variant="outlined" padding="md">
               <h3 className="font-pixel text-retro-accent mb-2 flex items-center gap-2">
-                <Download className="w-4 h-4" />
+                <Upload className="w-4 h-4" />
                 Import Collections
               </h3>
               <p className="text-retro-accent-light font-pixel-sans text-sm mb-pixel-2">
@@ -549,7 +549,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
                   <div className="flex justify-end">
                     <Button
                       variant="accent"
-                      icon={Download}
+                      icon={Upload}
                       onClick={handleImport}
                       disabled={isLoading}
                       isLoading={isLoading}

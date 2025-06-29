@@ -7,7 +7,6 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { ImageSearchModal } from '../components/capture/ImageSearchModal';
-import { processItemImages } from '../utils/imageUtils';
 
 interface CaptureResultsPageProps {
   detectionResult: DetectionResult;
@@ -359,49 +358,32 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     }
 
     try {
-      // Process each item to ensure all blob URLs are converted to base64
-      const processedItems = await Promise.all(
-        selectedItems.map(async (item) => {
-          // Get the current image for this item
-          const currentImage = getCurrentImage(item.tempId);
-          
-          // Create a new item with the current image
-          const itemWithImage = {
-            ...item,
-            primaryImage: currentImage,
-            additionalImages: [],
-            thumbnailImage: currentImage
-          };
-          
-          // Process the item to convert any remaining blob URLs to base64
-          return {
-            folderId: selectedFolder.id,
-            userId: 'default-user',
-            name: item.name || 'Unknown Item',
-            type: item.type,
-            series: item.series,
-            condition: item.condition || 'good',
-            description: item.description,
-            notes: item.notes,
-            estimatedValue: item.estimatedValue,
-            purchasePrice: item.purchasePrice,
-            currency: item.currency || 'USD',
-            tags: item.tags || [],
-            primaryImage: currentImage,
-            additionalImages: [],
-            thumbnailImage: currentImage,
-            aiDetected: true,
-            aiConfidence: item.aiConfidence,
-            aiPromptUsed: detectionResult.rawResponse ? 'Gemini 2.0 Flash detection' : undefined,
-            ocrText: item.ocrText,
-            lastViewedAt: undefined,
-            syncStatus: 'local-only' as const,
-            isArchived: false
-          };
-        })
-      );
+      const itemsToSave = selectedItems.map(item => ({
+        folderId: selectedFolder.id,
+        userId: 'default-user',
+        name: item.name || 'Unknown Item',
+        type: item.type,
+        series: item.series,
+        condition: item.condition || 'good',
+        description: item.description,
+        notes: item.notes,
+        estimatedValue: item.estimatedValue,
+        purchasePrice: item.purchasePrice,
+        currency: item.currency || 'USD',
+        tags: item.tags || [],
+        primaryImage: getCurrentImage(item.tempId),
+        additionalImages: [],
+        thumbnailImage: getCurrentImage(item.tempId),
+        aiDetected: true,
+        aiConfidence: item.aiConfidence,
+        aiPromptUsed: detectionResult.rawResponse ? 'Gemini 2.0 Flash detection' : undefined,
+        ocrText: item.ocrText,
+        lastViewedAt: undefined,
+        syncStatus: 'local-only' as const,
+        isArchived: false
+      }));
 
-      await onSave(processedItems);
+      await onSave(itemsToSave);
     } catch (error) {
       console.error('Error saving items:', error);
       alert('Failed to save items. Please try again.');
