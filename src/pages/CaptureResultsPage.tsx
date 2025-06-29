@@ -60,6 +60,17 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
   
   // Ref for the original high-resolution image
   const originalImageRef = useRef<HTMLImageElement>(null);
+  
+  // Store the actual dimensions and object-fit properties of preview images
+  const [previewImageInfo, setPreviewImageInfo] = useState<Record<string, {
+    displayWidth: number;
+    displayHeight: number;
+    naturalWidth: number;
+    naturalHeight: number;
+    offsetX: number;
+    offsetY: number;
+    scale: number;
+  }>>({});
 
   const conditions: { value: ItemCondition; label: string; color: string }[] = [
     { value: 'mint', label: 'Mint', color: 'text-retro-success' },
@@ -99,6 +110,70 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     };
   }, [originalImage]);
 
+  // Calculate and store preview image dimensions and object-fit properties
+  const updatePreviewImageInfo = (itemId: string) => {
+    const imgElement = previewImageRefs.current[itemId];
+    if (!imgElement) return;
+    
+    // Get the actual displayed dimensions after object-fit: cover is applied
+    const containerWidth = imgElement.parentElement?.clientWidth || 96; // Default to 24px * 4
+    const containerHeight = imgElement.parentElement?.clientHeight || 96;
+    
+    const imgNaturalWidth = imgElement.naturalWidth;
+    const imgNaturalHeight = imgElement.naturalHeight;
+    
+    // Calculate the scaling and positioning that object-fit: cover applies
+    let scale: number;
+    let offsetX = 0;
+    let offsetY = 0;
+    
+    // Calculate how object-fit: cover works
+    const containerRatio = containerWidth / containerHeight;
+    const imageRatio = imgNaturalWidth / imgNaturalHeight;
+    
+    if (containerRatio > imageRatio) {
+      // Container is wider than image (relative to their heights)
+      // Image will be scaled to match container width
+      scale = containerWidth / imgNaturalWidth;
+      const scaledHeight = imgNaturalHeight * scale;
+      offsetY = (containerHeight - scaledHeight) / 2;
+    } else {
+      // Container is taller than image (relative to their widths)
+      // Image will be scaled to match container height
+      scale = containerHeight / imgNaturalHeight;
+      const scaledWidth = imgNaturalWidth * scale;
+      offsetX = (containerWidth - scaledWidth) / 2;
+    }
+    
+    const displayWidth = imgNaturalWidth * scale;
+    const displayHeight = imgNaturalHeight * scale;
+    
+    console.log(`Preview image info for ${itemId}:`, {
+      containerWidth,
+      containerHeight,
+      imgNaturalWidth,
+      imgNaturalHeight,
+      scale,
+      offsetX,
+      offsetY,
+      displayWidth,
+      displayHeight
+    });
+    
+    setPreviewImageInfo(prev => ({
+      ...prev,
+      [itemId]: {
+        displayWidth,
+        displayHeight,
+        naturalWidth: imgNaturalWidth,
+        naturalHeight: imgNaturalHeight,
+        offsetX,
+        offsetY,
+        scale
+      }
+    }));
+  };
+
   // Get the current image for display (alternative > cropped > original)
   const getCurrentImage = (itemId?: string): string => {
     if (itemId) {
@@ -113,6 +188,9 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     setCropArea(null);
     setIsDragging(false);
     console.log('Started crop mode for item:', itemId);
+    
+    // Ensure we have the preview image info
+    updatePreviewImageInfo(itemId);
   };
 
   const cancelCrop = () => {
@@ -198,8 +276,9 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     }
   };
 
-  const handleImageLoad = () => {
-    console.log('Image loaded, ready for cropping');
+  const handleImageLoad = (itemId: string) => {
+    console.log('Image loaded for item:', itemId);
+    updatePreviewImageInfo(itemId);
   };
 
   const applyCrop = async () => {
@@ -230,40 +309,53 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Calculate the scaling factor between the thumbnail and the original image
-    const thumbnailWidth = imgElement.width;
-    const thumbnailHeight = imgElement.height;
-    const originalWidth = originalImageRef.current.naturalWidth;
-    const originalHeight = originalImageRef.current.naturalHeight;
+    // Get the preview image info for this item
+    const info = previewImageInfo[cropMode];
+    if (!info) {
+      console.error('No preview image info available for item:', cropMode);
+      return;
+    }
     
-    const scaleX = originalWidth / thumbnailWidth;
-    const scaleY = originalHeight / thumbnailHeight;
+    console.log('Preview image info:', info);
     
-    console.log('Scaling factors:', { scaleX, scaleY });
-    console.log('Thumbnail dimensions:', { thumbnailWidth, thumbnailHeight });
-    console.log('Original dimensions:', { originalWidth, originalHeight });
-
-    // Calculate the crop area in the original image coordinates
-    const originalCropArea = {
-      x: Math.round(cropArea.x * scaleX),
-      y: Math.round(cropArea.y * scaleY),
-      width: Math.round(cropArea.width * scaleX),
-      height: Math.round(cropArea.height * scaleY)
-    };
+    // Convert the crop area from the preview image coordinates to the original image coordinates
+    // This accounts for object-fit: cover and any scaling/positioning
     
-    console.log('Original image crop area:', originalCropArea);
-
-    // Set canvas size to the crop dimensions from the original image
-    canvas.width = originalCropArea.width;
-    canvas.height = originalCropArea.height;
+    // First, convert from container coordinates to actual displayed image coordinates
+    // (accounting for object-fit: cover positioning)
+    const displayX = cropArea.x - info.offsetX;
+    const displayY = cropArea.y - info.offsetY;
+    
+    // Then convert from displayed coordinates to original image coordinates
+    const originalX = displayX / info.scale;
+    const originalY = displayY / info.scale;
+    const originalWidth = cropArea.width / info.scale;
+    const originalHeight = cropArea.height / info.scale;
+    
+    // Ensure coordinates are within bounds of the original image
+    const boundedX = Math.max(0, Math.min(originalX, originalImageRef.current.naturalWidth - 1));
+    const boundedY = Math.max(0, Math.min(originalY, originalImageRef.current.naturalHeight - 1));
+    const boundedWidth = Math.min(originalWidth, originalImageRef.current.naturalWidth - boundedX);
+    const boundedHeight = Math.min(originalHeight, originalImageRef.current.naturalHeight - boundedY);
+    
+    // Set canvas size to the crop dimensions
+    canvas.width = boundedWidth;
+    canvas.height = boundedHeight;
+    
+    console.log('Original image crop coordinates:', {
+      x: boundedX,
+      y: boundedY,
+      width: boundedWidth,
+      height: boundedHeight
+    });
 
     // Draw the cropped portion from the original high-resolution image
     ctx.drawImage(
       originalImageRef.current,
-      originalCropArea.x,
-      originalCropArea.y,
-      originalCropArea.width,
-      originalCropArea.height,
+      boundedX,
+      boundedY,
+      boundedWidth,
+      boundedHeight,
       0,
       0,
       canvas.width,
@@ -576,7 +668,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                   </Button>
                 )}
               </div>
-              
+               
               {/* Hidden canvases for image processing */}
               <canvas ref={canvasRef} className="hidden" />
               <canvas ref={cropCanvasRef} className="hidden" />
@@ -669,7 +761,13 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                         }`}
                       >
                         <img
-                          ref={el => previewImageRefs.current[item.tempId] = el}
+                          ref={el => {
+                            previewImageRefs.current[item.tempId] = el;
+                            if (el) {
+                              // When the image loads, update its dimensions info
+                              el.onload = () => handleImageLoad(item.tempId);
+                            }
+                          }}
                           src={getCurrentImage(item.tempId)}
                           alt={`Preview for ${item.name}`}
                           className={`w-full h-full object-cover ${
@@ -697,6 +795,11 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                             <div className="absolute -top-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
                             <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
                             <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                            
+                            {/* Size indicator */}
+                            <div className="absolute top-1 left-1 bg-retro-warning text-retro-bg-primary px-1 text-xs font-pixel-sans">
+                              {Math.round(cropArea.width)}×{Math.round(cropArea.height)}
+                            </div>
                           </div>
                         )}
                       </div>
