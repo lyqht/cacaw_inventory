@@ -601,21 +601,6 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           )}
         </div>
 
-        {/* Enhanced Instructions */}
-        {!capturedImage && !isStreaming && (
-          <div className="text-center p-3 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
-            <p className="text-retro-accent font-pixel-sans text-sm">
-              💡 <strong>Multiple ways to add images:</strong>
-            </p>
-            <ul className="text-retro-accent-light font-pixel-sans text-xs mt-2 space-y-1">
-              <li>📷 <strong>Camera:</strong> Click "Start Camera" to take a photo</li>
-              <li>📁 <strong>Upload:</strong> Click "Upload File" to select from device</li>
-              <li>🖱️ <strong>Drag & Drop:</strong> Drag image files directly onto the preview area</li>
-              <li>📱 <strong>Mobile:</strong> Use "Take Photo (Mobile)" for device camera</li>
-            </ul>
-          </div>
-        )}
-
         <input
           ref={fileInputRef}
           type="file"
