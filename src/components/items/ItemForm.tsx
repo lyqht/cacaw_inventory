@@ -13,6 +13,7 @@ import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { CollectibleData, ItemCondition, FolderType, DetectionResult } from '../../types';
 import { AIDetectionService } from '../../services/aiDetection';
 import { StorageService } from '../../services/storage';
+import { processItemImages } from '../../utils/imageUtils';
 
 interface ImageFile {
   id: string;
@@ -512,19 +513,19 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     // Convert first image to primary
     if (imageFiles[0]) {
       try {
-        // If it's already a data URL or blob URL, use it directly
-        if (imageFiles[0].url.startsWith('data:') || imageFiles[0].url.startsWith('blob:')) {
-          // For blob URLs, convert to data URL for persistence
-          if (imageFiles[0].url.startsWith('blob:')) {
-            const dataUrl = await fileToDataUrl(imageFiles[0].file);
-            processedImages.primaryImage = dataUrl;
-            processedImages.thumbnailImage = dataUrl;
-          } else {
-            processedImages.primaryImage = imageFiles[0].url;
-            processedImages.thumbnailImage = imageFiles[0].url;
-          }
-        } else {
-          // For new files, convert to data URL
+        // If it's already a data URL, use it directly
+        if (imageFiles[0].url.startsWith('data:')) {
+          processedImages.primaryImage = imageFiles[0].url;
+          processedImages.thumbnailImage = imageFiles[0].url;
+        } 
+        // For blob URLs, convert to data URL for persistence
+        else if (imageFiles[0].url.startsWith('blob:')) {
+          const dataUrl = await blobToBase64(imageFiles[0].url);
+          processedImages.primaryImage = dataUrl;
+          processedImages.thumbnailImage = dataUrl;
+        } 
+        // For new files, convert to data URL
+        else {
           const dataUrl = await fileToDataUrl(imageFiles[0].file);
           processedImages.primaryImage = dataUrl;
           processedImages.thumbnailImage = dataUrl;
@@ -540,7 +541,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
         if (imageFiles[i].url.startsWith('data:')) {
           processedImages.additionalImages.push(imageFiles[i].url);
         } else if (imageFiles[i].url.startsWith('blob:')) {
-          const dataUrl = await fileToDataUrl(imageFiles[i].file);
+          const dataUrl = await blobToBase64(imageFiles[i].url);
           processedImages.additionalImages.push(dataUrl);
         } else {
           const dataUrl = await fileToDataUrl(imageFiles[i].file);
@@ -553,6 +554,38 @@ export const ItemForm: React.FC<ItemFormProps> = ({
 
     console.log('Processed images for save:', processedImages);
     return processedImages;
+  };
+
+  // Convert blob URL to base64
+  const blobToBase64 = async (blobUrl: string): Promise<string> => {
+    try {
+      // Fetch the blob data
+      const response = await fetch(blobUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch blob: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      
+      // Convert blob to base64 using FileReader
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          resolve(dataUrl);
+        };
+        
+        reader.onerror = () => {
+          reject(new Error('Failed to convert blob to base64'));
+        };
+        
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error converting blob to base64:', error);
+      throw error;
+    }
   };
 
   const fileToDataUrl = (file: File): Promise<string> => {
