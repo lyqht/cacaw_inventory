@@ -323,7 +323,7 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({
           </div>
           
           <div className="mt-2 p-2 bg-retro-success bg-opacity-20 border border-retro-success rounded-pixel">
-            <p className="text-retro-success font-pixel-sans text-xs">
+            <p className="text-retro-bg-primary font-pixel-sans text-xs">
               💡 Most users stay within the free tier limits for personal use!
             </p>
           </div>
