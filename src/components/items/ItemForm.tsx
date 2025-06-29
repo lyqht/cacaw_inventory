@@ -783,40 +783,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   <Image className="w-4 h-4" />
                   Images {images.length > 0 && `(${images.length})`}
                 </h3>
-                
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="accent"
-                    size="sm"
-                    icon={Camera}
-                    onClick={() => setShowCameraCapture(true)}
-                    disabled={isLoading || isDetecting}
-                  >
-                    Take Photo
-                  </Button>
-                  
-                  {images.length > 0 && (
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      icon={Sparkles}
-                      onClick={async () => {
-                        if (images[0] && images[0].file.size > 0) {
-                          await handleAIDetectionForImage(images[0]);
-                        } else {
-                          alert('Please add an image first to use AI detection.');
-                        }
-                      }}
-                      disabled={isLoading || isDetecting || shouldShowFreeLimitWarning}
-                      isLoading={isDetecting}
-                      glow={!shouldShowFreeLimitWarning}
-                    >
-                      AI Detect
-                    </Button>
-                  )}
-                </div>
               </div>
 
               {/* AI Detection Status */}
