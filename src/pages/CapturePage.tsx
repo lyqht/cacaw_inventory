@@ -300,22 +300,22 @@ export const CapturePage: React.FC = () => {
   // Processing step UI
   if (captureStep === 'processing') {
     return (
-      <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid flex items-center justify-center p-pixel-2">
+      <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid flex items-center justify-center p-4 sm:p-pixel-2">
         <Card className="text-center max-w-md w-full" glow>
-          <div className="space-y-pixel-2">
-            <div className="w-16 h-16 bg-retro-accent rounded-pixel flex items-center justify-center mx-auto">
-              <Sparkles className="w-8 h-8 text-retro-bg-primary animate-pixel-pulse" />
+          <div className="space-y-4 sm:space-y-pixel-2 p-4 sm:p-pixel-2">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-retro-accent rounded-pixel flex items-center justify-center mx-auto">
+              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-retro-bg-primary animate-pixel-pulse" />
             </div>
             
             <div>
-              <h2 className="text-xl font-pixel text-retro-accent mb-2">
+              <h2 className="text-lg sm:text-xl font-pixel text-retro-accent mb-2">
                 AI Magic in Progress
               </h2>
-              <p className="text-retro-accent-light font-pixel-sans">
+              <p className="text-sm font-pixel-sans text-retro-accent-light">
                 {processingStatus || 'Analyzing your collectible with advanced AI detection...'}
               </p>
               {selectedFolder && (
-                <p className="text-retro-accent-light font-pixel-sans text-sm mt-1">
+                <p className="text-xs sm:text-sm text-retro-accent-light font-pixel-sans mt-1">
                   Optimizing for {selectedFolder.type.replace('-', ' ')} detection
                 </p>
               )}
@@ -351,19 +351,21 @@ export const CapturePage: React.FC = () => {
 
   // Main capture interface
   return (
-    <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid p-pixel-2">
-      <div className="max-w-4xl mx-auto space-y-pixel-2">
+    <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid p-4 sm:p-pixel-2">
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-pixel-2">
         {/* Header */}
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
             icon={ArrowLeft}
             onClick={handleBackToFolders}
+            className="min-h-[44px] min-w-[44px]"
           >
-            Back to Folders
+            <span className="hidden sm:inline">Back to Folders</span>
+            <span className="sm:hidden">Back</span>
           </Button>
           
-          <h1 className="text-2xl font-pixel text-retro-accent">
+          <h1 className="text-xl sm:text-2xl font-pixel text-retro-accent">
             Capture Item
           </h1>
           
@@ -377,7 +379,7 @@ export const CapturePage: React.FC = () => {
           isDevUnlimited ? 'border-retro-primary' :
           remainingDetections > 0 ? 'border-retro-accent' : 'border-retro-warning'
         }>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-pixel flex items-center justify-center ${
                 isUsingCustomKey ? 'bg-retro-success' : 
@@ -393,12 +395,12 @@ export const CapturePage: React.FC = () => {
                 )}
               </div>
               <div>
-                <h3 className="font-pixel text-retro-accent">
+                <h3 className="font-pixel text-retro-accent text-sm sm:text-base">
                   {isUsingCustomKey ? 'Custom API Key Active' : 
                    isDevUnlimited ? 'Development Mode - Unlimited' :
                    'Free AI Detections'}
                 </h3>
-                <p className="text-retro-accent-light font-pixel-sans text-sm">
+                <p className="text-xs sm:text-sm text-retro-accent-light font-pixel-sans">
                   {isUsingCustomKey 
                     ? 'Unlimited AI detections with your own API key'
                     : isDevUnlimited
@@ -436,6 +438,7 @@ export const CapturePage: React.FC = () => {
                 size="sm"
                 onClick={() => setShowApiSetup(true)}
                 glow={shouldShowFreeLimitWarning}
+                className="min-h-[44px] min-w-[44px]"
               >
                 Setup
               </Button>
@@ -446,12 +449,12 @@ export const CapturePage: React.FC = () => {
         {/* Free Limit Warning - Only show when actually needed */}
         {shouldShowFreeLimitWarning && (
           <Card variant="outlined" className="border-retro-error">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-retro-error" />
+                <AlertTriangle className="w-5 h-5 text-retro-error flex-shrink-0" />
                 <div>
-                  <h3 className="font-pixel text-retro-error">Free Limit Reached</h3>
-                  <p className="text-retro-error font-pixel-sans text-sm">
+                  <h3 className="font-pixel text-retro-error text-sm sm:text-base">Free Limit Reached</h3>
+                  <p className="text-retro-error font-pixel-sans text-xs sm:text-sm">
                     You've used all 5 free AI detections. Add your own Gemini API key to continue.
                   </p>
                 </div>
@@ -461,6 +464,7 @@ export const CapturePage: React.FC = () => {
                 size="sm"
                 onClick={() => setShowApiSetup(true)}
                 glow
+                className="min-h-[44px] min-w-[44px]"
               >
                 Add API Key
               </Button>
@@ -474,8 +478,8 @@ export const CapturePage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Code className="w-5 h-5 text-retro-primary" />
               <div>
-                <h3 className="font-pixel text-retro-primary">Development Mode Active</h3>
-                <p className="text-retro-accent-light font-pixel-sans text-sm">
+                <h3 className="font-pixel text-retro-primary text-sm sm:text-base">Development Mode Active</h3>
+                <p className="text-retro-accent-light font-pixel-sans text-xs sm:text-sm">
                   Unlimited AI detections enabled for development. Usage tracking is disabled.
                 </p>
               </div>
@@ -489,8 +493,8 @@ export const CapturePage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Key className="w-5 h-5 text-retro-success" />
               <div>
-                <h3 className="font-pixel text-retro-success">Custom API Key Active</h3>
-                <p className="text-retro-accent-light font-pixel-sans text-sm">
+                <h3 className="font-pixel text-retro-success text-sm sm:text-base">Custom API Key Active</h3>
+                <p className="text-retro-accent-light font-pixel-sans text-xs sm:text-sm">
                   You now have unlimited AI detections! Your usage is billed directly by Google.
                 </p>
               </div>
@@ -516,11 +520,11 @@ export const CapturePage: React.FC = () => {
 
         {/* AI Features Info */}
         <Card variant="outlined" padding="md" className="bg-retro-bg-tertiary">
-          <h3 className="font-pixel text-retro-accent mb-2 flex items-center gap-2">
+          <h3 className="font-pixel text-retro-accent text-sm sm:text-base mb-2 flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
             AI-Powered Detection
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-pixel text-sm font-pixel-sans text-retro-accent-light">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-pixel text-xs sm:text-sm font-pixel-sans text-retro-accent-light">
             <div>
               <h4 className="font-pixel text-retro-accent text-xs mb-1">What AI Can Detect:</h4>
               <ul className="space-y-0.5">

@@ -208,16 +208,16 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
         className={`cursor-pointer hover:border-retro-accent-light transition-all duration-200 ${className}`}
         onClick={() => setShowFolderModal(true)}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="text-2xl">
               {selectedFolder ? getFolderIcon(selectedFolder.type) : '📁'}
             </span>
             <div>
-              <h3 className="font-pixel text-retro-accent">
+              <h3 className="font-pixel text-retro-accent text-sm sm:text-base">
                 Adding to: {selectedFolder ? selectedFolder.name : 'Select Folder'}
               </h3>
-              <p className="text-retro-accent-light font-pixel-sans text-sm">
+              <p className="text-xs sm:text-sm text-retro-accent-light font-pixel-sans">
                 {selectedFolder 
                   ? `AI will be optimized for ${getFolderTypeLabel(selectedFolder.type).toLowerCase()} detection`
                   : 'Choose which folder to add detected items to'
@@ -226,12 +226,12 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <Button
               variant="ghost"
               size="sm"
               icon={ChevronDown}
-              className="flex-shrink-0"
+              className="min-h-[44px] min-w-[44px]"
             >
               Change
             </Button>
@@ -246,7 +246,7 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
         title={showCreateForm ? "Create New Folder" : "Select Destination Folder"}
         size="md"
       >
-        <div className="space-y-pixel-2">
+        <div className="space-y-4 sm:space-y-pixel-2">
           {!showCreateForm ? (
             <>
               {/* Folder Selection View */}
@@ -256,14 +256,14 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
 
               {/* Create New Folder Button */}
               <Card variant="outlined" padding="md" className="border-retro-success">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-retro-success rounded-pixel flex items-center justify-center">
                       <Plus className="w-4 h-4 text-retro-bg-primary" />
                     </div>
                     <div>
-                      <h3 className="font-pixel text-retro-success">Create New Folder</h3>
-                      <p className="text-retro-accent-light font-pixel-sans text-sm">
+                      <h3 className="font-pixel text-retro-success text-sm">Create New Folder</h3>
+                      <p className="text-retro-accent-light font-pixel-sans text-xs">
                         Add a new folder for your collectibles
                       </p>
                     </div>
@@ -274,6 +274,7 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
                     icon={Plus}
                     onClick={() => setShowCreateForm(true)}
                     glow
+                    className="min-h-[44px] min-w-[44px]"
                   >
                     Create
                   </Button>
@@ -281,14 +282,14 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
               </Card>
 
               {/* Existing Folders */}
-              <div className="space-y-pixel">
+              <div className="space-y-3 sm:space-y-pixel max-h-[60vh] overflow-y-auto pr-1">
                 {folders.length === 0 ? (
                   <Card variant="outlined" padding="md" className="text-center">
                     <div className="space-y-2">
                       <div className="text-4xl">📁</div>
                       <div>
-                        <h3 className="font-pixel text-retro-accent">No Folders Available</h3>
-                        <p className="text-retro-accent-light font-pixel-sans text-sm">
+                        <h3 className="font-pixel text-retro-accent text-sm">No Folders Available</h3>
+                        <p className="text-retro-accent-light font-pixel-sans text-xs">
                           Create your first folder to organize your items
                         </p>
                       </div>
@@ -313,10 +314,10 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
                             {getFolderIcon(folder.type)}
                           </span>
                           <div>
-                            <h3 className="font-pixel text-retro-accent">
+                            <h3 className="font-pixel text-retro-accent text-sm">
                               {folder.name}
                             </h3>
-                            <p className="text-retro-accent-light font-pixel-sans text-sm">
+                            <p className="text-retro-accent-light font-pixel-sans text-xs">
                               {getFolderTypeLabel(folder.type)} • {folder.itemCount} items
                             </p>
                             {folder.description && (
@@ -338,10 +339,11 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
                 )}
               </div>
 
-              <div className="flex justify-end gap-2 pt-pixel-2">
+              <div className="flex justify-end gap-2 pt-4 sm:pt-pixel-2">
                 <Button
                   variant="ghost"
                   onClick={handleModalClose}
+                  className="min-h-[44px] min-w-[44px]"
                 >
                   Cancel
                 </Button>
@@ -354,7 +356,7 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
                 Create a new folder to organize your collectibles. Choose the type that best matches what you'll be storing.
               </p>
 
-              <div className="space-y-pixel-2">
+              <div className="space-y-4 sm:space-y-pixel-2">
                 {/* Folder Name */}
                 <Input
                   label="Folder Name *"
@@ -371,7 +373,7 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
                   <label className="block text-sm font-pixel text-retro-accent mb-2">
                     Folder Type *
                   </label>
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 gap-2 max-h-[40vh] overflow-y-auto pr-1">
                     {folderTypes.map((type) => (
                       <Card
                         key={type.value}
@@ -449,11 +451,12 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
                 </Card>
               </div>
 
-              <div className="flex justify-end gap-2 pt-pixel-2">
+              <div className="flex justify-end gap-2 pt-4 sm:pt-pixel-2">
                 <Button
                   variant="ghost"
                   onClick={handleCancelCreate}
                   disabled={isCreating}
+                  className="min-h-[44px] min-w-[44px]"
                 >
                   Cancel
                 </Button>
@@ -463,6 +466,7 @@ export const FolderSelector: React.FC<FolderSelectorProps> = ({
                   disabled={!newFolderData.name.trim() || isCreating}
                   isLoading={isCreating}
                   glow
+                  className="min-h-[44px] min-w-[44px]"
                 >
                   Create Folder
                 </Button>

@@ -14,24 +14,24 @@ export const Navigation: React.FC = () => {
   ];
   
   return (
-    <nav className="pixel-nav p-pixel-2">
+    <nav className="pixel-nav p-3 sm:p-pixel-2">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-pixel">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-pixel">
           {/* Logo */}
           <div className="flex items-center space-x-pixel">
             <AnimatedLogo size="md" />
             <div>
-              <h1 className="text-retro-accent font-pixel text-lg">
+              <h1 className="text-lg sm:text-xl font-pixel text-retro-accent">
                 CacawInventory
               </h1>
-              <p className="text-retro-accent-light font-pixel-sans text-xs">
+              <p className="text-xs text-retro-accent-light font-pixel-sans">
                 Hoard it like a crow, store it like a pro!
               </p>
             </div>
           </div>
           
           {/* Navigation Items - Responsive Layout */}
-          <div className="flex flex-wrap justify-center md:justify-end gap-2 mt-pixel md:mt-0">
+          <div className="flex flex-wrap justify-center md:justify-end gap-2 mt-2 md:mt-0">
             {navItems.map((item) => (
               <Button
                 key={item.id}
@@ -40,7 +40,7 @@ export const Navigation: React.FC = () => {
                 icon={item.icon}
                 onClick={() => setCurrentView(item.id)}
                 glow={currentView === item.id}
-                className="flex-shrink-0"
+                className="flex-shrink-0 min-h-[44px] min-w-[44px]"
               >
                 <span className="hidden sm:inline">{item.label}</span>
               </Button>

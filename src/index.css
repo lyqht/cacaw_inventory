@@ -493,3 +493,56 @@
     opacity: 1;
   }
 }
+
+/* Mobile-first responsive adjustments */
+@media (max-width: 640px) {
+  /* Reduce heading sizes on mobile */
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  h2 {
+    font-size: 1.25rem !important;
+  }
+  
+  h3 {
+    font-size: 1.125rem !important;
+  }
+  
+  /* Increase touch target sizes */
+  .pixel-button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Improve spacing for mobile */
+  .p-pixel-2 {
+    padding: 1rem !important;
+  }
+  
+  .gap-pixel-2 {
+    gap: 1rem !important;
+  }
+  
+  /* Ensure proper wrapping for flex containers */
+  .flex {
+    flex-wrap: wrap;
+  }
+  
+  /* Ensure buttons have proper spacing when wrapped */
+  .flex > .pixel-button {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Improve card spacing on mobile */
+  .pixel-card {
+    margin-bottom: 1rem;
+  }
+  
+  /* Ensure form inputs are properly sized */
+  .pixel-input {
+    min-height: 44px;
+    width: 100%;
+  }
+}

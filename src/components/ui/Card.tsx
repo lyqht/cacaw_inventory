@@ -29,9 +29,9 @@ export const Card: React.FC<CardProps> = ({
   
   const paddingClasses = {
     none: '',
-    sm: 'p-pixel',
-    md: 'p-pixel-2',
-    lg: 'p-pixel-3'
+    sm: 'p-3 sm:p-pixel',
+    md: 'p-4 sm:p-pixel-2',
+    lg: 'p-5 sm:p-pixel-3'
   };
   
   const interactiveClasses = hoverable || onClick ? 

@@ -40,8 +40,8 @@ export const Button: React.FC<ButtonProps> = ({
   };
   
   const sizeClasses = {
-    sm: 'px-3 py-2 text-sm min-h-[32px]',
-    md: 'px-4 py-3 text-base min-h-[40px]',
+    sm: 'px-3 py-2 text-sm min-h-[32px] sm:min-h-[36px]',
+    md: 'px-4 py-3 text-base min-h-[40px] sm:min-h-[44px]',
     lg: 'px-6 py-4 text-lg min-h-[48px]'
   };
   

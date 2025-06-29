@@ -411,12 +411,12 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
-      <div className="space-y-4">
+      <div className="space-y-4 p-4 sm:p-pixel-2">
         <div className="text-center">
-          <h2 className="text-xl font-pixel text-retro-accent mb-2">
+          <h2 className="text-lg sm:text-xl font-pixel text-retro-accent mb-2">
             Capture Item Photo
           </h2>
-          <p className="text-retro-accent-light font-pixel-sans">
+          <p className="text-sm text-retro-accent-light font-pixel-sans">
             Take a photo, upload an image, or drag & drop from your computer
           </p>
         </div>
@@ -472,8 +472,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           {dragActive && (
             <div className="absolute inset-0 flex items-center justify-center bg-retro-accent bg-opacity-20 z-20">
               <div className="text-center text-retro-accent">
-                <Upload className="w-16 h-16 mx-auto mb-4 animate-pixel-pulse" />
-                <p className="font-pixel text-lg">Drop image here</p>
+                <Upload className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 animate-pixel-pulse" />
+                <p className="font-pixel text-base sm:text-lg">Drop image here</p>
                 <p className="font-pixel-sans text-sm">Release to upload</p>
               </div>
             </div>
@@ -496,8 +496,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
             />
           ) : (
             <div className="flex items-center justify-center h-full text-retro-accent-light">
-              <div className="text-center">
-                <Camera className="w-16 h-16 mx-auto mb-4" />
+              <div className="text-center p-4">
+                <Camera className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4" />
                 <p className="font-pixel-sans">
                   {!cameraSupported 
                     ? 'Camera not supported' 
@@ -517,7 +517,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         </div>
 
         {/* Control Buttons */}
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap gap-3 justify-center">
           {!capturedImage ? (
             <>
               {!isStreaming ? (
@@ -526,6 +526,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                   icon={Camera}
                   onClick={startCamera}
                   disabled={isLoading || !cameraSupported}
+                  className="min-h-[44px] min-w-[44px]"
                 >
                   {!cameraSupported ? 'Camera Not Available' : 'Start Camera'}
                 </Button>
@@ -535,6 +536,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                   icon={Camera}
                   onClick={capturePhoto}
                   disabled={isLoading}
+                  className="min-h-[44px] min-w-[44px]"
                 >
                   Take Photo
                 </Button>
@@ -545,6 +547,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 icon={Upload}
                 onClick={handleBrowseClick}
                 disabled={isLoading}
+                className="min-h-[44px] min-w-[44px]"
               >
                 Upload File
               </Button>
@@ -555,7 +558,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 icon={Camera}
                 onClick={handleTakePhotoClick}
                 disabled={isLoading}
-                className="md:hidden"
+                className="md:hidden min-h-[44px] min-w-[44px]"
               >
                 Take Photo (Mobile)
               </Button>
@@ -566,6 +569,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                   icon={X}
                   onClick={onCancel}
                   disabled={isLoading}
+                  className="min-h-[44px] min-w-[44px]"
                 >
                   Cancel
                 </Button>
@@ -579,6 +583,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 onClick={confirmImage}
                 disabled={isLoading}
                 glow
+                className="min-h-[44px] min-w-[44px]"
               >
                 Use This Photo
               </Button>
@@ -588,6 +593,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 icon={RotateCcw}
                 onClick={retakePhoto}
                 disabled={isLoading}
+                className="min-h-[44px] min-w-[44px]"
               >
                 Retake
               </Button>
