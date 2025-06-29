@@ -204,14 +204,7 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
         {/* Search Header */}
         <div className="flex items-center gap-2 p-3 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
           <Globe className="w-5 h-5 text-retro-accent" />
-          <div>
-            <h3 className="font-pixel text-retro-accent text-sm">
-              Enhanced Product Image Search
-            </h3>
-            <p className="text-retro-accent-light font-pixel-sans text-xs">
-              Search across multiple providers for high-quality product images
-            </p>
-          </div>
+
         </div>
 
         {/* Openverse Info Banner */}
