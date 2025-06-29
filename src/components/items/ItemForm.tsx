@@ -860,63 +860,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                     maxFiles={10}
                     maxFileSize={5}
                   />
-                  
-                  {/* AI Detection Checkbox - Moved here */}
-                  <Card variant="outlined" padding="md" className="bg-retro-bg-tertiary">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="runAIDetection"
-                          checked={runAIDetection}
-                          onChange={(e) => setRunAIDetection(e.target.checked)}
-                          className="w-4 h-4 text-retro-accent bg-retro-bg-tertiary border-retro-accent rounded focus:ring-retro-accent"
-                          disabled={shouldShowFreeLimitWarning}
-                        />
-                        <label htmlFor="runAIDetection" className="font-pixel text-retro-accent text-sm">
-                          Run AI detection
-                        </label>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {runAIDetection && (
-                          <Badge variant="success" size="sm" glow>
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            Auto-detect
-                          </Badge>
-                        )}
-                        
-                        {isDetecting && (
-                          <Badge variant="warning" size="sm">
-                            <LoadingSpinner size="sm" className="mr-1" />
-                            Analyzing...
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <p className="text-retro-accent-light font-pixel-sans text-xs mt-2">
-                      {runAIDetection 
-                        ? shouldShowFreeLimitWarning
-                          ? 'AI detection disabled - free limit reached. Add your API key to enable.'
-                          : 'AI will automatically analyze uploaded images and suggest item details'
-                        : 'AI detection disabled - images will be uploaded without analysis'
-                      }
-                    </p>
-                  </Card>
-                </div>
-              )}
-              
-              {isInitialized && hasImagesChanged() && (
-                <div className="p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
-                  <p className="text-retro-warning font-pixel-sans text-sm">
-                    ⚠️ You have unsaved image changes. Save the item to apply these changes.
-                  </p>
-                </div>
-              )}
-            </div>
-          </Card>
-
           {/* Basic Information */}
           <Card variant="outlined" padding="md">
             <h3 className="font-pixel text-retro-accent mb-pixel-2 flex items-center gap-2">
