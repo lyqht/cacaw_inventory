@@ -334,9 +334,6 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-pixel text-retro-accent text-sm capitalize">{provider}</span>
-                        {provider === 'openverse' && (
-                          <Badge variant="success" size="sm">NEW</Badge>
-                        )}
                       </div>
                       <p className="text-xs text-retro-accent-light font-pixel-sans">
                         {getProviderDescription(provider)}
