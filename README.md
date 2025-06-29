@@ -151,6 +151,9 @@ cd cacaw_inventory
 # Install dependencies
 npm install
 
+# (Automatic) Remove Fingerprint icon from lucide-react to prevent ad blocker issues
+# This is handled by a postinstall script. If you see issues with missing icons, see FAQ below.
+
 # Start development server
 npm run dev
 
@@ -175,6 +178,9 @@ npm test
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## ❓ FAQ / Troubleshooting
+
+**Q: Why do I see errors about 'fingerprint.js' being blocked or missing in development?**
+A: Some ad blockers or privacy extensions block files with 'fingerprint' in the name, which can break icon imports from lucide-react. This project includes a postinstall script that automatically removes the Fingerprint icon from lucide-react after install. If you still see issues, try disabling your ad blocker for localhost or re-run `npm install` to ensure the script runs.
 
 **Q: How do I reset my local data?**
 A: Clear your browser's IndexedDB storage for this site.
