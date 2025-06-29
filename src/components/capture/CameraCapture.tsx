@@ -30,6 +30,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const [dragActive, setDragActive] = useState(false);
   const [cameraSupported, setCameraSupported] = useState(true);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Enhanced camera initialization with better error handling
   const startCamera = useCallback(async () => {
@@ -165,26 +166,60 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     console.log('✅ Camera stopped');
   }, []);
 
-  // Auto-start camera if requested (for CapturePage)
+  // Component lifecycle management
   useEffect(() => {
-    if (autoStart && !isModal) {
-      console.log('🚀 Auto-starting camera for CapturePage');
-      startCamera();
-    }
+    let mounted = true;
+    
+    const initializeComponent = async () => {
+      console.log('🚀 CameraCapture component initializing...', {
+        isModal,
+        autoStart,
+        mounted
+      });
+      
+      // Small delay to ensure DOM is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!mounted) {
+        console.log('❌ Component unmounted during initialization');
+        return;
+      }
+      
+      setIsInitialized(true);
+      
+      // Auto-start camera for CapturePage (non-modal usage)
+      if (autoStart && !isModal && mounted) {
+        console.log('🎬 Auto-starting camera for CapturePage');
+        await startCamera();
+      } else {
+        console.log('⏸️ Waiting for manual camera start (modal mode or autoStart disabled)');
+      }
+    };
+    
+    initializeComponent();
     
     // Cleanup on unmount
     return () => {
-      console.log('🧹 Component unmounting, cleaning up camera');
+      mounted = false;
+      console.log('🧹 CameraCapture component unmounting, cleaning up camera');
       stopCamera();
     };
   }, [autoStart, isModal, startCamera, stopCamera]);
 
-  // Modal-specific lifecycle handling
+  // Handle visibility changes to stop camera when tab is hidden
   useEffect(() => {
-    if (isModal) {
-      console.log('📱 Modal mode detected, waiting for manual camera start');
-    }
-  }, [isModal]);
+    const handleVisibilityChange = () => {
+      if (document.hidden && isStreaming) {
+        console.log('📱 Tab hidden, stopping camera to save resources');
+        stopCamera();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isStreaming, stopCamera]);
 
   const capturePhoto = useCallback(() => {
     console.log('📸 Capturing photo...');
@@ -361,6 +396,18 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       fileInputRef.current.click();
     }
   }, []);
+
+  // Don't render until initialized
+  if (!isInitialized) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <div className="flex items-center justify-center p-8">
+          <LoadingSpinner size="md" variant="accent" />
+          <span className="ml-2 font-pixel-sans text-retro-accent">Initializing camera...</span>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">

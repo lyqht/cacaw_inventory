@@ -106,6 +106,8 @@ export const CapturePage: React.FC = () => {
   }, [folders, selectedFolder]);
 
   const handleImageCapture = async (imageBlob: Blob) => {
+    console.log('📸 CapturePage: Image captured, blob size:', imageBlob.size);
+    
     if (!selectedFolder) {
       alert('Please select a folder first before capturing an image.');
       return;
@@ -114,6 +116,8 @@ export const CapturePage: React.FC = () => {
     setCapturedImage(imageBlob);
     const imageUrl = URL.createObjectURL(imageBlob);
     setCapturedImageUrl(imageUrl);
+
+    console.log('🖼️ CapturePage: Image URL created:', imageUrl);
 
     // Check if AI detection is available
     const { canUse, remaining, isUsingCustomKey: usingCustom } = await aiService.canUseDetection();
@@ -133,6 +137,8 @@ export const CapturePage: React.FC = () => {
       console.error('No folder selected for AI processing');
       return;
     }
+
+    console.log('🤖 CapturePage: Starting AI processing for folder type:', selectedFolder.type);
 
     setCaptureStep('processing');
     setLoading(true);
@@ -500,10 +506,12 @@ export const CapturePage: React.FC = () => {
           onFolderCreated={handleFolderCreated}
         />
 
-        {/* Camera Capture Component */}
+        {/* Camera Capture Component with proper props */}
         <CameraCapture
           onImageCapture={handleImageCapture}
           onCancel={handleBackToFolders}
+          isModal={false}
+          autoStart={true}
         />
 
         {/* AI Features Info */}
