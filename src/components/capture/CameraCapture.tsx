@@ -261,7 +261,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               muted
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-retro-accent-light">
+            <div 
+              className="flex items-center justify-center h-full text-retro-accent-light"
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
               <div className="text-center">
                 <Camera className="w-16 h-16 mx-auto mb-4" />
                 <p className="font-pixel-sans">Camera preview will appear here</p>
