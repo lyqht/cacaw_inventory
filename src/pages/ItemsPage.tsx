@@ -9,6 +9,7 @@ import { ItemCard } from '../components/items/ItemCard';
 import { ItemForm } from '../components/items/ItemForm';
 import { ItemDetailModal } from '../components/items/ItemDetailModal';
 import { ItemSearch } from '../components/items/ItemSearch';
+import { ListView } from '../components/items/ListView';
 import { CollectibleData, Folder } from '../types';
 
 const storageService = StorageService.getInstance();
@@ -347,12 +348,8 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
               )}
             </div>
           </Card>
-        ) : (
-          <div className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-pixel-2'
-              : 'space-y-pixel'
-          }>
+        ) : viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-pixel-2">
             {filteredAndSortedItems.map((item) => (
               <ItemCard
                 key={item.id}
@@ -363,6 +360,14 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
               />
             ))}
           </div>
+        ) : (
+          <ListView
+            items={filteredAndSortedItems}
+            onEdit={handleEditItem}
+            onDelete={handleDeleteItem}
+            onView={handleViewItem}
+            isLoading={isLoading}
+          />
         )}
 
         {/* Modals */}
