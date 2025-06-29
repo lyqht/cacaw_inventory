@@ -135,17 +135,17 @@ export const ListView: React.FC<ListViewProps> = ({
     setCurrentPage(1); // Reset to first page when changing items per page
   };
   
-  // Condition formatting
+  // Condition formatting with enhanced contrast
   const getConditionColor = (condition: ItemCondition) => {
     switch (condition) {
-      case 'mint': return 'text-retro-success';
-      case 'near-mint': return 'text-green-400';
-      case 'excellent': return 'text-retro-accent';
-      case 'good': return 'text-yellow-400';
-      case 'fair': return 'text-orange-400';
-      case 'poor': return 'text-red-400';
-      case 'damaged': return 'text-retro-error';
-      default: return 'text-retro-accent-light';
+      case 'mint': return 'text-green-700 dark:text-green-300 font-semibold';
+      case 'near-mint': return 'text-green-600 dark:text-green-400 font-semibold';
+      case 'excellent': return 'text-blue-700 dark:text-blue-300 font-semibold';
+      case 'good': return 'text-yellow-700 dark:text-yellow-300 font-semibold';
+      case 'fair': return 'text-orange-700 dark:text-orange-300 font-semibold';
+      case 'poor': return 'text-red-700 dark:text-red-400 font-semibold';
+      case 'damaged': return 'text-red-800 dark:text-red-300 font-semibold';
+      default: return 'text-retro-accent font-semibold';
     }
   };
   
@@ -343,7 +343,7 @@ export const ListView: React.FC<ListViewProps> = ({
             {sortedItems.map((item) => (
               <tr 
                 key={item.id} 
-                className="border-b border-retro-accent border-opacity-30 hover:bg-retro-accent hover:bg-opacity-10 transition-colors h-12"
+                className="border-b border-retro-accent border-opacity-30 hover:bg-retro-accent hover:bg-opacity-20 dark:hover:bg-retro-accent dark:hover:bg-opacity-30 transition-colors h-12 cursor-pointer"
                 onClick={() => onView && onView(item)}
               >
                 <td className="p-2" onClick={(e) => e.stopPropagation()}>
@@ -375,7 +375,7 @@ export const ListView: React.FC<ListViewProps> = ({
                   </div>
                 </td>
                 <td className="p-2">
-                  <div className="font-pixel-sans font-semibold text-retro-accent">
+                  <div className="font-pixel-sans font-semibold text-retro-accent group-hover:text-retro-bg-primary">
                     {item.name}
                   </div>
                   {item.type && (
