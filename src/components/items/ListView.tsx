@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, Lock, Shield, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import { Edit, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
 import { CollectibleData, ItemCondition } from '../../types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -343,7 +343,7 @@ export const ListView: React.FC<ListViewProps> = ({
             {sortedItems.map((item) => (
               <tr 
                 key={item.id} 
-                className="border-b border-retro-accent border-opacity-30 hover:bg-retro-accent hover:bg-opacity-20 dark:hover:bg-retro-accent dark:hover:bg-opacity-30 transition-colors h-12 cursor-pointer"
+                className="table-row-hover border-b border-retro-accent border-opacity-30 h-12"
                 onClick={() => onView && onView(item)}
               >
                 <td className="p-2" onClick={(e) => e.stopPropagation()}>
@@ -375,7 +375,7 @@ export const ListView: React.FC<ListViewProps> = ({
                   </div>
                 </td>
                 <td className="p-2">
-                  <div className="font-pixel-sans font-semibold text-retro-accent group-hover:text-retro-bg-primary">
+                  <div className="font-pixel-sans font-semibold text-retro-accent">
                     {item.name}
                   </div>
                   {item.type && (
@@ -429,11 +429,6 @@ export const ListView: React.FC<ListViewProps> = ({
                     >
                       <Edit className="w-5 h-5" />
                     </button>
-                    {item.aiDetected && (
-                      <span className="text-retro-primary" title="AI Detected">
-                        <Shield className="w-5 h-5" />
-                      </span>
-                    )}
                     <button
                       className="text-retro-error hover:text-red-400 transition-colors"
                       onClick={() => onDelete && onDelete(item)}
