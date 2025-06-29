@@ -3,6 +3,7 @@ import { useAppStore } from './stores/appStore';
 import { StorageService } from './services/storage';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { Navigation } from './components/layout/Navigation';
+import { Footer } from './components/layout/Footer';
 import { CapturePage } from './pages/CapturePage';
 import { FoldersPage } from './pages/FoldersPage';
 import { ItemsPage } from './pages/ItemsPage';
@@ -112,11 +113,13 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid">
+      <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid flex flex-col">
         <Navigation />
-        <main>
+        <main className="flex-grow">
           {renderCurrentPage()}
         </main>
+        
+        <Footer />
         
         {/* Bolt.new Badge */}
         <BoltBadge />
