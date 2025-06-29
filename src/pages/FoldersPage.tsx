@@ -244,15 +244,6 @@ export const FoldersPage: React.FC = () => {
               showCursor
             />
           </div>
-          
-          <div className="flex gap-2">
-            <Button variant="ghost" icon={Grid} size="sm" glow>
-              Grid
-            </Button>
-            <Button variant="ghost" icon={List} size="sm">
-              List
-            </Button>
-          </div>
         </div>
 
         {/* Error State */}
