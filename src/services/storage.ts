@@ -315,28 +315,36 @@ export class StorageService {
 
   // Utility methods
   private async updateFolderItemCount(folderId: string): Promise<void> {
-    const itemCount = await db.items
-      .where('folderId')
-      .equals(folderId)
-      .and(item => !item.isArchived)
-      .count();
-    
-    // Calculate total value
-    const items = await db.items
-      .where('folderId')
-      .equals(folderId)
-      .and(item => !item.isArchived)
-      .toArray();
-    
-    const totalValue = items.reduce((sum, item) => {
-      return sum + (item.estimatedValue || 0);
-    }, 0);
-    
-    await db.folders.update(folderId, { 
-      itemCount,
-      totalValue: totalValue > 0 ? totalValue : undefined,
-      updatedAt: new Date()
-    });
+    try {
+      console.log(`Updating item count for folder: ${folderId}`);
+      
+      // Get all non-archived items in the folder
+      const items = await db.items
+        .where('folderId')
+        .equals(folderId)
+        .and(item => !item.isArchived)
+        .toArray();
+      
+      const itemCount = items.length;
+      
+      // Calculate total value from all items
+      const totalValue = items.reduce((sum, item) => {
+        return sum + (item.estimatedValue || 0);
+      }, 0);
+      
+      console.log(`Folder ${folderId} has ${itemCount} items with total value ${totalValue}`);
+      
+      // Update the folder with the new counts
+      await db.folders.update(folderId, { 
+        itemCount,
+        totalValue: totalValue > 0 ? totalValue : undefined,
+        updatedAt: new Date()
+      });
+      
+      console.log(`Successfully updated folder ${folderId} with new item count: ${itemCount}`);
+    } catch (error) {
+      console.error(`Error updating folder item count for ${folderId}:`, error);
+    }
   }
 
   // Export data as JSON

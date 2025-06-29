@@ -75,6 +75,16 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
     }
   };
 
+  // Function to refresh all folders after operations that change item counts
+  const refreshAllFolders = async () => {
+    try {
+      const updatedFolders = await storageService.getFolders();
+      setFolders(updatedFolders);
+    } catch (error) {
+      console.error('Error refreshing folders:', error);
+    }
+  };
+
   // Compute available filter options
   const filterOptions = useMemo(() => {
     const allTags = new Set<string>();
@@ -186,16 +196,6 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
 
     return filtered;
   }, [items, searchQuery, filters, sortOption]);
-
-  // Function to refresh all folders after operations that change item counts
-  const refreshAllFolders = async () => {
-    try {
-      const updatedFolders = await storageService.getFolders();
-      setFolders(updatedFolders);
-    } catch (error) {
-      console.error('Error refreshing folders:', error);
-    }
-  };
 
   const handleSaveItem = async (itemData: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
