@@ -79,6 +79,7 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
   const refreshAllFolders = async () => {
     try {
       const updatedFolders = await storageService.getFolders();
+      console.log('Refreshing folders with updated data:', updatedFolders);
       setFolders(updatedFolders);
     } catch (error) {
       console.error('Error refreshing folders:', error);

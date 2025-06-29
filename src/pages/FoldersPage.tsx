@@ -48,6 +48,7 @@ export const FoldersPage: React.FC = () => {
       setError(null);
       await storageService.initialize();
       const loadedFolders = await storageService.getFolders();
+      console.log('Loaded folders:', loadedFolders);
       setFolders(loadedFolders);
     } catch (err) {
       console.error('Error loading folders:', err);

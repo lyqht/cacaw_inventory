@@ -66,6 +66,8 @@ export const FolderCard: React.FC<FolderCardProps> = ({
     return `$${amount.toFixed(2)}`;
   };
 
+  console.log(`Rendering FolderCard for ${folder.name} with itemCount: ${folder.itemCount}`);
+
   return (
     <Card
       hoverable

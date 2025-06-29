@@ -232,6 +232,7 @@ export class StorageService {
     
     // If folder changed, update both old and new folder item counts
     if (updates.folderId && updates.folderId !== oldFolderId) {
+      console.log(`Item ${id} moved from folder ${oldFolderId} to ${updates.folderId}`);
       await this.updateFolderItemCount(oldFolderId);
       await this.updateFolderItemCount(newFolderId);
     } else {
@@ -342,6 +343,10 @@ export class StorageService {
       });
       
       console.log(`Successfully updated folder ${folderId} with new item count: ${itemCount}`);
+      
+      // Verify the update was successful
+      const updatedFolder = await this.getFolder(folderId);
+      console.log(`Verification - Folder ${folderId} now has itemCount: ${updatedFolder?.itemCount}`);
     } catch (error) {
       console.error(`Error updating folder item count for ${folderId}:`, error);
     }
