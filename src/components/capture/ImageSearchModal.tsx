@@ -97,7 +97,7 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
           providers: filters.providers.length > 0 ? filters.providers : undefined,
           maxResultsPerProvider: 8,
           timeout: 15000,
-          fallbackToMockData: true
+          fallbackToMockData: false
         }
       );
       
