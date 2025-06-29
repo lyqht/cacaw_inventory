@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Palette, Zap, Shield, Download, Upload, Package } from 'lucide-react';
+import { ArrowLeft, Palette, Zap, Shield, Upload, Download, Package } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';

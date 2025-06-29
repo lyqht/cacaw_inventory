@@ -1,41 +1,54 @@
-import { BaseImageProvider, ImageResult, SearchOptions, ImageSearchParams, SearchResponse } from './baseProvider';
+import { BaseImageProvider, ImageResult, ImageSearchParams, SearchResponse } from './baseProvider';
 
 export class OpenverseProvider extends BaseImageProvider {
   private readonly baseUrl = 'https://api.openverse.engineering/v1';
-  private readonly name = 'openverse';
-
-  getName(): string {
-    return this.name;
+  
+  constructor() {
+    super({
+      baseUrl: 'https://api.openverse.engineering/v1',
+      rateLimit: {
+        requestsPerMinute: 60
+      },
+      maxResults: 100,
+      supportedFeatures: {
+        dimensions: true,
+        imageType: true,
+        colorFilter: false,
+        usageRights: true,
+        safeSearch: true
+      }
+    });
   }
 
-  async search(params: ImageSearchParams, options: SearchOptions = {}): Promise<SearchResponse> {
+  getName(): string {
+    return 'openverse';
+  }
+
+  async search(params: ImageSearchParams): Promise<SearchResponse> {
     try {
-      // Extract query from params object
-      const query = params.query;
-      
       // Build search parameters
       const searchParams = new URLSearchParams({
-        q: query,
-        page_size: (options.maxResults || 20).toString(),
+        q: params.query,
+        page_size: Math.min(params.count || 20, this.config.maxResults).toString(),
         mature: 'false', // Filter out mature content
       });
 
       // Add image type filter if specified
-      if (options.imageType && options.imageType !== 'any') {
-        if (options.imageType === 'photo') {
+      if (params.imageType && params.imageType !== 'any') {
+        if (params.imageType === 'photo') {
           searchParams.append('category', 'photograph');
-        } else if (options.imageType === 'illustration') {
+        } else if (params.imageType === 'illustration') {
           searchParams.append('category', 'illustration');
         }
       }
 
       // Add license filter for commercial use
-      if (options.usageRights === 'commercial') {
+      if (params.usageRights === 'commercial') {
         searchParams.append('license_type', 'commercial');
       }
 
       // Add size filter if specified
-      if (options.dimensions?.minWidth) {
+      if (params.dimensions?.minWidth) {
         searchParams.append('size', 'large'); // Use large size as proxy for minimum width
       }
 
@@ -47,9 +60,7 @@ export class OpenverseProvider extends BaseImageProvider {
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'CACAW-CollectionApp/1.0',
-        },
-        // Add timeout
-        signal: AbortSignal.timeout(options.timeout || 10000),
+        }
       });
 
       if (!response.ok) {
@@ -64,32 +75,16 @@ export class OpenverseProvider extends BaseImageProvider {
         return {
           results: [],
           totalResults: 0,
-          hasMore: false,
+          provider: 'openverse'
         };
       }
 
-      const results = data.results.map((item: any, index: number) => ({
-        id: item.id || `openverse-${index}`,
-        title: item.title || 'Untitled',
-        url: item.url,
-        thumbnailUrl: item.thumbnail || item.url,
-        width: item.width || 0,
-        height: item.height || 0,
-        source: this.name,
-        sourceUrl: item.foreign_landing_url || item.url,
-        license: {
-          type: item.license || 'Unknown',
-          attribution: item.attribution || item.creator || 'Unknown',
-          commercial: this.isCommercialLicense(item.license),
-          url: item.license_url,
-        },
-        tags: item.tags ? item.tags.map((tag: any) => tag.name || tag).filter(Boolean) : [],
-      }));
+      const results = data.results.map((item: any) => this.transformResult(item));
 
       return {
         results,
         totalResults: data.result_count || results.length,
-        hasMore: data.result_count > results.length,
+        provider: 'openverse'
       };
 
     } catch (error) {
@@ -100,13 +95,34 @@ export class OpenverseProvider extends BaseImageProvider {
         throw new Error('Unable to connect to Openverse API. This may be due to network restrictions or CORS policy.');
       }
       
-      // If it's a timeout error
-      if (error instanceof DOMException && error.name === 'TimeoutError') {
-        throw new Error('Openverse API request timed out. Please try again.');
-      }
-      
       throw error;
     }
+  }
+
+  private transformResult(item: any): ImageResult {
+    return {
+      id: item.id || `openverse-${Date.now()}`,
+      url: item.url,
+      thumbnailUrl: item.thumbnail || item.url,
+      title: item.title || 'Untitled',
+      description: item.description,
+      width: item.width || 0,
+      height: item.height || 0,
+      format: 'jpeg',
+      source: 'openverse',
+      sourceUrl: item.foreign_landing_url || item.url,
+      license: {
+        type: item.license || 'Unknown',
+        url: item.license_url,
+        commercial: this.isCommercialLicense(item.license),
+        attribution: item.license !== 'cc0' && item.license !== 'pdm'
+      },
+      downloadUrl: item.url,
+      metadata: {
+        photographer: item.creator,
+        tags: item.tags ? item.tags.map((tag: any) => tag.name || tag).filter(Boolean) : []
+      }
+    };
   }
 
   private isCommercialLicense(license: string): boolean {
@@ -123,9 +139,9 @@ export class OpenverseProvider extends BaseImageProvider {
     return commercialLicenses.some(cl => licenseKey.includes(cl.replace(/[-_\s]/g, '')));
   }
 
-  async downloadImage(imageUrl: string): Promise<Blob> {
+  async downloadImage(url: string): Promise<Blob> {
     try {
-      const response = await fetch(imageUrl, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'image/*',
@@ -140,6 +156,16 @@ export class OpenverseProvider extends BaseImageProvider {
     } catch (error) {
       console.error('Openverse image download error:', error);
       throw new Error('Failed to download image from Openverse');
+    }
+  }
+
+  async validateApiKey(): Promise<boolean> {
+    // Openverse doesn't require an API key, so just check if the API is accessible
+    try {
+      const response = await fetch(`${this.baseUrl}/images?q=test&page_size=1`);
+      return response.ok;
+    } catch {
+      return false;
     }
   }
 }
