@@ -22,6 +22,7 @@ export const Footer: React.FC = () => {
         >
           Tan Tiang Teck
         </a>
+        😸
       </p>
     </footer>
   );
