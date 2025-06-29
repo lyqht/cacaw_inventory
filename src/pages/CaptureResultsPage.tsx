@@ -51,11 +51,15 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
   const [showImageSearch, setShowImageSearch] = useState<string | null>(null);
   const [currentDisplayImage, setCurrentDisplayImage] = useState<string>(originalImage);
   
+  // Refs for the main image and canvas
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cropCanvasRef = useRef<HTMLCanvasElement>(null);
   const cropContainerRef = useRef<HTMLDivElement>(null);
   const previewImageRefs = useRef<Record<string, HTMLImageElement | null>>({});
+  
+  // Ref for the original high-resolution image
+  const originalImageRef = useRef<HTMLImageElement>(null);
 
   const conditions: { value: ItemCondition; label: string; color: string }[] = [
     { value: 'mint', label: 'Mint', color: 'text-retro-success' },
@@ -81,6 +85,19 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
       setEditingItems(items);
     }
   }, [detectionResult]);
+
+  // Load the original image for high-quality cropping
+  useEffect(() => {
+    const img = new Image();
+    img.src = originalImage;
+    img.onload = () => {
+      originalImageRef.current = img;
+      console.log('Original high-resolution image loaded:', img.naturalWidth, 'x', img.naturalHeight);
+    };
+    img.onerror = (err) => {
+      console.error('Failed to load original high-resolution image:', err);
+    };
+  }, [originalImage]);
 
   // Get the current image for display (alternative > cropped > original)
   const getCurrentImage = (itemId?: string): string => {
@@ -192,10 +209,11 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     }
     
     const imgElement = previewImageRefs.current[cropMode];
-    if (!imgElement || !canvasRef.current) {
+    if (!imgElement || !canvasRef.current || !originalImageRef.current) {
       console.log('Missing image or canvas ref:', { 
         imgElement: !!imgElement, 
-        canvasRef: !!canvasRef.current 
+        canvasRef: !!canvasRef.current,
+        originalImageRef: !!originalImageRef.current
       });
       return;
     }
@@ -212,31 +230,40 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size to crop area
-    canvas.width = cropArea.width;
-    canvas.height = cropArea.height;
+    // Calculate the scaling factor between the thumbnail and the original image
+    const thumbnailWidth = imgElement.width;
+    const thumbnailHeight = imgElement.height;
+    const originalWidth = originalImageRef.current.naturalWidth;
+    const originalHeight = originalImageRef.current.naturalHeight;
+    
+    const scaleX = originalWidth / thumbnailWidth;
+    const scaleY = originalHeight / thumbnailHeight;
+    
+    console.log('Scaling factors:', { scaleX, scaleY });
+    console.log('Thumbnail dimensions:', { thumbnailWidth, thumbnailHeight });
+    console.log('Original dimensions:', { originalWidth, originalHeight });
 
-    // Get the natural dimensions of the image
-    const scaleX = imgElement.naturalWidth / imgElement.width;
-    const scaleY = imgElement.naturalHeight / imgElement.height;
-
-    // Calculate actual crop dimensions
-    const actualCrop = {
-      x: cropArea.x * scaleX,
-      y: cropArea.y * scaleY,
-      width: cropArea.width * scaleX,
-      height: cropArea.height * scaleY
+    // Calculate the crop area in the original image coordinates
+    const originalCropArea = {
+      x: Math.round(cropArea.x * scaleX),
+      y: Math.round(cropArea.y * scaleY),
+      width: Math.round(cropArea.width * scaleX),
+      height: Math.round(cropArea.height * scaleY)
     };
+    
+    console.log('Original image crop area:', originalCropArea);
 
-    console.log('Actual crop dimensions:', actualCrop);
+    // Set canvas size to the crop dimensions from the original image
+    canvas.width = originalCropArea.width;
+    canvas.height = originalCropArea.height;
 
-    // Draw cropped portion
+    // Draw the cropped portion from the original high-resolution image
     ctx.drawImage(
-      imgElement,
-      actualCrop.x,
-      actualCrop.y,
-      actualCrop.width,
-      actualCrop.height,
+      originalImageRef.current,
+      originalCropArea.x,
+      originalCropArea.y,
+      originalCropArea.width,
+      originalCropArea.height,
       0,
       0,
       canvas.width,
@@ -244,7 +271,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     );
 
     // Convert to data URL with high quality
-    const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.95);
     setCroppedImages(prev => ({ ...prev, [cropMode]: croppedDataUrl }));
     
     console.log('Crop applied successfully for item:', cropMode);
