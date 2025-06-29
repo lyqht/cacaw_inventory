@@ -1,4 +1,4 @@
-import { BaseImageProvider, ImageResult, SearchOptions } from './baseProvider';
+import { BaseImageProvider, ImageResult, SearchOptions, ImageSearchParams, SearchResponse } from './baseProvider';
 
 export class OpenverseProvider extends BaseImageProvider {
   private readonly baseUrl = 'https://api.openverse.engineering/v1';
@@ -8,10 +8,13 @@ export class OpenverseProvider extends BaseImageProvider {
     return this.name;
   }
 
-  async search(query: string, options: SearchOptions = {}): Promise<ImageResult[]> {
+  async search(params: ImageSearchParams, options: SearchOptions = {}): Promise<SearchResponse> {
     try {
+      // Extract query from params object
+      const query = params.query;
+      
       // Build search parameters
-      const params = new URLSearchParams({
+      const searchParams = new URLSearchParams({
         q: query,
         page_size: (options.maxResults || 20).toString(),
         mature: 'false', // Filter out mature content
@@ -20,23 +23,23 @@ export class OpenverseProvider extends BaseImageProvider {
       // Add image type filter if specified
       if (options.imageType && options.imageType !== 'any') {
         if (options.imageType === 'photo') {
-          params.append('category', 'photograph');
+          searchParams.append('category', 'photograph');
         } else if (options.imageType === 'illustration') {
-          params.append('category', 'illustration');
+          searchParams.append('category', 'illustration');
         }
       }
 
       // Add license filter for commercial use
       if (options.usageRights === 'commercial') {
-        params.append('license_type', 'commercial');
+        searchParams.append('license_type', 'commercial');
       }
 
       // Add size filter if specified
       if (options.dimensions?.minWidth) {
-        params.append('size', 'large'); // Use large size as proxy for minimum width
+        searchParams.append('size', 'large'); // Use large size as proxy for minimum width
       }
 
-      const url = `${this.baseUrl}/images/?${params.toString()}`;
+      const url = `${this.baseUrl}/images/?${searchParams.toString()}`;
       console.log('Openverse API URL:', url);
 
       const response = await fetch(url, {
@@ -58,10 +61,14 @@ export class OpenverseProvider extends BaseImageProvider {
 
       if (!data.results || !Array.isArray(data.results)) {
         console.warn('Openverse API returned unexpected format:', data);
-        return [];
+        return {
+          results: [],
+          totalResults: 0,
+          hasMore: false,
+        };
       }
 
-      return data.results.map((item: any, index: number) => ({
+      const results = data.results.map((item: any, index: number) => ({
         id: item.id || `openverse-${index}`,
         title: item.title || 'Untitled',
         url: item.url,
@@ -78,6 +85,12 @@ export class OpenverseProvider extends BaseImageProvider {
         },
         tags: item.tags ? item.tags.map((tag: any) => tag.name || tag).filter(Boolean) : [],
       }));
+
+      return {
+        results,
+        totalResults: data.result_count || results.length,
+        hasMore: data.result_count > results.length,
+      };
 
     } catch (error) {
       console.error('Openverse search error:', error);
