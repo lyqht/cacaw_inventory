@@ -179,19 +179,6 @@
     min-width: 32px;
   }
 
-  /* Special styling for icon-only buttons to ensure perfect centering */
-  .icon-only-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  /* Ensure icons are perfectly centered */
-  .icon-only-button svg {
-    margin: 0 auto;
-    display: block;
-  }
-
   .pixel-card {
     @apply bg-retro-bg-secondary border-2 border-retro-accent rounded-pixel shadow-pixel;
     @apply hover:shadow-pixel-lg transition-all duration-200;
