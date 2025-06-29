@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { Edit, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Edit, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Check, X, Copy, FolderOpen } from 'lucide-react';
 import { CollectibleData, ItemCondition } from '../../types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { FolderSelector } from '../capture/FolderSelector';
+import { useAppStore } from '../../stores/appStore';
 
 interface ListViewProps {
   items: CollectibleData[];
@@ -13,6 +15,8 @@ interface ListViewProps {
   onDelete?: (item: CollectibleData) => void;
   onView?: (item: CollectibleData) => void;
   onSelectionChange?: (selectedItems: string[]) => void;
+  onDuplicateItems?: (itemIds: string[], targetFolderId: string) => Promise<void>;
+  onMoveItems?: (itemIds: string[], targetFolderId: string) => Promise<void>;
 }
 
 interface SortConfig {
@@ -26,12 +30,19 @@ export const ListView: React.FC<ListViewProps> = ({
   onEdit,
   onDelete,
   onView,
-  onSelectionChange
+  onSelectionChange,
+  onDuplicateItems,
+  onMoveItems
 }) => {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showFolderSelector, setShowFolderSelector] = useState(false);
+  const [actionType, setActionType] = useState<'duplicate' | 'move' | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const { folders } = useAppStore();
   
   // Pagination
   const totalPages = Math.ceil(items.length / itemsPerPage);
@@ -189,6 +200,35 @@ export const ListView: React.FC<ListViewProps> = ({
       .toUpperCase()
       .substring(0, 2);
   };
+
+  // Handle folder selection for move/duplicate
+  const handleFolderSelected = async (folder: any) => {
+    if (!actionType || selectedItems.size === 0) return;
+    
+    try {
+      setIsProcessing(true);
+      const selectedItemIds = Array.from(selectedItems);
+      
+      if (actionType === 'duplicate' && onDuplicateItems) {
+        await onDuplicateItems(selectedItemIds, folder.id);
+      } else if (actionType === 'move' && onMoveItems) {
+        await onMoveItems(selectedItemIds, folder.id);
+      }
+      
+      // Reset selection after successful operation
+      setSelectedItems(new Set());
+      if (onSelectionChange) {
+        onSelectionChange([]);
+      }
+    } catch (error) {
+      console.error(`Error ${actionType === 'duplicate' ? 'duplicating' : 'moving'} items:`, error);
+      alert(`Failed to ${actionType} items. Please try again.`);
+    } finally {
+      setIsProcessing(false);
+      setShowFolderSelector(false);
+      setActionType(null);
+    }
+  };
   
   if (isLoading) {
     return (
@@ -232,6 +272,30 @@ export const ListView: React.FC<ListViewProps> = ({
               Clear Selection
             </Button>
             <Button
+              variant="primary"
+              size="sm"
+              icon={Copy}
+              onClick={() => {
+                setActionType('duplicate');
+                setShowFolderSelector(true);
+              }}
+              disabled={selectedItems.size === 0}
+            >
+              Duplicate
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={FolderOpen}
+              onClick={() => {
+                setActionType('move');
+                setShowFolderSelector(true);
+              }}
+              disabled={selectedItems.size === 0}
+            >
+              Move To
+            </Button>
+            <Button
               variant="danger"
               size="sm"
               icon={X}
@@ -251,6 +315,54 @@ export const ListView: React.FC<ListViewProps> = ({
             </Button>
           </div>
         </div>
+      )}
+      
+      {/* Folder Selector Modal */}
+      {showFolderSelector && (
+        <Card variant="outlined" padding="md">
+          <div className="space-y-pixel-2">
+            <h3 className="font-pixel text-retro-accent">
+              {actionType === 'duplicate' ? 'Duplicate To Folder' : 'Move To Folder'}
+            </h3>
+            <p className="text-retro-accent-light font-pixel-sans text-sm">
+              {actionType === 'duplicate' 
+                ? `Select a destination folder to duplicate ${selectedItems.size} item(s)`
+                : `Select a destination folder to move ${selectedItems.size} item(s)`
+              }
+            </p>
+            
+            <FolderSelector
+              selectedFolder={null}
+              folders={folders}
+              onFolderSelect={handleFolderSelected}
+              className="mt-pixel-2"
+            />
+            
+            <div className="flex justify-end gap-2 mt-pixel-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowFolderSelector(false);
+                  setActionType(null);
+                }}
+                disabled={isProcessing}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+          
+          {isProcessing && (
+            <div className="absolute inset-0 bg-retro-bg-primary bg-opacity-70 flex items-center justify-center">
+              <div className="text-center">
+                <LoadingSpinner size="lg" variant="accent" className="mb-2" />
+                <p className="font-pixel text-retro-accent">
+                  {actionType === 'duplicate' ? 'Duplicating items...' : 'Moving items...'}
+                </p>
+              </div>
+            </div>
+          )}
+        </Card>
       )}
       
       {/* List Table */}

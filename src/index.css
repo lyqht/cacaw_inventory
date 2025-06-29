@@ -270,6 +270,7 @@
   .table-row-hover {
     @apply transition-colors duration-200;
     background-color: transparent;
+    cursor: pointer;
   }
   
   .table-row-hover:hover {

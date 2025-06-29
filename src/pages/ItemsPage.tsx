@@ -224,6 +224,85 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
     setViewingItem(item);
   };
 
+  // New function to handle duplicating items to another folder
+  const handleDuplicateItems = async (itemIds: string[], targetFolderId: string) => {
+    try {
+      setLoading(true);
+      
+      // Get the items to duplicate
+      const itemsToDuplicate = items.filter(item => itemIds.includes(item.id));
+      
+      // Create duplicates in the target folder
+      for (const item of itemsToDuplicate) {
+        const newItemData: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'> = {
+          folderId: targetFolderId,
+          userId: item.userId,
+          name: `${item.name} (Copy)`,
+          type: item.type,
+          series: item.series,
+          condition: item.condition,
+          description: item.description,
+          tags: [...item.tags],
+          notes: item.notes,
+          estimatedValue: item.estimatedValue,
+          purchasePrice: item.purchasePrice,
+          currency: item.currency,
+          primaryImage: item.primaryImage,
+          additionalImages: [...item.additionalImages],
+          thumbnailImage: item.thumbnailImage,
+          aiDetected: item.aiDetected,
+          aiConfidence: item.aiConfidence,
+          aiPromptUsed: item.aiPromptUsed,
+          ocrText: item.ocrText,
+          lastViewedAt: undefined,
+          syncStatus: 'local-only',
+          isArchived: false
+        };
+        
+        await storageService.createItem(newItemData);
+      }
+      
+      // Reload items if duplicating to the current folder
+      if (targetFolderId === folder.id) {
+        await loadItems();
+      }
+      
+      alert(`Successfully duplicated ${itemsToDuplicate.length} item(s) to the selected folder.`);
+    } catch (error) {
+      console.error('Error duplicating items:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // New function to handle moving items to another folder
+  const handleMoveItems = async (itemIds: string[], targetFolderId: string) => {
+    try {
+      setLoading(true);
+      
+      // Get the items to move
+      const itemsToMove = items.filter(item => itemIds.includes(item.id));
+      
+      // Move items to the target folder
+      for (const item of itemsToMove) {
+        await storageService.updateItem(item.id, {
+          folderId: targetFolderId
+        });
+      }
+      
+      // Reload items to update the UI
+      await loadItems();
+      
+      alert(`Successfully moved ${itemsToMove.length} item(s) to the selected folder.`);
+    } catch (error) {
+      console.error('Error moving items:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (isLoading && items.length === 0) {
     return (
       <div className="min-h-screen bg-retro-bg-primary bg-pixel-grid flex items-center justify-center">
@@ -367,6 +446,8 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
             onDelete={handleDeleteItem}
             onView={handleViewItem}
             isLoading={isLoading}
+            onDuplicateItems={handleDuplicateItems}
+            onMoveItems={handleMoveItems}
           />
         )}
 
