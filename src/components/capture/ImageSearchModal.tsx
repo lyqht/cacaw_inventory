@@ -201,26 +201,6 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
       showCloseButton={false}
     >
       <div className="space-y-pixel-2">
-        {/* Search Header */}
-        <div className="flex items-center gap-2 p-3 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
-          <Globe className="w-5 h-5 text-retro-accent" />
-
-        </div>
-
-        {/* Openverse Info Banner */}
-        <Card variant="outlined" padding="md" className="bg-green-50 border-green-500">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-green-500 rounded-pixel flex items-center justify-center">
-              <Globe className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h4 className="font-pixel text-green-700 text-sm">Now Powered by Openverse!</h4>
-              <p className="text-green-600 font-pixel-sans text-xs">
-                Access millions of openly licensed images from Wikimedia, Flickr, and other sources
-              </p>
-            </div>
-          </div>
-        </Card>
 
         {/* Search Controls */}
         <div className="space-y-pixel">
