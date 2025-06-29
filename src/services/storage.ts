@@ -219,10 +219,25 @@ export class StorageService {
   }
 
   async updateItem(id: string, updates: Partial<CollectibleData>): Promise<void> {
+    const item = await this.getItem(id);
+    if (!item) return;
+    
+    const oldFolderId = item.folderId;
+    const newFolderId = updates.folderId || oldFolderId;
+    
     await db.items.update(id, {
       ...updates,
       updatedAt: new Date()
     });
+    
+    // If folder changed, update both old and new folder item counts
+    if (updates.folderId && updates.folderId !== oldFolderId) {
+      await this.updateFolderItemCount(oldFolderId);
+      await this.updateFolderItemCount(newFolderId);
+    } else {
+      // Otherwise just update the current folder's item count
+      await this.updateFolderItemCount(oldFolderId);
+    }
   }
 
   async deleteItem(id: string): Promise<void> {

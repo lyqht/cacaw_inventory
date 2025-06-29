@@ -34,7 +34,13 @@ interface ItemsPageProps {
 }
 
 export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
-  const { isLoading, setLoading, error, setError } = useAppStore();
+  const {
+    isLoading,
+    setLoading,
+    error,
+    setError,
+    setFolders
+  } = useAppStore();
   
   const [items, setItems] = useState<CollectibleData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -181,6 +187,16 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
     return filtered;
   }, [items, searchQuery, filters, sortOption]);
 
+  // Function to refresh all folders after operations that change item counts
+  const refreshAllFolders = async () => {
+    try {
+      const updatedFolders = await storageService.getFolders();
+      setFolders(updatedFolders);
+    } catch (error) {
+      console.error('Error refreshing folders:', error);
+    }
+  };
+
   const handleSaveItem = async (itemData: Omit<CollectibleData, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       if (editingItem) {
@@ -190,6 +206,7 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
       }
       
       await loadItems();
+      await refreshAllFolders(); // Refresh folders to update item counts
       setShowItemForm(false);
       setEditingItem(null);
     } catch (error) {
@@ -209,6 +226,7 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
         setLoading(true);
         await storageService.deleteItem(item.id);
         await loadItems();
+        await refreshAllFolders(); // Refresh folders to update item counts
       } catch (error) {
         console.error('Error deleting item:', error);
         setError('Failed to delete item. Please try again.');
@@ -267,6 +285,9 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
         await loadItems();
       }
       
+      // Refresh all folders to update item counts
+      await refreshAllFolders();
+      
       alert(`Successfully duplicated ${itemsToDuplicate.length} item(s) to the selected folder.`);
     } catch (error) {
       console.error('Error duplicating items:', error);
@@ -293,6 +314,9 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
       
       // Reload items to update the UI
       await loadItems();
+      
+      // Refresh all folders to update item counts
+      await refreshAllFolders();
       
       alert(`Successfully moved ${itemsToMove.length} item(s) to the selected folder.`);
     } catch (error) {
