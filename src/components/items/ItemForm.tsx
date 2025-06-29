@@ -882,7 +882,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                         </p>
                       </div>
                     )}
-                  </div>
+                  </Card>
                 </div>
               ) : (
                 <div className="space-y-pixel-2">
