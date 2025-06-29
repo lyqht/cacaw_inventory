@@ -97,17 +97,27 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     return null;
   };
 
-  const processFile = useCallback((file: File) => {
+  const processFile = useCallback(async (file: File) => {
     const error = validateFile(file);
     if (error) {
       setError(error);
       return;
     }
     
-    const imageUrl = URL.createObjectURL(file);
-    setCapturedImage(imageUrl);
-    setError(null);
-  }, []);
+    try {
+      // Convert file to blob and create URL for preview
+      const blob = new Blob([file], { type: file.type });
+      const imageUrl = URL.createObjectURL(blob);
+      setCapturedImage(imageUrl);
+      setError(null);
+      
+      // Immediately call onImageCapture with the blob
+      onImageCapture(blob);
+    } catch (err) {
+      console.error('Error processing file:', err);
+      setError('Failed to process the selected file.');
+    }
+  }, [onImageCapture]);
 
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
