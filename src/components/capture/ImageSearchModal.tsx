@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, X, ExternalLink, Image as ImageIcon, Check, Loader, AlertTriangle, Settings, Key, Zap } from 'lucide-react';
+import { Search, Download, X, ExternalLink, Image as ImageIcon, Check, Loader, AlertTriangle, Settings, Key, Zap, Globe } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -161,7 +161,7 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
 
   const getProviderIcon = (provider: string) => {
     switch (provider) {
-      case 'unsplash': return '📸';
+      case 'openverse': return '🌐';
       case 'pexels': return '🎨';
       case 'pixabay': return '🖼️';
       case 'google': return '🔍';
@@ -172,12 +172,23 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
 
   const getProviderColor = (provider: string) => {
     switch (provider) {
-      case 'unsplash': return 'border-blue-500 text-blue-500';
+      case 'openverse': return 'border-green-500 text-green-500';
       case 'pexels': return 'border-green-500 text-green-500';
       case 'pixabay': return 'border-yellow-500 text-yellow-500';
       case 'google': return 'border-red-500 text-red-500';
       case 'mock': return 'border-gray-500 text-gray-500';
       default: return 'border-retro-accent text-retro-accent';
+    }
+  };
+
+  const getProviderDescription = (provider: string) => {
+    switch (provider) {
+      case 'openverse': return 'Open content from Wikimedia, Flickr, and more';
+      case 'pexels': return 'High-quality stock photos';
+      case 'pixabay': return 'Free images and vectors';
+      case 'google': return 'Google Custom Search';
+      case 'mock': return 'Demo images for testing';
+      default: return 'Image provider';
     }
   };
 
@@ -192,7 +203,7 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
       <div className="space-y-pixel-2">
         {/* Search Header */}
         <div className="flex items-center gap-2 p-3 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
-          <ImageIcon className="w-5 h-5 text-retro-accent" />
+          <Globe className="w-5 h-5 text-retro-accent" />
           <div>
             <h3 className="font-pixel text-retro-accent text-sm">
               Enhanced Product Image Search
@@ -202,6 +213,21 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Openverse Info Banner */}
+        <Card variant="outlined" padding="md" className="bg-green-50 border-green-500">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-green-500 rounded-pixel flex items-center justify-center">
+              <Globe className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h4 className="font-pixel text-green-700 text-sm">Now Powered by Openverse!</h4>
+              <p className="text-green-600 font-pixel-sans text-xs">
+                Access millions of openly licensed images from Wikimedia, Flickr, and other sources
+              </p>
+            </div>
+          </div>
+        </Card>
 
         {/* Search Controls */}
         <div className="space-y-pixel">
@@ -246,7 +272,7 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
               icon={Key}
               onClick={() => setShowProviderSettings(!showProviderSettings)}
             >
-              API Settings
+              Providers
             </Button>
           </div>
         </div>
@@ -296,8 +322,8 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
                   className="pixel-input w-full text-xs"
                 >
                   <option value="any">Any License</option>
-                  <option value="commercial">Commercial Use</option>
-                  <option value="noncommercial">Non-Commercial</option>
+                  <option value="commercial">Commercial Use OK</option>
+                  <option value="noncommercial">Non-Commercial Only</option>
                 </select>
               </div>
 
@@ -316,65 +342,44 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
                 />
               </div>
             </div>
-
-            {/* Provider Selection */}
-            <div className="mt-pixel-2">
-              <label className="block text-xs font-pixel text-retro-accent mb-2">Search Providers</label>
-              <div className="flex flex-wrap gap-2">
-                {imageSearchService.getAvailableProviders().map(provider => (
-                  <Button
-                    key={provider}
-                    variant={filters.providers.includes(provider) ? 'accent' : 'ghost'}
-                    size="sm"
-                    onClick={() => toggleProvider(provider)}
-                    className={`text-xs ${getProviderColor(provider)}`}
-                  >
-                    {getProviderIcon(provider)} {provider}
-                  </Button>
-                ))}
-              </div>
-            </div>
           </Card>
         )}
 
         {/* Provider Settings */}
         {showProviderSettings && (
           <Card variant="outlined" padding="md">
-            <h4 className="font-pixel text-retro-accent text-sm mb-2">API Provider Settings</h4>
+            <h4 className="font-pixel text-retro-accent text-sm mb-2">Image Providers</h4>
             <p className="text-retro-accent-light font-pixel-sans text-xs mb-2">
-              Configure API keys for enhanced search capabilities and higher rate limits.
+              Select which providers to search. Openverse provides openly licensed content.
             </p>
             
-            <div className="space-y-2 text-xs font-pixel-sans text-retro-accent-light">
-              <div className="flex items-center gap-2">
-                <span className="w-16">📸 Unsplash:</span>
-                <span>Free tier available, API key for higher limits</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-16">🎨 Pexels:</span>
-                <span>Requires API key (free tier: 200 req/min)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-16">🖼️ Pixabay:</span>
-                <span>Requires API key (free tier: 100 req/min)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-16">🔍 Google:</span>
-                <span>Requires API key + Search Engine ID</span>
-              </div>
-            </div>
-            
-            <div className="mt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  // TODO: Open API settings modal
-                  console.log('Open API settings');
-                }}
-              >
-                Configure API Keys
-              </Button>
+            <div className="space-y-2">
+              {imageSearchService.getAvailableProviders().map(provider => (
+                <div key={provider} className="flex items-center justify-between p-2 border border-retro-accent rounded-pixel">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getProviderIcon(provider)}</span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-pixel text-retro-accent text-sm capitalize">{provider}</span>
+                        {provider === 'openverse' && (
+                          <Badge variant="success" size="sm">NEW</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-retro-accent-light font-pixel-sans">
+                        {getProviderDescription(provider)}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant={filters.providers.includes(provider) ? 'accent' : 'ghost'}
+                    size="sm"
+                    onClick={() => toggleProvider(provider)}
+                    className={`text-xs ${getProviderColor(provider)}`}
+                  >
+                    {filters.providers.includes(provider) ? 'Enabled' : 'Disabled'}
+                  </Button>
+                </div>
+              ))}
             </div>
           </Card>
         )}
@@ -511,6 +516,15 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
                       </div>
                     )}
 
+                    {/* CC0/Public Domain Badge */}
+                    {!image.license?.attribution && image.license?.commercial && (
+                      <div className="absolute top-2 left-2">
+                        <Badge variant="success" size="sm">
+                          CC0/Public Domain
+                        </Badge>
+                      </div>
+                    )}
+
                     {/* External Link */}
                     <div className="absolute bottom-2 right-2">
                       <Button
@@ -538,9 +552,9 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
                       <span className="text-xs text-retro-accent-light font-pixel-sans">
                         {image.width}×{image.height}
                       </span>
-                      {image.fileSize && (
+                      {image.license && (
                         <span className="text-xs text-retro-accent-light font-pixel-sans">
-                          {(image.fileSize / 1024 / 1024).toFixed(1)}MB
+                          {image.license.type}
                         </span>
                       )}
                     </div>
@@ -560,7 +574,7 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
               No results for "{searchQuery}"
             </p>
             <p className="text-retro-accent-light font-pixel-sans text-xs">
-              Try different search terms, adjust filters, or configure additional API providers
+              Try different search terms, adjust filters, or check provider settings
             </p>
           </div>
         )}
@@ -572,8 +586,8 @@ export const ImageSearchModal: React.FC<ImageSearchModalProps> = ({
             <li>• <strong>Be specific:</strong> "Charizard Pokemon card" vs just "card"</li>
             <li>• <strong>Include brand/series:</strong> "Funko Pop Batman" or "Magic The Gathering"</li>
             <li>• <strong>Use filters:</strong> Specify image type, size, and usage rights</li>
-            <li>• <strong>Try multiple providers:</strong> Different sources have different content</li>
-            <li>• <strong>Configure API keys:</strong> For better results and higher rate limits</li>
+            <li>• <strong>Openverse advantage:</strong> All content is openly licensed for reuse</li>
+            <li>• <strong>Check licenses:</strong> Look for CC0 or Public Domain for maximum freedom</li>
           </ul>
         </Card>
 

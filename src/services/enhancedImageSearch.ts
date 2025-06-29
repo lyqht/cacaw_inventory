@@ -1,5 +1,5 @@
 import { BaseImageProvider, ImageSearchParams, SearchResponse, ImageResult } from './imageProviders/baseProvider';
-import { UnsplashProvider } from './imageProviders/unsplashProvider';
+import { OpenverseProvider } from './imageProviders/openverseProvider';
 import { PexelsProvider } from './imageProviders/pexelsProvider';
 import { PixabayProvider } from './imageProviders/pixabayProvider';
 import { GoogleImagesProvider } from './imageProviders/googleImagesProvider';
@@ -7,7 +7,6 @@ import { ImageSearchCache } from './imageProviders/cache';
 import { StorageService } from './storage';
 
 interface ProviderCredentials {
-  unsplash?: string;
   pexels?: string;
   pixabay?: string;
   google?: {
@@ -60,14 +59,10 @@ export class EnhancedImageSearchService {
       // Load API keys from storage
       const credentials = await this.loadCredentials();
       
-      // Initialize providers with available credentials
-      if (credentials.unsplash) {
-        this.providers.set('unsplash', new UnsplashProvider(credentials.unsplash));
-      } else {
-        // Fallback to public access
-        this.providers.set('unsplash', new UnsplashProvider());
-      }
-
+      // Initialize Openverse provider (no API key required)
+      this.providers.set('openverse', new OpenverseProvider());
+      
+      // Initialize other providers with available credentials
       if (credentials.pexels) {
         this.providers.set('pexels', new PexelsProvider(credentials.pexels));
       }
@@ -91,8 +86,7 @@ export class EnhancedImageSearchService {
 
   private async loadCredentials(): Promise<ProviderCredentials> {
     try {
-      const [unsplash, pexels, pixabay, googleApiKey, googleSearchEngineId] = await Promise.all([
-        this.storageService.getSetting('unsplash_api_key'),
+      const [pexels, pixabay, googleApiKey, googleSearchEngineId] = await Promise.all([
         this.storageService.getSetting('pexels_api_key'),
         this.storageService.getSetting('pixabay_api_key'),
         this.storageService.getSetting('google_images_api_key'),
@@ -100,7 +94,6 @@ export class EnhancedImageSearchService {
       ]);
 
       return {
-        unsplash,
         pexels,
         pixabay,
         google: googleApiKey && googleSearchEngineId ? {
@@ -146,7 +139,8 @@ export class EnhancedImageSearchService {
       };
     }
 
-    const providersToUse = options.providers || Array.from(this.providers.keys());
+    // Prioritize Openverse as the primary provider
+    const providersToUse = options.providers || ['openverse', ...Array.from(this.providers.keys()).filter(p => p !== 'openverse')];
     const results: ImageResult[] = [];
     const errors: Record<string, string> = {};
     const successfulProviders: string[] = [];
@@ -169,10 +163,11 @@ export class EnhancedImageSearchService {
 
         results.push(...response.results);
         successfulProviders.push(providerName);
+        console.log(`✅ ${providerName} returned ${response.results.length} results`);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         errors[providerName] = errorMessage;
-        console.warn(`Provider ${providerName} failed:`, errorMessage);
+        console.warn(`❌ Provider ${providerName} failed:`, errorMessage);
       }
     });
 
@@ -261,9 +256,9 @@ export class EnhancedImageSearchService {
     else if (pixels > 500000) score += 2; // > 0.5MP
     else if (pixels > 100000) score += 1; // > 0.1MP
     
-    // Source preference
+    // Source preference - Openverse gets highest priority for open content
     const sourceScores: Record<string, number> = {
-      'unsplash': 3,
+      'openverse': 4, // Highest priority for open content
       'pexels': 3,
       'pixabay': 2,
       'google': 1,
@@ -271,8 +266,9 @@ export class EnhancedImageSearchService {
     };
     score += sourceScores[result.source] || 0;
     
-    // License preference (commercial use)
-    if (result.license?.commercial) score += 1;
+    // License preference (commercial use and attribution requirements)
+    if (result.license?.commercial) score += 2;
+    if (!result.license?.attribution) score += 1; // CC0/Public Domain gets bonus
     
     return score;
   }
@@ -370,7 +366,8 @@ export class EnhancedImageSearchService {
       const response = await fetch(imageUrl, {
         mode: 'cors',
         headers: {
-          'Accept': 'image/*'
+          'Accept': 'image/*',
+          'User-Agent': 'CacawInventory/1.0 (https://cacaw.site)'
         }
       });
 
@@ -401,9 +398,6 @@ export class EnhancedImageSearchService {
 
   async updateProviderCredentials(credentials: Partial<ProviderCredentials>): Promise<void> {
     // Save credentials to storage
-    if (credentials.unsplash) {
-      await this.storageService.setSetting('unsplash_api_key', credentials.unsplash);
-    }
     if (credentials.pexels) {
       await this.storageService.setSetting('pexels_api_key', credentials.pexels);
     }
