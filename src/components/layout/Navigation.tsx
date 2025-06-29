@@ -40,7 +40,8 @@ export const Navigation: React.FC = () => {
                 icon={item.icon}
                 onClick={() => setCurrentView(item.id)}
                 glow={currentView === item.id}
-                className="flex-shrink-0 min-h-[44px] min-w-[44px]"
+                className="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label={item.label}
               >
                 <span className="hidden sm:inline">{item.label}</span>
               </Button>
