@@ -329,18 +329,6 @@ export const ApiKeySetup: React.FC<ApiKeySetupProps> = ({
           </div>
         </Card>
 
-        {/* Benefits of Custom API Key */}
-        <Card variant="outlined" padding="md" className="border-retro-success">
-          <h4 className="font-pixel text-retro-success mb-2">Benefits of Your Own API Key:</h4>
-          <ul className="space-y-1 text-sm font-pixel-sans text-retro-accent-light">
-            <li>• ✅ Unlimited AI detections</li>
-            <li>• ✅ Faster processing (no shared limits)</li>
-            <li>• ✅ Direct billing control</li>
-            <li>• ✅ Future access to new AI features</li>
-            <li>• ✅ Support CacawInventory development</li>
-          </ul>
-        </Card>
-
         {/* Action Buttons */}
         <div className="flex justify-end gap-2 pt-pixel-2">
           <Button
