@@ -98,6 +98,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   };
 
   const processFile = useCallback(async (file: File) => {
+    console.log('Processing file:', file.name, file.type, file.size);
+    
     const error = validateFile(file);
     if (error) {
       setError(error);
@@ -105,24 +107,26 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     }
     
     try {
-      // Convert file to blob and create URL for preview
+      // Create blob from file
       const blob = new Blob([file], { type: file.type });
       const imageUrl = URL.createObjectURL(blob);
+      
+      console.log('File processed successfully, setting captured image');
       setCapturedImage(imageUrl);
       setError(null);
       
-      // Immediately call onImageCapture with the blob
-      onImageCapture(blob);
+      // Don't call onImageCapture here - wait for user confirmation
     } catch (err) {
       console.error('Error processing file:', err);
       setError('Failed to process the selected file.');
     }
-  }, [onImageCapture]);
+  }, []);
 
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
+    console.log('File upload triggered:', file.name);
     processFile(file);
   }, [processFile]);
 
@@ -130,10 +134,19 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
     if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
     } else if (e.type === 'dragleave') {
-      setDragActive(false);
+      // Only set dragActive to false if we're leaving the drop zone entirely
+      const rect = dropZoneRef.current?.getBoundingClientRect();
+      if (rect) {
+        const x = e.clientX;
+        const y = e.clientY;
+        if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+          setDragActive(false);
+        }
+      }
     }
   }, []);
 
@@ -142,8 +155,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     e.stopPropagation();
     setDragActive(false);
     
+    console.log('Drop event triggered');
+    
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
+      console.log('Dropped file:', file.name, file.type, file.size);
       processFile(file);
     }
   }, [processFile]);
@@ -158,6 +174,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
       const response = await fetch(capturedImage);
       const blob = await response.blob();
       
+      console.log('Confirming image, calling onImageCapture');
       onImageCapture(blob);
       
       // Cleanup
@@ -271,13 +288,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               muted
             />
           ) : (
-            <div 
-              className="flex items-center justify-center h-full text-retro-accent-light"
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
+            <div className="flex items-center justify-center h-full text-retro-accent-light">
               <div className="text-center">
                 <Camera className="w-16 h-16 mx-auto mb-4" />
                 <p className="font-pixel-sans">Camera preview will appear here</p>
