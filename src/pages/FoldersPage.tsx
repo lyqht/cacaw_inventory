@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Grid, List, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Grid, List, Edit, Trash2, Download, Upload } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
 import { StorageService } from '../services/storage';
 import { Button } from '../components/ui/Button';
@@ -11,6 +11,7 @@ import { FolderCard } from '../components/folders/FolderCard';
 import { FolderDeleteModal } from '../components/folders/FolderDeleteModal';
 import { FolderCreateModal } from '../components/folders/FolderCreateModal';
 import { FolderEditModal } from '../components/folders/FolderEditModal';
+import { ExportImportModal } from '../components/folders/ExportImportModal';
 import { Folder, FolderType } from '../types';
 
 const storageService = StorageService.getInstance();
@@ -32,6 +33,10 @@ export const FoldersPage: React.FC = () => {
   const [deletingFolder, setDeletingFolder] = useState<Folder | null>(null);
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showExportImport, setShowExportImport] = useState(false);
+  const [exportImportMode, setExportImportMode] = useState<'export' | 'import'>('export');
+  const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
 
   useEffect(() => {
     loadFolders();
@@ -159,6 +164,32 @@ export const FoldersPage: React.FC = () => {
     setEditingFolder(folder);
   };
 
+  const toggleFolderSelection = (folderId: string) => {
+    setSelectedFolders(prev => 
+      prev.includes(folderId)
+        ? prev.filter(id => id !== folderId)
+        : [...prev, folderId]
+    );
+  };
+
+  const selectAllFolders = () => {
+    setSelectedFolders(filteredFolders.map(f => f.id));
+  };
+
+  const deselectAllFolders = () => {
+    setSelectedFolders([]);
+  };
+
+  const openExportModal = () => {
+    setExportImportMode('export');
+    setShowExportImport(true);
+  };
+
+  const openImportModal = () => {
+    setExportImportMode('import');
+    setShowExportImport(true);
+  };
+
   const filteredFolders = folders.filter(folder =>
     folder.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     folder.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -221,6 +252,22 @@ export const FoldersPage: React.FC = () => {
           </div>
           
           <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              icon={Download}
+              size="sm"
+              onClick={openExportModal}
+            >
+              Export
+            </Button>
+            <Button
+              variant="ghost"
+              icon={Upload}
+              size="sm"
+              onClick={openImportModal}
+            >
+              Import
+            </Button>
             <Button
               variant="accent"
               icon={Plus}
@@ -327,6 +374,17 @@ export const FoldersPage: React.FC = () => {
           onClose={() => setDeletingFolder(null)}
           onConfirm={handleDeleteFolder}
           isLoading={isLoading}
+        />
+
+        <ExportImportModal
+          isOpen={showExportImport}
+          onClose={() => setShowExportImport(false)}
+          folders={folders}
+          selectedFolders={selectedFolders}
+          mode={exportImportMode}
+          onImportComplete={() => {
+            loadFolders();
+          }}
         />
       </div>
     </div>

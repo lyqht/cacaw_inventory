@@ -1,12 +1,14 @@
-import React from 'react';
-import { ArrowLeft, Palette, Zap, Shield, Download } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Palette, Zap, Shield, Download, Upload, Package } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
+import { ExportImportModal } from '../components/folders/ExportImportModal';
 
 export const SettingsPage: React.FC = () => {
-  const { setCurrentView, preferences, updatePreferences } = useAppStore();
+  const { setCurrentView, preferences, updatePreferences, folders } = useAppStore();
+  const [showExportImport, setShowExportImport] = useState(false);
+  const [exportImportMode, setExportImportMode] = useState<'export' | 'import'>('export');
 
   const handleThemeChange = (theme: 'light' | 'dark' | 'auto') => {
     updatePreferences({ theme });
@@ -18,6 +20,16 @@ export const SettingsPage: React.FC = () => {
 
   const handleToggleAutoDetection = () => {
     updatePreferences({ autoDetection: !preferences.autoDetection });
+  };
+
+  const openExportModal = () => {
+    setExportImportMode('export');
+    setShowExportImport(true);
+  };
+
+  const openImportModal = () => {
+    setExportImportMode('import');
+    setShowExportImport(true);
   };
 
   return (
@@ -187,24 +199,64 @@ export const SettingsPage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Privacy & Data Settings */}
+        {/* Data Management Settings */}
         <Card variant="outlined" padding="md">
           <div className="space-y-pixel-2">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-retro-accent-medium rounded-pixel flex items-center justify-center">
-                <Shield className="w-5 h-5 text-retro-bg-primary" />
+                <Package className="w-5 h-5 text-retro-bg-primary" />
               </div>
               <div>
                 <h2 className="text-lg font-pixel text-retro-accent">
-                  Privacy & Data
+                  Data Management
                 </h2>
                 <p className="text-sm text-retro-accent-light font-pixel-sans">
-                  Manage your data and privacy settings
+                  Export, import, and manage your collection data
                 </p>
               </div>
             </div>
 
             <div className="space-y-pixel-2 pl-13">
+              {/* Export Data */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-pixel text-retro-accent">
+                    Export Collections
+                  </label>
+                  <p className="text-xs text-retro-accent-light font-pixel-sans">
+                    Download your collections as a JSON file for backup
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Download}
+                  onClick={openExportModal}
+                >
+                  Export
+                </Button>
+              </div>
+
+              {/* Import Data */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-pixel text-retro-accent">
+                    Import Collections
+                  </label>
+                  <p className="text-xs text-retro-accent-light font-pixel-sans">
+                    Import collections from a previously exported file
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Upload}
+                  onClick={openImportModal}
+                >
+                  Import
+                </Button>
+              </div>
+
               {/* Compression Level */}
               <div>
                 <label className="block text-sm font-pixel text-retro-accent mb-2">
@@ -227,28 +279,36 @@ export const SettingsPage: React.FC = () => {
                   Higher compression saves storage space but reduces image quality
                 </p>
               </div>
+            </div>
+          </div>
+        </Card>
 
-              {/* Export Data */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-pixel text-retro-accent">
-                    Export Data
-                  </label>
-                  <p className="text-xs text-retro-accent-light font-pixel-sans">
-                    Download all your data as a JSON file
-                  </p>
+        {/* Privacy & Data Settings */}
+        <Card variant="outlined" padding="md">
+          <div className="space-y-pixel-2">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-retro-accent-medium rounded-pixel flex items-center justify-center">
+                <Shield className="w-5 h-5 text-retro-bg-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-pixel text-retro-accent">
+                  Privacy & Security
+                </h2>
+                <p className="text-sm text-retro-accent-light font-pixel-sans">
+                  Manage your privacy and security settings
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-pixel-2 pl-13">
+              <div className="p-3 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
+                <h4 className="font-pixel text-retro-accent text-sm mb-2">Local-First Privacy</h4>
+                <div className="space-y-1 text-xs font-pixel-sans text-retro-accent-light">
+                  <p>• <strong>Your data stays on your device:</strong> All collections are stored locally in your browser</p>
+                  <p>• <strong>No cloud storage required:</strong> Works completely offline</p>
+                  <p>• <strong>AI processing:</strong> Only image data is sent to Google Gemini for detection</p>
+                  <p>• <strong>Export control:</strong> You decide when and what to export</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={Download}
-                  onClick={() => {
-                    // TODO: Implement data export
-                    console.log('Export data clicked');
-                  }}
-                >
-                  Export
-                </Button>
               </div>
             </div>
           </div>
@@ -281,6 +341,18 @@ export const SettingsPage: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* Export/Import Modal */}
+      <ExportImportModal
+        isOpen={showExportImport}
+        onClose={() => setShowExportImport(false)}
+        folders={folders}
+        mode={exportImportMode}
+        onImportComplete={() => {
+          // Refresh the page or reload data as needed
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };
