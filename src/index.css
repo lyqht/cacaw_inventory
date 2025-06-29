@@ -385,6 +385,11 @@
   .focus-visible {
     @apply ring-2 ring-retro-accent ring-offset-2;
   }
+  
+  /* Theme-specific background for ghost buttons */
+  .bg-button-ghost {
+    background-color: var(--button-ghost-bg);
+  }
 }
 
 /* Custom scrollbar with theme system */
