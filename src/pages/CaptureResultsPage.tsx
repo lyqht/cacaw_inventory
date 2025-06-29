@@ -608,21 +608,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                   </div>
                 </div>
               )}
-              
-              {/* Image Tips - Only show when NOT in crop mode */}
-              {!cropMode && (
-                <div className="mt-2 p-2 bg-retro-bg-tertiary border border-retro-accent rounded-pixel">
-                  <p className="text-retro-accent font-pixel-sans text-xs">
-                    <strong>🖼️ Image Options:</strong>
-                  </p>
-                  <ul className="text-retro-accent-light font-pixel-sans text-xs mt-1 space-y-1">
-                    <li>• <strong>Find Similar:</strong> Search for product images online</li>
-                    <li>• <strong>Crop:</strong> Select specific area of current image</li>
-                    <li>• <strong>Per-Item:</strong> Each item can have its own image</li>
-                    <li>• Alternative images get priority over cropped versions</li>
-                  </ul>
-                </div>
-              )}
+             
               
               {/* Hidden canvases for image processing */}
               <canvas ref={canvasRef} className="hidden" />
