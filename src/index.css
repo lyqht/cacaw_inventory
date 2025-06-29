@@ -42,6 +42,7 @@
     --retro-accent-glow: rgba(0, 0, 128, 0.4);
     --retro-accent-glow-weak: rgba(0, 0, 128, 0.2);
     --pixel-grid-pattern: linear-gradient(rgba(0, 0, 128, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 128, 0.1) 1px, transparent 1px);
+    --button-ghost-bg: #FFFFFF;
     
     /* Input colors for light theme */
     --input-bg: #FFFFFF;
@@ -81,6 +82,7 @@
     --retro-accent-glow: rgba(173, 216, 230, 0.8);
     --retro-accent-glow-weak: rgba(173, 216, 230, 0.4);
     --pixel-grid-pattern: linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
+    --button-ghost-bg: transparent;
     
     /* Input colors for dark theme */
     --input-bg: #000055;
@@ -121,6 +123,7 @@
       --retro-accent-glow: rgba(173, 216, 230, 0.8);
       --retro-accent-glow-weak: rgba(173, 216, 230, 0.4);
       --pixel-grid-pattern: linear-gradient(rgba(173, 216, 230, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(173, 216, 230, 0.05) 1px, transparent 1px);
+      --button-ghost-bg: transparent;
       
       --input-bg: #000055;
       --input-text: #ADD8E6;
