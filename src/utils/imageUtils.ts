@@ -6,12 +6,12 @@ import { CollectibleData } from '../types';
  * @returns Promise resolving to a base64 data URL
  */
 export const blobToBase64 = async (blobUrl: string): Promise<string> => {
-  try {
-    // Skip if not a blob URL
-    if (!blobUrl.startsWith('blob:')) {
-      return blobUrl;
-    }
+  // Skip if not a blob URL
+  if (!blobUrl.startsWith('blob:')) {
+    return blobUrl;
+  }
 
+  try {
     // Fetch the blob data
     const response = await fetch(blobUrl);
     if (!response.ok) {
@@ -37,8 +37,8 @@ export const blobToBase64 = async (blobUrl: string): Promise<string> => {
     });
   } catch (error) {
     console.error('Error converting blob to base64:', error);
-    // Return original URL if conversion fails
-    return blobUrl;
+    // Re-throw the error instead of returning the original URL
+    throw error;
   }
 };
 
@@ -86,7 +86,8 @@ export const processItemImages = async (item: Partial<CollectibleData>): Promise
     return updatedItem;
   } catch (error) {
     console.error('Error processing item images:', error);
-    return item;
+    // Re-throw the error to prevent saving invalid data
+    throw error;
   }
 };
 
