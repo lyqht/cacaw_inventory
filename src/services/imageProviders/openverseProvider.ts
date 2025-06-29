@@ -78,8 +78,7 @@ export class OpenverseProvider extends BaseImageProvider {
       
       const response = await fetch(url, {
         headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'CacawInventory/1.0 (https://cacaw.site)'
+          'Accept': 'application/json'
         }
       });
       
@@ -165,8 +164,7 @@ export class OpenverseProvider extends BaseImageProvider {
       const response = await fetch(url, {
         mode: 'cors',
         headers: {
-          'Accept': 'image/*',
-          'User-Agent': 'CacawInventory/1.0 (https://cacaw.site)'
+          'Accept': 'image/*'
         }
       });
       
@@ -186,8 +184,7 @@ export class OpenverseProvider extends BaseImageProvider {
     try {
       const response = await fetch(`${this.config.baseUrl}/images?q=test&page_size=1`, {
         headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'CacawInventory/1.0 (https://cacaw.site)'
+          'Accept': 'application/json'
         }
       });
       return response.ok;
