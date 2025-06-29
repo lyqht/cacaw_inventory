@@ -533,45 +533,6 @@ export const CapturePage: React.FC = () => {
             </div>
           </div>
         </Card>
-
-        {/* Pricing Info for Free Users - Only show if not using custom key and not in dev unlimited mode */}
-        {!isUsingCustomKey && !isDevUnlimited && (
-          <Card variant="outlined" padding="md" className="border-retro-success">
-            <h3 className="font-pixel text-retro-success mb-2 flex items-center gap-2">
-              <CreditCard className="w-4 h-4" />
-              Want Unlimited AI Detections?
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-pixel text-sm font-pixel-sans text-retro-accent-light">
-              <div>
-                <h4 className="font-pixel text-retro-accent text-xs mb-1">Get Your Own API Key:</h4>
-                <ul className="space-y-0.5">
-                  <li>• Unlimited AI detections</li>
-                  <li>• Only ~$0.002 per image</li>
-                  <li>• Free tier covers most users</li>
-                  <li>• Direct Google billing</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-pixel text-retro-accent text-xs mb-1">Quick Setup:</h4>
-                <ul className="space-y-0.5">
-                  <li>• Visit Google AI Studio</li>
-                  <li>• Create free API key</li>
-                  <li>• Add to CacawInventory</li>
-                  <li>• Start detecting!</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-2">
-              <Button
-                variant="success"
-                size="sm"
-                onClick={() => setShowApiSetup(true)}
-              >
-                Setup API Key
-              </Button>
-            </div>
-          </Card>
-        )}
       </div>
 
       {/* Modals */}
