@@ -39,7 +39,7 @@ export class OpenverseProvider extends BaseImageProvider {
         searchParams.append('size', 'large'); // Use large size as proxy for minimum width
       }
 
-      const url = `${this.baseUrl}/images/?${searchParams.toString()}`;
+      const url = `${this.baseUrl}/images?${searchParams.toString()}`;
       console.log('Openverse API URL:', url);
 
       const response = await fetch(url, {
