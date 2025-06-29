@@ -230,7 +230,7 @@ export const SettingsPage: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  icon={Download}
+                  icon={Upload}
                   onClick={openExportModal}
                 >
                   Export
@@ -250,7 +250,7 @@ export const SettingsPage: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  icon={Upload}
+                  icon={Download}
                   onClick={openImportModal}
                 >
                   Import

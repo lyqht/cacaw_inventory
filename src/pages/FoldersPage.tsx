@@ -254,7 +254,7 @@ export const FoldersPage: React.FC = () => {
           <div className="flex gap-2">
             <Button
               variant="ghost"
-              icon={Download}
+              icon={Upload}
               size="sm"
               onClick={openExportModal}
             >
@@ -262,7 +262,7 @@ export const FoldersPage: React.FC = () => {
             </Button>
             <Button
               variant="ghost"
-              icon={Upload}
+              icon={Download}
               size="sm"
               onClick={openImportModal}
             >
