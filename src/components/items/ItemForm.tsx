@@ -863,26 +863,28 @@ export const ItemForm: React.FC<ItemFormProps> = ({
               {showCameraCapture ? (
                 <div className="space-y-pixel-2">
                   <Card variant="outlined" padding="md" className="bg-retro-bg-tertiary">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Camera className="w-5 h-5 text-retro-accent" />
-                        <h4 className="font-pixel text-retro-accent">Camera Capture</h4>
+                    <>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Camera className="w-5 h-5 text-retro-accent" />
+                          <h4 className="font-pixel text-retro-accent">Camera Capture</h4>
+                        </div>
                       </div>
-                    </div>
-                    <CameraCapture
-                      onImageCapture={runAIDetection && !shouldShowFreeLimitWarning ? handleCameraCaptureWithAI : handleCameraCapture}
-                      onCancel={() => setShowCameraCapture(false)}
-                    />
-                    
-                    {runAIDetection && !shouldShowFreeLimitWarning && (
-                      <div className="mt-2 p-2 bg-retro-accent bg-opacity-20 border border-retro-accent rounded-pixel">
-                        <p className="text-retro-accent font-pixel-sans text-xs">
-                          ✨ <strong>AI Detection Enabled:</strong> After taking a photo, AI will automatically 
-                          analyze it and suggest item details to fill in the form.
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                      <CameraCapture
+                        onImageCapture={runAIDetection && !shouldShowFreeLimitWarning ? handleCameraCaptureWithAI : handleCameraCapture}
+                        onCancel={() => setShowCameraCapture(false)}
+                      />
+                      
+                      {runAIDetection && !shouldShowFreeLimitWarning && (
+                        <div className="mt-2 p-2 bg-retro-accent bg-opacity-20 border border-retro-accent rounded-pixel">
+                          <p className="text-retro-accent font-pixel-sans text-xs">
+                            ✨ <strong>AI Detection Enabled:</strong> After taking a photo, AI will automatically 
+                            analyze it and suggest item details to fill in the form.
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  </Card>
                 </div>
               ) : (
                 <div className="space-y-pixel-2">
