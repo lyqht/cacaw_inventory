@@ -71,7 +71,7 @@ export const Button: React.FC<ButtonProps> = ({
       )}
       
       {isLoading ? (
-        <div className={`${iconSizeClasses[size]} bg-current rounded-pixel animate-pixel-pulse flex-shrink-0 items-center flex`} />
+        <div className={`${iconSizeClasses[size]} bg-current rounded-pixel animate-pixel-pulse flex-shrink-0 items-center justify-center flex`} />
       ) : (
         children && <span className="truncate">{children}</span>
       )}
