@@ -659,6 +659,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                           onClick={() => setShowImageSearch(item.tempId)}
                           disabled={cropMode === item.tempId}
                           title="Find similar image for this item"
+                          className="hidden"
                         >
                           Find Image
                         </Button>
