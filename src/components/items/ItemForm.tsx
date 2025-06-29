@@ -784,18 +784,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   Images {images.length > 0 && `(${images.length})`}
                 </h3>
                 
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="accent"
-                    size="sm"
-                    icon={Camera}
-                    onClick={() => setShowCameraCapture(true)}
-                    disabled={isLoading || isDetecting}
-                  >
-                    Take Photo
-                  </Button>
-                  
+                <div className="flex gap-2">               
                   {images.length > 0 && (
                     <Button
                       type="button"
