@@ -543,15 +543,6 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
               
               {/* Image Controls */}
               <div className="mt-2 flex gap-2">
-                <Button
-                  variant="accent"
-                  size="sm"
-                  icon={Search}
-                  onClick={() => setShowImageSearch('global')}
-                  disabled={cropMode !== null}
-                >
-                  Find Similar
-                </Button>
                 
                 {Object.keys(alternativeImages).length > 0 && (
                   <Button
