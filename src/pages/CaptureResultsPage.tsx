@@ -55,6 +55,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cropCanvasRef = useRef<HTMLCanvasElement>(null);
   const cropContainerRef = useRef<HTMLDivElement>(null);
+  const previewImageRefs = useRef<Record<string, HTMLImageElement | null>>({});
 
   const conditions: { value: ItemCondition; label: string; color: string }[] = [
     { value: 'mint', label: 'Mint', color: 'text-retro-success' },
@@ -116,9 +117,14 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
   };
 
   // Mouse event handlers for cropping
-  const handleCropMouseDown = (e: React.MouseEvent) => {
-    if (!cropMode || !imageRef.current) {
-      console.log('Not in crop mode or no image ref');
+  const handleCropMouseDown = (e: React.MouseEvent, itemId: string) => {
+    if (!cropMode || cropMode !== itemId) {
+      return;
+    }
+    
+    const imgElement = previewImageRefs.current[itemId];
+    if (!imgElement) {
+      console.log('No image ref for item:', itemId);
       return;
     }
     
@@ -126,7 +132,7 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    const coords = getRelativeCoordinates(e, imageRef.current);
+    const coords = getRelativeCoordinates(e, imgElement);
     console.log('Mouse down at:', coords);
     
     setIsDragging(true);
@@ -140,10 +146,10 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
 
     // Add global mouse event listeners for better tracking
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!imageRef.current || !cropMode) return;
+      if (!imgElement || !cropMode) return;
       
       e.preventDefault();
-      const coords = getRelativeCoordinates(e, imageRef.current);
+      const coords = getRelativeCoordinates(e, imgElement);
       
       setCropArea({
         x: Math.min(dragStart.x, coords.x),
@@ -180,8 +186,17 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
   };
 
   const applyCrop = async () => {
-    if (!cropArea || !cropMode || !imageRef.current || !canvasRef.current) {
-      console.log('Missing requirements for crop:', { cropArea, cropMode, imageRef: !!imageRef.current, canvasRef: !!canvasRef.current });
+    if (!cropArea || !cropMode) {
+      console.log('Missing requirements for crop:', { cropArea, cropMode });
+      return;
+    }
+    
+    const imgElement = previewImageRefs.current[cropMode];
+    if (!imgElement || !canvasRef.current) {
+      console.log('Missing image or canvas ref:', { 
+        imgElement: !!imgElement, 
+        canvasRef: !!canvasRef.current 
+      });
       return;
     }
     
@@ -197,9 +212,13 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const img = imageRef.current;
-    const scaleX = img.naturalWidth / img.width;
-    const scaleY = img.naturalHeight / img.height;
+    // Set canvas size to crop area
+    canvas.width = cropArea.width;
+    canvas.height = cropArea.height;
+
+    // Get the natural dimensions of the image
+    const scaleX = imgElement.naturalWidth / imgElement.width;
+    const scaleY = imgElement.naturalHeight / imgElement.height;
 
     // Calculate actual crop dimensions
     const actualCrop = {
@@ -211,13 +230,9 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
 
     console.log('Actual crop dimensions:', actualCrop);
 
-    // Set canvas size to crop area
-    canvas.width = actualCrop.width;
-    canvas.height = actualCrop.height;
-
     // Draw cropped portion
     ctx.drawImage(
-      img,
+      imgElement,
       actualCrop.x,
       actualCrop.y,
       actualCrop.width,
@@ -501,7 +516,6 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                       ? 'cursor-crosshair border-retro-warning shadow-pixel-glow' 
                       : 'cursor-default'
                   }`}
-                  onMouseDown={handleCropMouseDown}
                   onContextMenu={handleContextMenu}
                   onLoad={handleImageLoad}
                   onDragStart={(e) => e.preventDefault()}
@@ -515,30 +529,6 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                     WebkitTouchCallout: 'none'
                   }}
                 />
-                
-                {/* Crop overlay - ONLY shows selection area, not blocking overlay */}
-                {cropMode && cropArea && cropArea.width > 0 && cropArea.height > 0 && (
-                  <div
-                    className="absolute border-2 border-retro-warning bg-retro-warning bg-opacity-20 pointer-events-none"
-                    style={{
-                      left: cropArea.x,
-                      top: cropArea.y,
-                      width: cropArea.width,
-                      height: cropArea.height,
-                    }}
-                  >
-                    {/* Corner indicators */}
-                    <div className="absolute -top-1 -left-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
-                    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
-                    <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
-                    
-                    {/* Size indicator */}
-                    <div className="absolute top-1 left-1 bg-retro-warning text-retro-bg-primary px-1 text-xs font-pixel-sans">
-                      {Math.round(cropArea.width)}×{Math.round(cropArea.height)}
-                    </div>
-                  </div>
-                )}
               </div>
               
               {/* Image Controls */}
@@ -559,47 +549,6 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                   </Button>
                 )}
               </div>
-              
-              {/* Crop Instructions - BELOW the image, not overlaying it */}
-              {cropMode && (
-                <div className="mt-2 p-3 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Move className="w-4 h-4 text-retro-warning animate-pixel-pulse" />
-                    <p className="font-pixel text-retro-warning text-sm">
-                      CROP MODE ACTIVE
-                    </p>
-                  </div>
-                  <p className="font-pixel-sans text-xs text-retro-warning mb-2">
-                    <strong>Click and drag on the image above</strong> to select the area you want to keep
-                  </p>
-                  <p className="font-pixel-sans text-xs text-retro-accent-light">
-                    Drag from top-left to bottom-right • Minimum size: 10×10 pixels
-                  </p>
-                  
-                  {/* Crop controls */}
-                  <div className="flex justify-center gap-2 mt-3">
-                    <Button
-                      variant="accent"
-                      size="sm"
-                      icon={Check}
-                      onClick={applyCrop}
-                      disabled={!cropArea || cropArea.width < 10 || cropArea.height < 10}
-                      glow={cropArea && cropArea.width >= 10 && cropArea.height >= 10}
-                    >
-                      Apply Crop
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={X}
-                      onClick={cancelCrop}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-             
               
               {/* Hidden canvases for image processing */}
               <canvas ref={canvasRef} className="hidden" />
@@ -652,18 +601,6 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                       
                       {/* Image Controls */}
                       <div className="flex gap-1">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          icon={Search}
-                          onClick={() => setShowImageSearch(item.tempId)}
-                          disabled={cropMode === item.tempId}
-                          title="Find similar image for this item"
-                          className="hidden"
-                        >
-                          Find Image
-                        </Button>
-                        
                         {(croppedImages[item.tempId] || alternativeImages[item.tempId]) && (
                           <Button
                             variant="ghost"
@@ -696,17 +633,45 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                       </div>
                     </div>
 
-                    {/* Image Preview */}
+                    {/* Image Preview with Crop Functionality */}
                     <div className="flex items-center gap-2">
-                      <div className={`w-24 h-24 border-2 rounded-pixel overflow-hidden ${
-                        alternativeImages[item.tempId] ? 'border-retro-primary' :
-                        croppedImages[item.tempId] ? 'border-retro-success' : 'border-retro-accent'
-                      }`}>
+                      <div 
+                        className={`w-24 h-24 border-2 rounded-pixel overflow-hidden relative ${
+                          alternativeImages[item.tempId] ? 'border-retro-primary' :
+                          croppedImages[item.tempId] ? 'border-retro-success' : 'border-retro-accent'
+                        }`}
+                      >
                         <img
+                          ref={el => previewImageRefs.current[item.tempId] = el}
                           src={getCurrentImage(item.tempId)}
                           alt={`Preview for ${item.name}`}
-                          className="w-full h-full object-cover"
+                          className={`w-full h-full object-cover ${
+                            cropMode === item.tempId ? 'cursor-crosshair' : ''
+                          }`}
+                          onMouseDown={(e) => handleCropMouseDown(e, item.tempId)}
+                          onContextMenu={handleContextMenu}
+                          draggable={false}
                         />
+                        
+                        {/* Crop overlay - Only visible during crop mode */}
+                        {cropMode === item.tempId && cropArea && cropArea.width > 0 && cropArea.height > 0 && (
+                          <div
+                            className="absolute border-2 border-retro-warning pointer-events-none"
+                            style={{
+                              left: cropArea.x,
+                              top: cropArea.y,
+                              width: cropArea.width,
+                              height: cropArea.height,
+                              backgroundColor: 'transparent'
+                            }}
+                          >
+                            {/* Corner indicators */}
+                            <div className="absolute -top-1 -left-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-retro-warning border border-retro-bg-primary" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col gap-1">
                         {alternativeImages[item.tempId] && (
@@ -723,6 +688,31 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
                           <Badge variant="default" size="sm">
                             📷 Original
                           </Badge>
+                        )}
+                        
+                        {/* Crop Controls - Only visible during crop mode */}
+                        {cropMode === item.tempId && (
+                          <div className="flex flex-col gap-1 mt-1">
+                            <Button
+                              variant="accent"
+                              size="sm"
+                              icon={Check}
+                              onClick={applyCrop}
+                              disabled={!cropArea || cropArea.width < 10 || cropArea.height < 10}
+                              className="text-xs py-0.5 px-1 h-6 min-h-0"
+                            >
+                              Apply
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              icon={X}
+                              onClick={cancelCrop}
+                              className="text-xs py-0.5 px-1 h-6 min-h-0"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </div>
