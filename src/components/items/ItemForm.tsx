@@ -72,7 +72,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const [isUsingCustomKey, setIsUsingCustomKey] = useState(false);
 
   // NEW: AI Detection checkbox state
-  const [runAIDetection, setRunAIDetection] = useState(true);
   const [pendingImageForDetection, setPendingImageForDetection] = useState<ImageFile | null>(null);
 
   // Track initial state to detect real changes
@@ -301,19 +300,14 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     console.log("Images changed in form:", newImages.length, "images");
     setImages(newImages);
 
-    // NEW: Check if we should run AI detection on new images
-    if (runAIDetection && newImages.length > 0) {
+    // Always run AI detection on new images in AI tab
+    if (activeTab === 'ai' && newImages.length > 0) {
       // Find the newest image (one that wasn't in the previous images array)
       const previousUrls = images.map((img) => img.url);
       const newImage = newImages.find((img) => !previousUrls.includes(img.url));
 
       if (newImage && newImage.file.size > 0) {
-        console.log(
-          "New image detected, checking if AI detection should run...",
-        );
         setPendingImageForDetection(newImage);
-
-        // Automatically trigger AI detection after a short delay
         setTimeout(() => {
           handleAIDetectionForImage(newImage);
         }, 500);
@@ -451,11 +445,9 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     // First add the image to the form
     handleCameraCapture(imageBlob);
 
-    // Then run AI detection on it if enabled
-    if (runAIDetection) {
-      const imageUrl = URL.createObjectURL(imageBlob);
-      await handleAIDetection(imageBlob, imageUrl);
-    }
+    // Then run AI detection on it (always in AI tab)
+    const imageUrl = URL.createObjectURL(imageBlob);
+    await handleAIDetection(imageBlob, imageUrl);
   };
 
   const handleDetectionResultsSave = async (
@@ -926,66 +918,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   {!isDetecting && (
                     <CameraCapture
                       onImageCapture={
-                        runAIDetection && !shouldShowFreeLimitWarning
-                          ? handleCameraCaptureWithAI
-                          : handleCameraCapture
+                        handleCameraCaptureWithAI
                       }
                       onCancel={undefined}
                     />
                   )}
-
-                  {/* AI Detection Checkbox */}
-                  <Card
-                    variant="outlined"
-                    padding="md"
-                    className="bg-retro-bg-tertiary">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="runAIDetection"
-                          checked={runAIDetection}
-                          onChange={(e) => setRunAIDetection(e.target.checked)}
-                          className="w-4 h-4 text-retro-accent bg-retro-bg-tertiary border-retro-accent rounded focus:ring-retro-accent"
-                          disabled={shouldShowFreeLimitWarning}
-                        />
-                        <label
-                          htmlFor="runAIDetection"
-                          className="font-pixel text-retro-accent text-sm">
-                          Run AI detection
-                        </label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {runAIDetection && (
-                          <Badge
-                            variant="success"
-                            size="sm"
-                            glow>
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            Auto-detect
-                          </Badge>
-                        )}
-                        {isDetecting && (
-                          <Badge
-                            variant="warning"
-                            size="sm">
-                            <LoadingSpinner
-                              size="sm"
-                              className="mr-1"
-                            />
-                            Analyzing...
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-retro-accent-light font-pixel-sans text-xs mt-2">
-                      {runAIDetection
-                        ? shouldShowFreeLimitWarning
-                          ? "AI detection disabled - free limit reached. Add your API key to enable."
-                          : "AI will automatically analyze captured or uploaded images and suggest item details"
-                        : "AI detection disabled - images will be uploaded without analysis"}
-                    </p>
-                  </Card>
                 </div>
               </Card>
             </section>
