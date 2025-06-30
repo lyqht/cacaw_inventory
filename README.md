@@ -1,46 +1,40 @@
-# cacaw_inventory
+<div style="display:grid; place-items: center;">
+   <img width="200" src="demo/app_logo.png" />
+</div>
 
-> _A retro-themed app for collectors to organize, identify, and manage their collections with AI-powered tools and offline-first storage._
+# Cacaw AI Inventory
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.x-blue?logo=typescript)
 ![Vite](https://img.shields.io/badge/Vite-4.x-blue?logo=vite)
 
----
-
-## 📚 Table of Contents
-
-- [Features](#-features)
-- [Demo](#-demo)
-- [Key Features](#key-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Design System](#-design-system)
-- [Key Services](#-key-services)
-- [User Experience](#-user-experience)
-- [Development Setup](#-development-setup)
-- [License](#-license)
-- [How to Contribute](#-how-to-contribute)
-- [FAQ / Troubleshooting](#-faq--troubleshooting)
-- [Community & Contact](#-community--contact)
-
----
-
 ## 🎯 Features
 
-![](./CACAW%20USER%20JOURNEY%20MAP.png)
+- 📦 **Collection Management:** Organize, tag, and track collectibles with detailed information and photos.
+- 🤖 **AI-Powered Detection:** Instantly identify collectibles and extract details from photos using computer vision.
+- 💾 **Data Persistence:** Securely store, export, and back up your collection data locally for offline access.
+- 🕹️ **User Experience:** Enjoy a retro pixel art interface with smooth, responsive, and intuitive navigation.
 
-- **Collection Management:** Organize, tag, and track collectibles with detailed information and photos.
-- **AI-Powered Detection:** Instantly identify collectibles and extract details from photos using computer vision.
-- **Data Persistence:** Securely store, export, and back up your collection data locally for offline access.
-- **User Experience:** Enjoy a retro pixel art interface with smooth, responsive, and intuitive navigation.
+## User Journey
+
+![](./CACAW%20USER%20JOURNEY%20MAP.png)
 
 ---
 
 ## 🖼️ Demo
 
-> _Screenshots and GIFs coming soon!_
+### Capture page flow (with captions)
+
+<video src="demo/Capture%20page%20flow%20-%20teck%20-%20with%20captions.mp4" controls width="400"></video>
+
+### List & Grid View (with captions)
+
+<video src="demo/List%20%26%20Grid%20View%20-%20with%20captions.mp4" controls width="400"></video>
+
+### Import demo (with captions)
+
+<video src="demo/Import%20demo%20-%20with%20captions.mp4" controls width="400"></video>
 
 ---
 
@@ -54,8 +48,8 @@
 2. **Data Management**
    - **Folders**: Organize collections by type (trading cards, action figures, etc.)
    - **Items**: Detailed collectible records with metadata
-   - **Images**: Photo storage and processing
-   - **AI Detection**: Automated item identification
+   - **Images**: Blobs converted into Base64 Urls before being saved
+   - **AI Detection**: Automated item identification, with custom API key support
 3. **Storage System**
    - **IndexedDB** via Dexie.js for local storage
    - Data export/import capabilities
@@ -115,14 +109,6 @@ src/
 - Reusable UI components (Button, Card, Modal, etc.)
 - Consistent styling patterns
 - Accessibility considerations
-
----
-
-## 🔧 Key Services
-
-1. **Storage Service**: IndexedDB local storage
-2. **AI Detection Service**: Gemini Computer vision for item identification
-3. **Image Search Service**: Openverse for royalty-free and legal images
 
 ---
 
