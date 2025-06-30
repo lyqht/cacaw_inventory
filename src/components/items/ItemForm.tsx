@@ -767,19 +767,21 @@ export const ItemForm: React.FC<ItemFormProps> = ({
           onSubmit={handleSubmit}
           className="space-y-pixel-2">
           
-          {/* Tabs for switching between AI and Manual modes */}
-          <Tabs 
-            tabs={[
-              { id: 'ai', label: 'AI Detection', icon: <Sparkles className="w-4 h-4" /> },
-              { id: 'manual', label: 'Manual Input', icon: <FileText className="w-4 h-4" /> }
-            ]}
-            activeTab={activeTab}
-            onTabChange={(tabId) => setActiveTab(tabId as 'ai' | 'manual')}
-            className="mb-pixel-2"
-          />
+          {/* Tabs for switching between AI and Manual modes - Only show when adding a new item */}
+          {!item && (
+            <Tabs 
+              tabs={[
+                { id: 'ai', label: 'AI Detection', icon: <Sparkles className="w-4 h-4" /> },
+                { id: 'manual', label: 'Manual Input', icon: <FileText className="w-4 h-4" /> }
+              ]}
+              activeTab={activeTab}
+              onTabChange={(tabId) => setActiveTab(tabId as 'ai' | 'manual')}
+              className="mb-pixel-2"
+            />
+          )}
 
-          {/* AI Detection Section */}
-          {activeTab === 'ai' && (
+          {/* AI Detection Section - Only show when adding a new item and AI tab is active */}
+          {!item && activeTab === 'ai' && (
             <section>
               {/* AI Usage Status */}
               <Card
@@ -928,8 +930,8 @@ export const ItemForm: React.FC<ItemFormProps> = ({
             </section>
           )}
 
-          {/* Manual Input Section */}
-          {activeTab === 'manual' && (
+          {/* Manual Input Section - Always show for Edit, or for Add when manual tab is active */}
+          {(item || activeTab === 'manual') && (
             <section>
               {/* Image Uploader */}
               <Card
@@ -943,7 +945,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                 </div>
                 
                 <ImageUploader
-                  existingImages={item ? [item.primaryImage, ...item.additionalImages].filter(Boolean) : []}
+                  existingImages={item ? [item.primaryImage, ...item.additionalImages].filter((img): img is string => Boolean(img)) : []}
                   onImagesChange={handleImagesChange}
                   maxFiles={10}
                   maxFileSize={5}
