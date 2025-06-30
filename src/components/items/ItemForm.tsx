@@ -865,7 +865,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                 <div className="space-y-pixel-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-pixel text-retro-accent flex items-center gap-2">
-                      <Image className="w-4 h-4" />
+                      <ImageIcon className="w-4 h-4" />
                       Images
                     </h3>
                   </div>
