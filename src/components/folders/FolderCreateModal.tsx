@@ -5,6 +5,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
+import { useAppStore } from '../../stores/appStore';
 
 interface FolderCreateModalProps {
   isOpen: boolean;
@@ -23,12 +24,23 @@ export const FolderCreateModal: React.FC<FolderCreateModalProps> = ({
   onCreateFolder,
   isLoading = false
 }) => {
+  const { preferences } = useAppStore();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     type: 'trading-cards' as FolderType
   });
   const [error, setError] = useState<string | null>(null);
+
+  // Set default folder type from preferences when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setFormData((prev) => ({
+        ...prev,
+        type: preferences.defaultFolderType || 'trading-cards',
+      }));
+    }
+  }, [isOpen, preferences.defaultFolderType]);
 
   const folderTypes: { value: FolderType; label: string; icon: string; description: string }[] = [
     { 

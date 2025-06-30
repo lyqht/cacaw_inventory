@@ -45,6 +45,20 @@ const defaultPreferences: UserPreferences = {
   aiPromptTemplate: 'Identify this collectible item, including its name, series, condition, and estimated value.'
 };
 
+const PREFERENCES_KEY = 'cacaw_preferences';
+
+function loadPreferences(): UserPreferences {
+  try {
+    const stored = localStorage.getItem(PREFERENCES_KEY);
+    if (stored) {
+      return { ...defaultPreferences, ...JSON.parse(stored) };
+    }
+  } catch (e) {
+    // Ignore parse errors, fallback to default
+  }
+  return defaultPreferences;
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   // Initial State
   currentView: 'folders',
@@ -55,7 +69,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   folders: [],
   items: [],
   searchQuery: '',
-  preferences: defaultPreferences,
+  preferences: loadPreferences(),
   
   // Actions
   setCurrentView: (view) => set({ currentView: view }),
@@ -66,10 +80,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   setFolders: (folders) => set({ folders }),
   setItems: (items) => set({ items }),
   setSearchQuery: (query) => set({ searchQuery: query }),
-  updatePreferences: (newPreferences) => 
-    set((state) => ({ 
-      preferences: { ...state.preferences, ...newPreferences } 
-    })),
+  updatePreferences: (newPreferences) => {
+    set((state) => {
+      const updated = { ...state.preferences, ...newPreferences };
+      try {
+        localStorage.setItem(PREFERENCES_KEY, JSON.stringify(updated));
+      } catch (e) {
+        // Ignore storage errors
+      }
+      return { preferences: updated };
+    });
+  },
   
   // Navigation helpers
   navigateToFolder: (folder) => set({ 
