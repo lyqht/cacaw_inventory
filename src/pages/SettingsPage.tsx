@@ -314,18 +314,6 @@ export const SettingsPage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Accessibility Information */}
-        <Card variant="outlined" padding="md" className="bg-retro-bg-tertiary">
-          <h3 className="font-pixel text-retro-accent mb-pixel">Accessibility Features</h3>
-          <div className="space-y-1 text-sm font-pixel-sans text-retro-accent-light">
-            <p>• <strong>WCAG 2.1 AA Compliant:</strong> All color combinations meet accessibility standards</p>
-            <p>• <strong>High Contrast Support:</strong> Automatically adapts to system high contrast settings</p>
-            <p>• <strong>Reduced Motion:</strong> Respects system motion preferences</p>
-            <p>• <strong>Keyboard Navigation:</strong> Full keyboard support for all interactive elements</p>
-            <p>• <strong>Screen Reader Compatible:</strong> Proper ARIA labels and semantic markup</p>
-          </div>
-        </Card>
-
         {/* App Info */}
         <Card variant="outlined" padding="md">
           <div className="text-center space-y-2">
