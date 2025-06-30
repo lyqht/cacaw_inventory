@@ -1,5 +1,5 @@
+import { LucideIcon } from 'lucide-react';
 import React from 'react';
-import { DivideIcon as LucideIcon } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'accent' | 'ghost' | 'danger' | 'warning';

@@ -4,8 +4,26 @@ import { useAppStore } from '../../stores/appStore';
 import { Button } from '../ui/Button';
 import { AnimatedLogo } from '../ui/AnimatedLogo';
 
+// Custom hook to detect if viewport is below 'sm' (640px)
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : true
+  );
+
+  React.useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 640);
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
+
 export const Navigation: React.FC = () => {
   const { currentView, setCurrentView } = useAppStore();
+  const isMobile = useIsMobile();
   
   const navItems = [
     { id: 'capture' as const, label: 'Capture', icon: Camera },
@@ -42,7 +60,7 @@ export const Navigation: React.FC = () => {
                 glow={currentView === item.id}
                 className="flex-shrink-0 min-h-[44px] min-w-[44px]"
               >
-                <span className="hidden sm:inline">{item.label}</span>
+                {!isMobile && <span>{item.label}</span>}
               </Button>
             ))}
           </div>
