@@ -122,7 +122,7 @@ export const SettingsPage: React.FC = () => {
         <Card variant="outlined" padding="md">
           <div className="space-y-pixel-2">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-retro-primary rounded-pixel flex items-center justify-center">
+              <div className="w-10 h-10 bg-retro-accent-medium rounded-pixel flex items-center justify-center">
                 <Zap className="w-5 h-5 text-retro-white" />
               </div>
               <div>
