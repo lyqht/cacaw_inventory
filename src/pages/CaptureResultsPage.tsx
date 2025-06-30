@@ -483,6 +483,21 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     ));
   };
 
+  // Utility: Convert blob URL to data URL
+  const blobUrlToDataUrl = async (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        })
+        .catch(reject);
+    });
+  };
+
   const handleSave = async () => {
     const selectedItems = editingItems.filter(item => item.isSelected);
     
@@ -492,29 +507,41 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
     }
 
     try {
-      const itemsToSave = selectedItems.map(item => ({
-        folderId: selectedFolder.id,
-        userId: 'default-user',
-        name: item.name || 'Unknown Item',
-        type: item.type,
-        series: item.series,
-        condition: item.condition || 'good',
-        description: item.description,
-        notes: item.notes,
-        estimatedValue: item.estimatedValue,
-        purchasePrice: item.purchasePrice,
-        currency: item.currency || 'USD',
-        tags: item.tags || [],
-        primaryImage: getCurrentImage(item.tempId),
-        additionalImages: [],
-        thumbnailImage: getCurrentImage(item.tempId),
-        aiDetected: true,
-        aiConfidence: item.aiConfidence,
-        aiPromptUsed: detectionResult.rawResponse ? 'Gemini 2.0 Flash detection' : undefined,
-        ocrText: item.ocrText,
-        lastViewedAt: undefined,
-        syncStatus: 'local-only' as const,
-        isArchived: false
+      // Ensure all images are data URLs before saving
+      const itemsToSave = await Promise.all(selectedItems.map(async item => {
+        let primaryImage = getCurrentImage(item.tempId);
+        let thumbnailImage = getCurrentImage(item.tempId);
+        // Convert blob URLs to data URLs
+        if (primaryImage && primaryImage.startsWith('blob:')) {
+          primaryImage = await blobUrlToDataUrl(primaryImage);
+        }
+        if (thumbnailImage && thumbnailImage.startsWith('blob:')) {
+          thumbnailImage = await blobUrlToDataUrl(thumbnailImage);
+        }
+        return {
+          folderId: selectedFolder.id,
+          userId: 'default-user',
+          name: item.name || 'Unknown Item',
+          type: item.type,
+          series: item.series,
+          condition: item.condition || 'good',
+          description: item.description,
+          notes: item.notes,
+          estimatedValue: item.estimatedValue,
+          purchasePrice: item.purchasePrice,
+          currency: item.currency || 'USD',
+          tags: item.tags || [],
+          primaryImage,
+          additionalImages: [],
+          thumbnailImage,
+          aiDetected: true,
+          aiConfidence: item.aiConfidence,
+          aiPromptUsed: detectionResult.rawResponse ? 'Gemini 2.0 Flash detection' : undefined,
+          ocrText: item.ocrText,
+          lastViewedAt: undefined,
+          syncStatus: 'local-only' as const,
+          isArchived: false
+        };
       }));
 
       await onSave(itemsToSave);
