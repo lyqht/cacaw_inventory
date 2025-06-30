@@ -454,37 +454,37 @@ export const ItemForm: React.FC<ItemFormProps> = ({
     items: Omit<CollectibleData, "id" | "createdAt" | "updatedAt">[],
   ) => {
     if (items.length > 0) {
-      // Take the first detected item and populate the form
-      const detectedItem = items[0];
-
-      setFormData((prev) => ({
-        ...prev,
-        name: detectedItem.name || prev.name,
-        type: detectedItem.type || prev.type,
-        series: detectedItem.series || prev.series,
-        condition: detectedItem.condition || prev.condition,
-        description: detectedItem.description || prev.description,
-        estimatedValue:
-          detectedItem.estimatedValue?.toString() || prev.estimatedValue,
-        currency: detectedItem.currency || prev.currency,
-        tags: validateAndFilterTags(
-          [...prev.tags, ...(detectedItem.tags || [])],
-          detectedItem.type,
-        ),
-      }));
-
-      console.log("Populated form with AI detection results");
-      
-      // Switch to manual tab after AI detection
-      setActiveTab('manual');
+      // Add each detected item directly to the folder
+      for (const detectedItem of items) {
+        // Ensure required fields are present
+        const itemToSave = {
+          ...detectedItem,
+          folderId,
+          userId: "default-user", // Replace with actual user if available
+          currency: detectedItem.currency || "USD",
+          tags: detectedItem.tags || [],
+          syncStatus: "local-only",
+          isArchived: false,
+        };
+        console.log('Saving detected item:', itemToSave);
+        try {
+          await onSave(itemToSave);
+        } catch (error) {
+          console.error('Error saving detected item:', error);
+          alert('Failed to save detected item. Please try again.');
+        }
+      }
     }
 
+    // Close the detection results modal and reset state
     setShowDetectionResults(false);
     setDetectionResult(null);
     if (capturedImageForDetection) {
       URL.revokeObjectURL(capturedImageForDetection);
       setCapturedImageForDetection(null);
     }
+    // Also close the ItemForm modal after saving
+    onClose();
   };
 
   const handleApiKeySet = async (newApiKey: string) => {
