@@ -155,7 +155,7 @@ export const FolderCreateModal: React.FC<FolderCreateModalProps> = ({
                 key={type.value}
                 variant="outlined"
                 padding="sm"
-                className={`cursor-pointer transition-all duration-200 ${
+                className={`group cursor-pointer transition-all duration-200 ${
                   formData.type === type.value
                     ? 'border-retro-accent-light bg-retro-accent bg-opacity-10'
                     : 'hover:border-retro-accent-light hover:bg-retro-accent hover:bg-opacity-5'
@@ -164,12 +164,22 @@ export const FolderCreateModal: React.FC<FolderCreateModalProps> = ({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">{type.icon}</span>
+                    <span className={`text-xl ${formData.type !== type.value ? 'group-hover:text-white' : ''}`}>
+                      {type.icon}
+                    </span>
                     <div>
-                      <h4 className="font-pixel text-retro-accent text-sm">
+                      <p
+                        className={`font-pixel text-retro-accent text-sm ${
+                          formData.type !== type.value ? 'group-hover:text-white' : ''
+                        }`}
+                      >
                         {type.label}
-                      </h4>
-                      <p className="text-retro-accent-light font-pixel-sans text-xs">
+                      </p>
+                      <p
+                        className={`text-retro-accent-light font-pixel-sans text-xs ${
+                          formData.type !== type.value ? 'group-hover:text-white' : ''
+                        }`}
+                      >
                         {type.description}
                       </p>
                     </div>
@@ -215,9 +225,9 @@ export const FolderCreateModal: React.FC<FolderCreateModalProps> = ({
           <div className="flex items-start gap-2">
             <span className="text-lg">{getFolderIcon(formData.type)}</span>
             <div>
-              <h4 className="font-pixel text-retro-accent text-sm mb-1">
+              <p className="font-pixel text-retro-accent text-sm mb-1">
                 AI Detection Optimization
-              </h4>
+              </p>
               <p className="text-retro-accent-light font-pixel-sans text-xs">
                 The AI will be optimized to detect {folderTypes.find(ft => ft.value === formData.type)?.label.toLowerCase()} 
                 when you capture items for this folder, improving accuracy and detail extraction.
