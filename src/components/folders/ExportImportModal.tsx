@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle, Download, FileText, FolderOpen, Upload, X } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ExportImportService, ImportOptions, ImportPreview, ImportResult } from '../../services/exportImport';
 import { Folder } from '../../types';
 import { Badge } from '../ui/Badge';
@@ -46,6 +46,10 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const exportImportService = ExportImportService.getInstance();
+
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
 
   const handleExport = async () => {
     try {
