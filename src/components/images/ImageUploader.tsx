@@ -1,10 +1,9 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, Camera, X, RotateCcw, Check, Trash2, Eye, GripVertical, Star, Plus } from 'lucide-react';
+import { Camera, Eye, GripVertical, Plus, RotateCcw, Star, Trash2, Upload, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { ImageEditor } from './ImageEditor';
 
 interface ImageFile {

@@ -862,7 +862,6 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                       onImageCapture={runAIDetection && !shouldShowFreeLimitWarning ? handleCameraCaptureWithAI : handleCameraCapture}
                       onCancel={() => setShowCameraCapture(false)}
                     />
-                    
                     {runAIDetection && !shouldShowFreeLimitWarning && (
                       <div className="mt-2 p-2 bg-retro-accent bg-opacity-20 border border-retro-accent rounded-pixel">
                         <p className="text-retro-accent font-pixel-sans text-xs">
@@ -875,11 +874,20 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                 </div>
               ) : (
                 <div className="space-y-pixel-2">
+                  <Button
+                    type="button"
+                    variant="accent"
+                    icon={Camera}
+                    onClick={() => setShowCameraCapture(true)}
+                  >
+                    Start capture
+                  </Button>
                   <ImageUploader
                     existingImages={item ? [item.primaryImage, ...item.additionalImages].filter(Boolean) : []}
                     onImagesChange={handleImagesChange}
                     maxFiles={10}
                     maxFileSize={5}
+                    hideTakePhotoButton={true}
                   />
                   
                   {/* AI Detection Checkbox - Moved here */}

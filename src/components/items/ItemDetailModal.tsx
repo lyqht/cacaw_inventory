@@ -84,9 +84,9 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-pixel text-retro-accent mb-1">
+            <h2 className="text-xl font-pixel text-retro-accent mb-1">
               {item.name}
-            </h1>
+            </h2>
             {item.type && (
               <p className="text-retro-accent-light font-pixel-sans">
                 {item.type}

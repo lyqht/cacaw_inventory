@@ -365,9 +365,9 @@ export const CapturePage: React.FC = () => {
             <span className="sm:hidden">Back</span>
           </Button>
           
-          <h1 className="text-xl sm:text-2xl font-pixel text-retro-accent">
+          <h2 className="text-xl sm:text-2xl font-pixel text-retro-accent">
             Capture Item
-          </h1>
+          </h2>
           
           {/* Empty div for spacing */}
           <div />

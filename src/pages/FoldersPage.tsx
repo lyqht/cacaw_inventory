@@ -244,9 +244,9 @@ export const FoldersPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-pixel-2">
           <div>
-            <h1 className="text-3xl font-pixel text-retro-accent">
+            <h2 className="text-xl font-pixel text-retro-accent">
               My Collections
-            </h1>
+            </h2>
             <p className="text-retro-accent-light font-pixel-sans mt-1">
               Organize your collectibles into retro folders
             </p>

@@ -495,20 +495,7 @@
 }
 
 /* Mobile-first responsive adjustments */
-@media (max-width: 640px) {
-  /* Reduce heading sizes on mobile */
-  h1 {
-    font-size: 1.5rem !important;
-  }
-  
-  h2 {
-    font-size: 1.25rem !important;
-  }
-  
-  h3 {
-    font-size: 1.125rem !important;
-  }
-  
+@media (max-width: 640px) {  
   /* Increase touch target sizes */
   .pixel-button {
     min-height: 44px;

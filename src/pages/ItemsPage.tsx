@@ -351,9 +351,9 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
             </Button>
             
             <div>
-              <h1 className="text-2xl font-pixel text-retro-accent">
+              <h2 className="text-xl font-pixel text-retro-accent">
                 {folder.name}
-              </h1>
+              </h2>
               <p className="text-retro-accent-light font-pixel-sans">
                 {filteredAndSortedItems.length} of {items.length} items
               </p>

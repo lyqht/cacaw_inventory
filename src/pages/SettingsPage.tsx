@@ -45,9 +45,9 @@ export const SettingsPage: React.FC = () => {
             Back to Folders
           </Button>
           
-          <h1 className="text-2xl font-pixel text-retro-accent">
+          <h2 className="text-xl font-pixel text-retro-accent">
             Settings
-          </h1>
+          </h2>
           
           <div /> {/* Spacer */}
         </div>

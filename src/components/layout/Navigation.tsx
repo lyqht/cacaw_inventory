@@ -39,9 +39,9 @@ export const Navigation: React.FC = () => {
           <div className="flex items-center space-x-pixel">
             <AnimatedLogo size="md" />
             <div>
-              <h1 className="text-lg sm:text-xl font-pixel text-retro-accent">
+              <h2 className="text-lg font-pixel text-retro-accent">
                 CacawInventory
-              </h1>
+              </h2>
               <p className="text-xs text-retro-accent-light font-pixel-sans">
                 Hoard it like a crow, store it like a pro!
               </p>

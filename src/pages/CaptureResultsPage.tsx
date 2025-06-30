@@ -563,9 +563,9 @@ export const CaptureResultsPage: React.FC<CaptureResultsPageProps> = ({
           </Button>
           
           <div className="text-center">
-            <h1 className="text-2xl font-pixel text-retro-accent">
+            <h2 className="text-xl font-pixel text-retro-accent">
               Review & Edit Results
-            </h1>
+            </h2>
             <p className="text-retro-accent-light font-pixel-sans text-sm">
               {editingItems.filter(item => item.isSelected).length} of {editingItems.length} items selected
             </p>
