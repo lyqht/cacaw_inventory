@@ -1,12 +1,12 @@
-import React, { useState, useRef } from 'react';
-import { Download, Upload, FileText, AlertTriangle, CheckCircle, X, Loader, FolderOpen, Package } from 'lucide-react';
-import { Modal } from '../ui/Modal';
+import { AlertTriangle, CheckCircle, Download, FileText, FolderOpen, Upload, X } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { ExportImportService, ImportOptions, ImportPreview, ImportResult } from '../../services/exportImport';
+import { Folder } from '../../types';
+import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { Badge } from '../ui/Badge';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { ExportImportService, ImportOptions, ImportResult, ImportPreview } from '../../services/exportImport';
-import { Folder } from '../../types';
+import { Modal } from '../ui/Modal';
 
 interface ExportImportModalProps {
   isOpen: boolean;
@@ -399,14 +399,14 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
 
                     {/* Duplicate Warnings */}
                     {importPreview.duplicateFolders.length > 0 && (
-                      <div className="mt-pixel-2 p-2 bg-retro-warning bg-opacity-20 border border-retro-warning rounded-pixel">
+                      <div className="mt-pixel-2 p-2 rounded-pixel">
                         <div className="flex items-center gap-2 mb-1">
                           <AlertTriangle className="w-4 h-4 text-retro-warning" />
                           <span className="font-pixel text-retro-warning text-xs">
                             Duplicate Folders Found
                           </span>
                         </div>
-                        <div className="text-xs font-pixel-sans text-retro-accent-light">
+                        <div className="text-xs font-pixel-sans text-retro-warning">
                           {importPreview.duplicateFolders.slice(0, 3).join(', ')}
                           {importPreview.duplicateFolders.length > 3 && 
                             ` and ${importPreview.duplicateFolders.length - 3} more`
@@ -504,12 +504,12 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
                       ) : (
                         <AlertTriangle className="w-4 h-4 text-retro-warning" />
                       )}
-                      <span className="font-pixel text-sm">
+                      <span className="font-pixel text-retro-success text-sm">
                         Import {importResult.success ? 'Completed' : 'Completed with Issues'}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs font-pixel-sans mb-2">
+                    <div className="grid grid-cols-2 gap-2 text-xs font-pixel-sans mb-2 text-retro-accent">
                       <div>Folders Imported: <span className="text-retro-success">{importResult.foldersImported}</span></div>
                       <div>Items Imported: <span className="text-retro-success">{importResult.itemsImported}</span></div>
                       <div>Folders Skipped: <span className="text-retro-warning">{importResult.foldersSkipped}</span></div>
