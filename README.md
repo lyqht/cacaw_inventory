@@ -4,6 +4,8 @@
 
 # Cacaw AI Inventory
 
+Hoard it like a crow, store it like a pro!
+
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.x-blue?logo=typescript)
@@ -24,17 +26,11 @@
 
 ## 🖼️ Demo
 
-### Capture page flow (with captions)
+[▶️ Capture page flow](https://github.com/lyqht/cacaw_inventory/blob/883f09f56adaa9d118fbfd09a476f2d1cb7748a1/demo/Capture%20page%20flow%20-%20teck%20-%20with%20captions.mp4)
 
-<video src="demo/Capture%20page%20flow%20-%20teck%20-%20with%20captions.mp4" controls width="400"></video>
+[▶️ List & Grid View](https://github.com/lyqht/cacaw_inventory/blob/883f09f56adaa9d118fbfd09a476f2d1cb7748a1/demo/List%20%26%20Grid%20View%20-%20with%20captions.mp4)
 
-### List & Grid View (with captions)
-
-<video src="demo/List%20%26%20Grid%20View%20-%20with%20captions.mp4" controls width="400"></video>
-
-### Import demo (with captions)
-
-<video src="demo/Import%20demo%20-%20with%20captions.mp4" controls width="400"></video>
+[▶️ Importing JSON](https://github.com/lyqht/cacaw_inventory/blob/883f09f56adaa9d118fbfd09a476f2d1cb7748a1/demo/Import%20demo%20-%20with%20captions.mp4)
 
 ---
 
