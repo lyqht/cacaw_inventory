@@ -473,6 +473,33 @@ export const ItemsPage: React.FC<ItemsPageProps> = ({ folder, onBack }) => {
             isLoading={isLoading}
             onDuplicateItems={handleDuplicateItems}
             onMoveItems={handleMoveItems}
+            onBulkEditTags={async (itemIds, tags, action) => {
+              try {
+                setLoading(true);
+                // For each item, update tags
+                const itemsToUpdate = items.filter(item => itemIds.includes(item.id));
+                for (const item of itemsToUpdate) {
+                  let newTags: string[];
+                  if (action === 'add') {
+                    // Add tags, avoiding duplicates
+                    newTags = Array.from(new Set([...item.tags, ...tags.map(t => t.trim()).filter(Boolean)]));
+                  } else {
+                    // Remove tags
+                    newTags = item.tags.filter(tag => !tags.includes(tag));
+                  }
+                  await storageService.updateItem(item.id, { tags: newTags });
+                }
+                await loadItems();
+                await refreshAllFolders();
+                alert(`Successfully ${action === 'add' ? 'added' : 'removed'} tags for ${itemsToUpdate.length} item(s).`);
+              } catch (error) {
+                console.error('Error bulk editing tags:', error);
+                setError('Failed to bulk edit tags. Please try again.');
+                throw error;
+              } finally {
+                setLoading(false);
+              }
+            }}
           />
         )}
 

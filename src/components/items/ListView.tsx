@@ -17,6 +17,7 @@ interface ListViewProps {
   onSelectionChange?: (selectedItems: string[]) => void;
   onDuplicateItems?: (itemIds: string[], targetFolderId: string) => Promise<void>;
   onMoveItems?: (itemIds: string[], targetFolderId: string) => Promise<void>;
+  onBulkEditTags?: (itemIds: string[], tags: string[], action: 'add' | 'remove') => Promise<void>;
 }
 
 interface SortConfig {
@@ -32,7 +33,8 @@ export const ListView: React.FC<ListViewProps> = ({
   onView,
   onSelectionChange,
   onDuplicateItems,
-  onMoveItems
+  onMoveItems,
+  onBulkEditTags
 }) => {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
@@ -41,6 +43,9 @@ export const ListView: React.FC<ListViewProps> = ({
   const [showFolderSelector, setShowFolderSelector] = useState(false);
   const [actionType, setActionType] = useState<'duplicate' | 'move' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showBulkEditTags, setShowBulkEditTags] = useState(false);
+  const [bulkTagsInput, setBulkTagsInput] = useState('');
+  const [bulkTagsAction, setBulkTagsAction] = useState<'add' | 'remove'>('add');
   
   const { folders } = useAppStore();
   
@@ -230,6 +235,28 @@ export const ListView: React.FC<ListViewProps> = ({
     }
   };
   
+  // Bulk edit tags handler
+  const handleBulkEditTags = async () => {
+    if (!onBulkEditTags || selectedItems.size === 0) return;
+    setIsProcessing(true);
+    const tags = bulkTagsInput
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
+    try {
+      await onBulkEditTags(Array.from(selectedItems), tags, bulkTagsAction);
+      setShowBulkEditTags(false);
+      setBulkTagsInput('');
+      setBulkTagsAction('add');
+      setSelectedItems(new Set());
+      if (onSelectionChange) onSelectionChange([]);
+    } catch (e) {
+      alert('Failed to bulk edit tags.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
   if (isLoading) {
     return (
       <Card variant="outlined" padding="md">
@@ -296,6 +323,14 @@ export const ListView: React.FC<ListViewProps> = ({
               Move To
             </Button>
             <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowBulkEditTags(true)}
+              disabled={selectedItems.size === 0 || isProcessing}
+            >
+              Bulk Edit Tags
+            </Button>
+            <Button
               variant="danger"
               size="sm"
               icon={X}
@@ -305,7 +340,6 @@ export const ListView: React.FC<ListViewProps> = ({
                   items
                     .filter(item => selectedItems.has(item.id))
                     .forEach(item => onDelete(item));
-                  
                   // Clear selection
                   setSelectedItems(new Set());
                 }
@@ -362,6 +396,59 @@ export const ListView: React.FC<ListViewProps> = ({
               </div>
             </div>
           )}
+        </Card>
+      )}
+      
+      {/* Bulk Edit Tags Modal */}
+      {showBulkEditTags && (
+        <Card variant="outlined" padding="md">
+          <div className="space-y-pixel-2">
+            <h3 className="font-pixel text-retro-accent">Bulk Edit Tags</h3>
+            <p className="text-retro-accent-light font-pixel-sans text-sm">
+              Add or remove tags for {selectedItems.size} selected item(s). Separate tags with commas.
+            </p>
+            <div className="flex gap-2 items-center">
+              <select
+                value={bulkTagsAction}
+                onChange={e => setBulkTagsAction(e.target.value as 'add' | 'remove')}
+                className="pixel-input text-sm"
+                disabled={isProcessing}
+              >
+                <option value="add">Add</option>
+                <option value="remove">Remove</option>
+              </select>
+              <input
+                type="text"
+                value={bulkTagsInput}
+                onChange={e => setBulkTagsInput(e.target.value)}
+                placeholder="tag1, tag2, ..."
+                className="pixel-input text-sm flex-1"
+                disabled={isProcessing}
+              />
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleBulkEditTags}
+                disabled={isProcessing || !bulkTagsInput.trim()}
+              >
+                Apply
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBulkEditTags(false)}
+                disabled={isProcessing}
+              >
+                Cancel
+              </Button>
+            </div>
+            {isProcessing && (
+              <div className="flex items-center gap-2 mt-2">
+                <LoadingSpinner size="sm" variant="accent" />
+                <span className="font-pixel-sans text-retro-accent">Processing...</span>
+              </div>
+            )}
+          </div>
         </Card>
       )}
       
