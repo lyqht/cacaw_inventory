@@ -162,15 +162,6 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 	return (
 		<Card className="w-full max-w-2xl mx-auto">
 			<div className="space-y-4 p-4 sm:p-pixel-2">
-				<div className="text-center">
-					<h2 className="text-lg sm:text-xl font-pixel text-retro-accent mb-2">
-						Capture Item Photo
-					</h2>
-					<p className="text-sm text-retro-accent-light font-pixel-sans">
-						Take a photo, upload an image, or drag & drop from your computer
-					</p>
-				</div>
-
 				{/* Error Display */}
 				{error && (
 					<div className="bg-retro-error bg-opacity-10 border-2 border-retro-error rounded-pixel p-3">
