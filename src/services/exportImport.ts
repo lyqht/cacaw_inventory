@@ -278,14 +278,17 @@ export class ExportImportService {
 
       onProgress?.(30, 'Creating backup...');
       
-      // Create backup if requested
-      if (options.createBackup) {
+      // Only create backup if requested AND there are existing folders
+      const existingFoldersForBackup = await this.storageService.getFolders();
+      if (options.createBackup && existingFoldersForBackup.length > 0) {
         try {
           await this.exportAllCollections();
           result.warnings.push('Backup created before import');
         } catch (error) {
           result.warnings.push('Failed to create backup, continuing with import');
         }
+      } else if (options.createBackup && existingFoldersForBackup.length === 0) {
+        result.warnings.push('No existing folders, backup not needed');
       }
 
       onProgress?.(40, 'Processing folders...');
