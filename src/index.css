@@ -65,6 +65,12 @@
     --row-hover-bg: rgba(0, 0, 128, 0.15);
     --row-hover-text: #000080;
     --row-selected-bg: rgba(0, 0, 128, 0.2);
+    
+    /* Tab focus and hover colors */
+    --tab-hover-bg: #191970;
+    --tab-hover-text: #F0F8FF;
+    --tab-focus-ring: #4169E1;
+    --tab-focus-outline: 3px solid #4169E1;
   }
 
   /* Dark theme variables */
@@ -110,6 +116,12 @@
     --row-hover-bg: rgba(135, 206, 235, 0.25);
     --row-hover-text: #FFFFFF;
     --row-selected-bg: rgba(135, 206, 235, 0.3);
+    
+    /* Tab focus and hover colors */
+    --tab-hover-bg: #4682B4;
+    --tab-hover-text: #000033;
+    --tab-focus-ring: #ADD8E6;
+    --tab-focus-outline: 3px solid #ADD8E6;
   }
 
   /* Auto theme - follows system preference */
@@ -155,6 +167,12 @@
       --row-hover-bg: rgba(135, 206, 235, 0.25);
       --row-hover-text: #FFFFFF;
       --row-selected-bg: rgba(135, 206, 235, 0.3);
+      
+      /* Tab focus and hover colors */
+      --tab-hover-bg: #4682B4;
+      --tab-hover-text: #000033;
+      --tab-focus-ring: #ADD8E6;
+      --tab-focus-outline: 3px solid #ADD8E6;
     }
   }
 
@@ -309,6 +327,29 @@
     @apply ring-4 ring-retro-accent ring-opacity-50;
   }
 
+  /* Tab component accessibility enhancements */
+  [role="tab"] {
+    @apply transition-all duration-200;
+  }
+
+  [role="tab"]:hover:not([aria-selected="true"]) {
+    background-color: var(--tab-hover-bg);
+    color: var(--tab-hover-text);
+    border-color: var(--retro-accent-light);
+  }
+
+  [role="tab"]:focus-visible {
+    outline: var(--tab-focus-outline);
+    outline-offset: 2px;
+    z-index: 10;
+  }
+
+  [role="tab"][aria-selected="true"] {
+    @apply font-bold;
+    position: relative;
+    z-index: 5;
+  }
+
   /* Ensure all interactive elements meet accessibility standards */
   .interactive-element {
     min-height: 44px;
@@ -327,6 +368,14 @@
 
     .pixel-input {
       border-width: 3px;
+    }
+    
+    [role="tab"] {
+      @apply border-4;
+    }
+    
+    [role="tab"]:focus-visible {
+      outline-width: 4px;
     }
   }
 
@@ -348,6 +397,10 @@
     }
 
     .pixel-input {
+      @apply transition-none;
+    }
+    
+    [role="tab"] {
       @apply transition-none;
     }
   }
@@ -531,5 +584,12 @@
   .pixel-input {
     min-height: 44px;
     width: 100%;
+  }
+  
+  /* Ensure tabs are properly sized on mobile */
+  [role="tab"] {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem 1rem;
   }
 }
