@@ -11,6 +11,8 @@ Hoard it like a crow, store it like a pro!
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.x-blue?logo=typescript)
 ![Vite](https://img.shields.io/badge/Vite-4.x-blue?logo=vite)
 
+This is a project submission for [Bolt.new's largest hackathon](https://bolt-hackathonn.vercel.app/), and a joint learning project worked on by [Estee Tey](https://github.com/lyqht) + [Tan Tiang Teck](https://github.com/software312).
+
 ## 🎯 Features
 
 - 📦 **Collection Management:** Organize, tag, and track collectibles with detailed information and photos.
